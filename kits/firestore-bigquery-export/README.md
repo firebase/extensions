@@ -4,226 +4,115 @@ Stream a Cloud Firestore collection to BigQuery. This is the Stream Firestore to
 BigQuery Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.
 
-It listens for document writes on a collection, serializes each change, and
-writes it to a BigQuery changelog table. Failed writes buffer through a Cloud
-Tasks queue (`syncBigQuery`), which retries them on its own throttled schedule.
-The functions run in your own Firebase project; there is no hosted version, so
-you deploy them yourself.
+Each document write is serialized and inserted into a BigQuery changelog table.
+Failed writes buffer through a Cloud Tasks queue (`syncBigQuery`) and are
+retried.
 
-A few terms used below: a **codebase** is a directory of Cloud Functions source
-that the Firebase CLI builds and deploys as a unit. A **kit** is this package
-added to your project as a codebase, declared by a `kit` entry in
-`firebase.json`. An **instance** is one configured copy of the kit, with its own
-`.env` and its own four functions; the CLI deploys each instance as a separate
+Terms used below: a **codebase** is a directory of Cloud Functions source the
+Firebase CLI deploys as a unit. A **kit** is this package declared by a `kit`
+entry in `firebase.json`. An **instance** is one configured copy of the kit,
+with its own `.env` and four functions; the CLI deploys each instance as a
 codebase named after its instance id.
-
-## Before you start
-
-You need:
-
-- A Firebase project on the Blaze plan with Cloud Firestore set up. Note the
-  database id and its location (listed at
-  https://console.cloud.google.com/firestore/databases): they become `DATABASE`
-  and `DATABASE_REGION`.
-- A local project directory with a `firebase.json` and a `.firebaserc` that
-  selects the project. `firebase use` only runs where a `firebase.json` exists,
-  so create an empty one first (the kit stanza goes in later, under
-  [Deploy](#deploy)):
-
-  ```sh
-  echo '{}' > firebase.json
-  firebase use --add <project-id> --alias default
-  ```
-
-- Node.js 24, the newest Cloud Functions runtime (the kit supports 22 or
-  later).
-- The latest Firebase CLI, signed in, with the `kits` experiment enabled:
-
-  ```sh
-  npm install -g firebase-tools@latest
-  firebase login
-  firebase experiments:enable kits
-  ```
-
-  Firebase CLI 15.28.0 is the minimum for this kit (see [Deploy](#deploy)).
-  Some sections below mention older versions; those only mark when a particular
-  CLI feature arrived.
 
 ## Install
 
-There are two ways to add the kit: the guided installer, or installing the
-package into a functions codebase you set up yourself.
+You need a Firebase project on the Blaze plan with Cloud Firestore, Node.js 24
+(22 or later is supported), and the latest Firebase CLI (15.28.0 at minimum)
+with the `kits` experiment:
 
-> Until the first stable release, install from the `next` tag. `latest`
-> currently points at 0.0.1, an empty placeholder that contains no code.
+```sh
+npm install -g firebase-tools@latest
+firebase login
+firebase experiments:enable kits
+echo '{}' > firebase.json   # firebase use needs a firebase.json
+firebase use --add <project-id> --alias default
+```
 
-### With the guided installer
+> Until the first stable release, install from the `next` tag. `latest` points
+> at 0.0.1, an empty placeholder.
+
+**Guided installer.** This creates the codebase under `function-kits/<kit-name>/`,
+adds the `kit` entry to `firebase.json`, and prompts for each setting, writing
+the answers to `function-kits/<kit-name>/config-<instance-id>/.env.<project-id>`:
 
 ```sh
 firebase functions:kits:install --package @firebase-function-kits/firestore-bigquery-export@next
 ```
 
-The installer asks for a kit name and an instance id, creates a functions
-codebase under `function-kits/<kit-name>/`, adds the `kit` stanza to
-`firebase.json`, and prompts for each setting under
-[Configuration](#configuration). It writes your answers to
-`function-kits/<kit-name>/config-<instance-id>/.env.<project-id>`. Then
-[deploy](#deploy).
+It also asks for `FUNCTION_DEFAULT_REGION`. Enter the region your functions
+will run in (`us-central1` for `nam5`; see [Region](#region)).
 
-The entry file it generates also prompts for `FUNCTION_DEFAULT_REGION` and passes
-it to `setGlobalOptions({ region })`. This kit's functions set their own region
-from `DATABASE_REGION` (see
-[DATABASE_REGION places the functions](#database_region-places-the-functions)),
-which takes precedence, so the value only applies if you leave
-`DATABASE_REGION` explicitly blank. Enter the Cloud Run region your database
-maps to, for example `us-central1` for `nam5` (the full mapping is in that
-section).
-
-Running the installer again in the same project directory adds another instance
-to the existing kit rather than creating a second kit.
-
-### In your own functions codebase
+**Your own codebase.** Install the kit plus `firebase-functions` and
+`firebase-admin` as direct dependencies, on the major versions the kit uses
+(currently 7 and 14). The kit's shrinkwrap nests its own copies, which the CLI
+can't see: without them the deploy fails with `Couldn't find firebase-functions
+package in your source code`.
 
 ```sh
 npm install @firebase-function-kits/firestore-bigquery-export@next firebase-functions@latest firebase-admin@latest
 npm install --save-dev typescript@latest
 ```
 
-`firebase-functions` and `firebase-admin` must be direct dependencies of your
-codebase. The kit ships an npm-shrinkwrap that keeps its own copies inside the
-package, where neither the CLI nor your scripts can resolve them. Without
-`firebase-functions`, the deploy stops with `Couldn't find firebase-functions
-package in your source code` followed by `Error: An unexpected error has
-occurred.` Without `firebase-admin`, the manual enqueue snippet under
-[Provisioning](#provisioning) fails with `Cannot find module
-'firebase-admin/app'`. Keep them on the same major versions the kit depends on
-(currently `firebase-functions` 7 and `firebase-admin` 14; `npm view
-@firebase-function-kits/firestore-bigquery-export@next dependencies` lists
-them). If `@latest` moves to a newer major, install those majors instead, for
-example `firebase-admin@^14`.
-
-Then set up the entry file ([Usage](#usage)) and `firebase.json`
-([Deploy](#deploy)).
-
 ## Required IAM
 
-There is nothing to set up by hand here: the deploy handles it, and you only
-confirm the roles when the first deploy asks (see [Deploy](#deploy)). The kit
-declares the Google Cloud roles and APIs below for the functions' service
-account. Firebase CLI 15.23.0 or later creates that account, grants the roles,
-enables the APIs, and attaches the account to every function in this kit. Do
-not set a custom runtime service account for this codebase — it conflicts with
-that automatic setup.
+Nothing to do by hand. On the first deploy the CLI asks you to confirm these
+roles (`This codebase uses declarative security … Continue? (y/N)`), then
+creates a service account for the kit, grants them, and enables the APIs. Don't
+set a custom runtime service account.
 
-| Role / API                     | Why                                                                                        |
-| ------------------------------ | ------------------------------------------------------------------------------------------ |
-| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                    |
-| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                                   |
-| `roles/datastore.user`         | write failed-row records back to Firestore; always granted, used only when `BACKUP_COLLECTION` is set |
-| `roles/eventarc.eventReceiver` | receive 2nd gen Firestore trigger events                                                   |
-| `roles/run.invoker`            | allow Eventarc to invoke the 2nd gen Cloud Run service, and Cloud Tasks to dispatch to the three task-queue functions, which have no function-level invoker binding |
-| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                         |
-| `firestore.googleapis.com`     | receive document change events from Cloud Firestore                                        |
-| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                            |
+| Role / API                     | Why                                                          |
+| ------------------------------ | ------------------------------------------------------------ |
+| `roles/bigquery.dataEditor`    | create the dataset, table and views; insert rows             |
+| `roles/bigquery.user`          | run BigQuery jobs and materialized views                     |
+| `roles/datastore.user`         | write failed rows to `BACKUP_COLLECTION` (always granted)    |
+| `roles/eventarc.eventReceiver` | receive Firestore trigger events                             |
+| `roles/run.invoker`            | let Eventarc and Cloud Tasks invoke the functions            |
+| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto `syncBigQuery`                    |
+| `firestore.googleapis.com`     | receive document change events                               |
+| `bigquery.googleapis.com`      | write to BigQuery                                            |
 
-Only when `EVENTARC_CHANNEL` is set in `.env` (see [Events](#events)), the deploy also
-declares `roles/eventarc.publisher` and `eventarcpublishing.googleapis.com`,
-which the Extensions platform granted implicitly to installs that opted into
-events. A default install declares neither, so nothing prompts you to enable
-the Eventarc Publishing API.
-
-If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
-kit's service account (the one the CLI created) the `bigquery.*` roles on that
-project. For a dataset encrypted with a customer-managed key (CMEK,
-`KMS_KEY_NAME`), also grant the BigQuery service account access to your KMS
-key.
+Setting `EVENTARC_CHANNEL` also adds `roles/eventarc.publisher` and
+`eventarcpublishing.googleapis.com`. For a dataset in another project, grant
+the kit's service account the `bigquery.*` roles there. For a CMEK dataset,
+grant the BigQuery service account access to your KMS key.
 
 ## Usage
 
-The guided installer sets all of this up for you. For your own codebase, this
-layout keeps the codebase and the instance's `.env` at the project root, which
-matches the `firebase.json` under [Deploy](#deploy):
+With your own codebase, this layout keeps the codebase and the instance's
+`.env` at the project root:
 
 ```text
 my-project/
   .firebaserc
   firebase.json
-  package.json
-  tsconfig.json
+  package.json      # "main": "lib/index.js", "engines": { "node": "24" }, "scripts": { "build": "tsc" }
+  tsconfig.json     # compiles src/ to lib/
   .env
-  src/index.ts      # compiled to lib/index.js
+  src/index.ts
 ```
-
-Export the four functions from your entry file:
 
 ```ts
 // src/index.ts
 export {
-  fsexportbigquery,
-  syncBigQuery,
-  initBigQuerySync,
-  setupBigQuerySync,
+  fsexportbigquery, // Firestore trigger
+  syncBigQuery, // retries failed writes from the queue
+  initBigQuerySync, // creates BigQuery resources after the first deploy
+  setupBigQuerySync, // updates them after later deploys
 } from "@firebase-function-kits/firestore-bigquery-export";
 ```
 
-`package.json` needs `main` pointing at the compiled file, a `build` script, and
-a Node.js engine, alongside the dependencies from [Install](#install):
-
-```json
-{
-  "main": "lib/index.js",
-  "engines": { "node": "24" },
-  "scripts": { "build": "tsc" }
-}
-```
-
-`tsconfig.json` compiles `src` to `lib`, for example:
-
-```json
-{
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2024",
-    "outDir": "lib",
-    "rootDir": "src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true
-  },
-  "include": ["src"]
-}
-```
-
-Configure the functions with a `.env` (or `.env.<project-id>`) in the instance's
-directory, here the project root:
-
 ```sh
+# .env — set these before the first deploy
 COLLECTION_PATH=users
-DATASET_ID=analytics
 TABLE_ID=users
 DATABASE_REGION=europe-west2
 BACKUP_COLLECTION=users_bigquery_failures
 ```
 
-Set at least these before the first deploy. `COLLECTION_PATH` and `TABLE_ID`
-otherwise default to `posts`. `DATABASE_REGION` must be in `.env` before the
-first deploy to place the functions correctly (see
-[DATABASE_REGION places the functions](#database_region-places-the-functions)).
-Without `BACKUP_COLLECTION`, rows that still fail after every retry are lost
-(see [Failure handling](#failure-handling)).
-
-- `fsexportbigquery` is the Firestore trigger.
-- `syncBigQuery` is the write-buffer task queue that retries failed writes.
-- `initBigQuerySync` is the first-deploy provisioning lifecycle task.
-- `setupBigQuerySync` is the reconfigure provisioning lifecycle task.
-
-Importing the package without exporting its functions deploys nothing — the CLI
-only deploys what your entry file exports.
+`COLLECTION_PATH` and `TABLE_ID` otherwise default to `posts`. Without
+`BACKUP_COLLECTION`, rows that fail every retry are lost.
 
 ## Deploy
-
-Add a `kit` stanza to your project's `firebase.json`. The guided installer
-writes one for you; the package itself does not ship a `firebase.json`.
 
 ```json
 {
@@ -231,337 +120,139 @@ writes one for you; the package itself does not ship a `firebase.json`.
     {
       "source": ".",
       "kit": "firestore-bigquery-export",
-      "instances": {
-        "default": "."
-      },
+      "instances": { "default": "." },
       "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ]
 }
 ```
 
-`source` is the directory holding the codebase's `package.json`. `predeploy`
-compiles the TypeScript before upload; the CLI sets `$RESOURCE_DIR` to the
-`source` directory.
-
-`kit` names the kit in your project and takes the place of the `codebase` field
-(the two cannot be combined). It is your choice and does not have to match the
-package name: up to 40 characters, using lowercase letters, digits, `_` and
-`-`. Each instance id, not the kit name, becomes a codebase name: deploy output
-shows `default:kit-default-fsexportbigquery`, and commands that take a codebase,
-such as `firebase deploy --only functions:<codebase>` or
-`firebase functions:lifecycle:run <hook> <codebase>`, take the instance id.
-Instance ids must be unique across the project.
-
-`instances` maps each instance id to the directory (relative to
-`firebase.json`) holding that instance's `.env`. The CLI prefixes every
-function and task queue name with `kit-<instance-id>-`, so the functions above
-deploy as `kit-default-fsexportbigquery`, `kit-default-syncBigQuery`,
-`kit-default-initBigQuerySync`, and `kit-default-setupBigQuerySync`.
-
-Deploy with Firebase CLI 15.28.0 or later: it sets the
-`FIREBASE_KIT_INSTANCE_ID` env var on the deployed functions, which the trigger
-needs to address its own `syncBigQuery` queue. On functions deployed with an
-older CLI, enqueues fail (logged at error level and published as an `onError`
-event; the event is not retried, as in the extension) until you redeploy with
-a newer CLI.
+`kit` is any name you choose (up to 40 lowercase letters, digits, `_`, `-`).
+`instances` maps each instance id to the directory holding its `.env`. Function
+names get a `kit-<instance-id>-` prefix, so this deploys
+`kit-default-fsexportbigquery` and so on. Commands that take a codebase take
+the instance id.
 
 ```sh
-firebase deploy --only functions
+firebase deploy --only functions                 # all instances
+firebase deploy --only functions:<instance-id>   # one instance
 ```
 
-Deploy a single instance with `firebase deploy --only functions:<instance-id>`.
+Deploy with Firebase CLI 15.28.0 or later: older versions don't set
+`FIREBASE_KIT_INSTANCE_ID`, so enqueues fail, and don't read `.env` early enough
+to place the functions.
 
-The first deploy asks you to confirm the roles listed under
-[Required IAM](#required-iam) (`This codebase uses declarative security. It will
-use the following role(s): … Continue? (y/N)`). Answering no aborts the deploy.
-Like any functions deploy, it may also ask how many days to keep container
-images.
-
-### Check that it works
-
-After the first deploy, the `initBigQuerySync` task creates the dataset
-`DATASET_ID` with two resources: the table `<TABLE_ID>_raw_changelog`, one row
-per document change, and the view `<TABLE_ID>_raw_latest`, the current state of
-each document. Write a document to `COLLECTION_PATH`, then query:
+**Check that it works.** The first deploy runs `initBigQuerySync`, which creates
+the dataset with a `<TABLE_ID>_raw_changelog` table (one row per change) and a
+`<TABLE_ID>_raw_latest` view (current state per document). Write a document,
+then:
 
 ```sql
 SELECT document_id, operation, data, timestamp
 FROM `<project-id>.<DATASET_ID>.<TABLE_ID>_raw_changelog`
-ORDER BY timestamp DESC
-LIMIT 10
+ORDER BY timestamp DESC LIMIT 10
 ```
 
-If the dataset is missing, see [Provisioning](#provisioning). At the default
-`LOG_LEVEL` of `info`, each write also logs `Firestore event received by
-onDocumentWritten trigger`:
-
-```sh
-firebase functions:log --only kit-<instance-id>-fsexportbigquery
-```
+At `LOG_LEVEL=info`, each write logs `Firestore event received by
+onDocumentWritten trigger` (`firebase functions:log --only
+kit-<instance-id>-fsexportbigquery`).
 
 ## Configuration
 
-Set these values in a `.env` (or `.env.<project-id>`) file in the instance's
-directory. The Firebase CLI loads them at deploy time. On a deploy, it prompts
-for every setting that has no value in those files, including the optional ones,
-and saves your answers to `.env.<project-id>` in the same directory (`Created new
-local file .env.<project-id> to store param values`). To skip those prompts, set
-the values you want in `.env` before deploying. `PROJECT_ID` is supplied by the
-Firebase CLI.
+Settings go in the instance's `.env` (or `.env.<project-id>`). A deploy prompts
+for every unset setting and saves the answers to `.env.<project-id>`. Settings
+marked † fail the deploy if present but blank: omit the line to get the
+default.
 
-"Required: no" means you can leave the line out and get the default. A line
-that is present but blank is different for the settings marked † below: the
-deploy fails rather than falling back to the default, so delete the line
-instead of emptying it.
-
-| Env var                             | Required | Default            | Description                                                        |
-| ----------------------------------- | -------- | ------------------ | ------------------------------------------------------------------ |
-| `COLLECTION_PATH` †                 | no       | `posts`            | Collection or collection-group path to export. Set this.           |
-| `DATASET_ID` †                      | no       | `firestore_export` | BigQuery dataset                                                   |
-| `TABLE_ID` †                        | no       | `posts`            | Prefix of the changelog table and view. Set this.                  |
-| `DATABASE_REGION`                   | yes      | (prompted)         | Firestore database location; also places the functions. Set it in `.env` before the first deploy. |
-| `DATASET_LOCATION` †                | no       | `us`               | BigQuery dataset location, used only when the dataset is created   |
-| `DATABASE` †                        | no       | `(default)`        | Firestore database id                                              |
-| `BIGQUERY_PROJECT_ID` †             | no       | project id         | Dataset project, if different                                      |
-| `BACKUP_COLLECTION`                 | no       | (empty)            | Strongly recommended: Firestore collection for rows whose BigQuery insert failed; without it they are lost |
-| `MAX_DISPATCHES_PER_SECOND`         | no       | `100`              | `syncBigQuery` queue dispatch rate (1-500)                         |
-| `MAX_ENQUEUE_ATTEMPTS`              | no       | `3`                | In-process enqueue attempts before giving up (1-10)                |
-| `TRANSFORM_FUNCTION`                | no       | (empty)            | URL of an HTTP function that transforms rows before insert, for example `https://us-west1-my-project.cloudfunctions.net/myTransform` |
-| `TABLE_PARTITIONING`                | no       | `NONE`             | Ingestion-time partitioning: `HOUR`, `DAY`, `MONTH`, `YEAR` or `NONE` |
-| `TIME_PARTITIONING_FIELD`           | no       | (empty)            | Time-partitioning column name                                      |
-| `TIME_PARTITIONING_FIELD_TYPE`      | no       | `omit`             | Time-partitioning column type: `TIMESTAMP`, `DATETIME`, `DATE` or `omit` |
-| `TIME_PARTITIONING_FIRESTORE_FIELD` | no       | (empty)            | Firestore field for partitioning                                   |
-| `CLUSTERING`                        | no       | (empty)            | Up to 4 comma-separated columns, no spaces, for example `data,document_id,timestamp` |
-| `WILDCARD_IDS`                      | no       | `false`            | Store path-param values as columns                                 |
-| `USE_NEW_SNAPSHOT_QUERY_SYNTAX` †   | no       | `no`               | Use newer snapshot query syntax (`yes` / `no`)                     |
-| `EXCLUDE_OLD_DATA`                  | no       | `no`               | Skip previous document state on updates (`yes` / `no`)             |
-| `VIEW_TYPE` †                       | no       | `view`             | `view`, `materialized_incremental`, `materialized_non_incremental` |
-| `MAX_STALENESS`                     | no       | (empty)            | Materialized views only: a BigQuery `INTERVAL`, for example `INTERVAL "8:0:0" HOUR TO SECOND` |
-| `REFRESH_INTERVAL_MINUTES`          | no       | (empty)            | Materialized views only: refresh interval in minutes, for example `60` |
-| `KMS_KEY_NAME`                      | no       | (empty)            | CMEK key for the dataset: `projects/<project>/locations/<location>/keyRings/<ring>/cryptoKeys/<key>` |
-| `LOG_LEVEL` †                       | no       | `info`             | `debug`, `info`, `warn`, `error`, `silent`                         |
-| `EVENTARC_CHANNEL`                  | no       | (unset)            | Eventarc channel to publish lifecycle events on; unset or blank disables events (see [Events](#events)) |
-| `EXT_SELECTED_EVENTS`               | no       | (unset)            | Comma-separated allowlist of event types to publish. Unset publishes every event; a blank value publishes none (see [Events](#events)) |
+| Env var                             | Default            | Description                                                         |
+| ----------------------------------- | ------------------ | ------------------------------------------------------------------- |
+| `DATABASE_REGION` (required)        | (prompted)         | Firestore database location; also places the functions             |
+| `COLLECTION_PATH` †                 | `posts`            | Collection or collection-group path to export                      |
+| `DATASET_ID` †                      | `firestore_export` | BigQuery dataset                                                    |
+| `TABLE_ID` †                        | `posts`            | Prefix of the changelog table and view                              |
+| `DATASET_LOCATION` †                | `us`               | Dataset location; used only when the dataset is created            |
+| `DATABASE` †                        | `(default)`        | Firestore database id                                               |
+| `BIGQUERY_PROJECT_ID` †             | project id         | Dataset project, if different                                       |
+| `BACKUP_COLLECTION`                 | (empty)            | Firestore collection for rows whose insert failed. Recommended.     |
+| `MAX_DISPATCHES_PER_SECOND`         | `100`              | `syncBigQuery` dispatch rate (1-500)                                |
+| `MAX_ENQUEUE_ATTEMPTS`              | `3`                | Enqueue attempts before giving up (1-10)                            |
+| `TRANSFORM_FUNCTION`                | (empty)            | URL of an HTTP function that transforms rows before insert          |
+| `TABLE_PARTITIONING`                | `NONE`             | `HOUR`, `DAY`, `MONTH`, `YEAR` or `NONE`                            |
+| `TIME_PARTITIONING_FIELD`           | (empty)            | Partitioning column name                                            |
+| `TIME_PARTITIONING_FIELD_TYPE`      | `omit`             | `TIMESTAMP`, `DATETIME`, `DATE` or `omit`                           |
+| `TIME_PARTITIONING_FIRESTORE_FIELD` | (empty)            | Firestore field to partition on                                     |
+| `CLUSTERING`                        | (empty)            | Up to 4 comma-separated columns, e.g. `data,document_id,timestamp`  |
+| `WILDCARD_IDS`                      | `false`            | Store path-param values as columns                                  |
+| `USE_NEW_SNAPSHOT_QUERY_SYNTAX` †   | `no`               | `yes` / `no`                                                        |
+| `EXCLUDE_OLD_DATA`                  | `no`               | Skip the previous document state on updates (`yes` / `no`)          |
+| `VIEW_TYPE` †                       | `view`             | `view`, `materialized_incremental`, `materialized_non_incremental`  |
+| `MAX_STALENESS`                     | (empty)            | Materialized views: e.g. `INTERVAL "8:0:0" HOUR TO SECOND`          |
+| `REFRESH_INTERVAL_MINUTES`          | (empty)            | Materialized views: refresh interval in minutes                     |
+| `KMS_KEY_NAME`                      | (empty)            | `projects/<p>/locations/<l>/keyRings/<r>/cryptoKeys/<k>`            |
+| `LOG_LEVEL` †                       | `info`             | `debug`, `info`, `warn`, `error`, `silent`                          |
+| `EVENTARC_CHANNEL`                  | (unset)            | Channel for lifecycle events; unset or blank disables events        |
+| `EXT_SELECTED_EVENTS`               | (unset)            | Event types to publish; unset publishes all, blank publishes none   |
 
 ## Multiple instances
 
-To export several collections, add one entry per instance to the `instances`
-map, each pointing at its own config directory with its own `.env`:
+Add one entry per instance, each with its own config directory and `.env`.
+Instance ids must be unique across the project.
 
 ```json
-{
-  "functions": [
-    {
-      "source": ".",
-      "kit": "firestore-bigquery-export",
-      "instances": {
-        "users": "instances/users",
-        "orders": "instances/orders"
-      },
-      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
-    }
-  ]
-}
+"instances": { "users": "instances/users", "orders": "instances/orders" }
 ```
-
-Instance ids must be unique across all kit stanzas in the project, and every
-instance's function names are namespaced by its `kit-<instance-id>-` prefix, so
-the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events:
-`onStart` and `onError` from the write path, and `onSuccess` from the
-`syncBigQuery` task when a buffered write lands (matching the extension, which
-only emitted `onSuccess` from its queue handler). A blank value is the same as
-an unset one: no channel is opened and nothing is published.
-
-Setting `EVENTARC_CHANNEL` also makes the deploy declare
-`eventarcpublishing.googleapis.com` and `roles/eventarc.publisher`: the CLI
-grants the role and prompts to enable the API, and declining that prompt
-aborts the deploy. That needs Firebase CLI 15.28.0 or later, which loads
-`.env` during deploy discovery; on an older CLI the declarations are skipped
-and every publish fails with `PERMISSION_DENIED`, logged as a warning while
-the export itself continues. `firebase functions:kits:install` and
-`firebase ext:migrate` print a summary of the APIs and roles the deploy will
-set up, but they build it without reading your `.env`, so neither the API nor
-the role appears in it, even right after `ext:migrate` has written
-`EVENTARC_CHANNEL`. The deploy declares them regardless.
-
-Each event is published twice, exactly as the extension published it: once
-under `firebase.extensions.firestore-bigquery-export.v1.*` and once under
-`firebase.extensions.firestore-counter.v1.*`. The `firestore-counter` type is a
-historical naming mistake the extension kept for backwards compatibility, and
-the kit keeps it for the same reason: triggers listening on it survive the
-migration. The two copies carry the same `data` and `subject`, and only differ
-by `type`. Write new triggers against the `firestore-bigquery-export` types.
-
-Publishing is filtered by `EXT_SELECTED_EVENTS`. When it is unset, every event
-is published. When it is set, the value is split on commas and only exactly
-matching event types are published, silently: a blank value
-(`EXT_SELECTED_EVENTS=`) suppresses every event, and a value carrying only another product's types
-(the extension offered more than one namespace to tick) publishes nothing. A
-config exported from the extension brings its `EXT_SELECTED_EVENTS` along, so
-check it lists the types you expect, `onSuccess` included. It gates the legacy
-`firestore-counter` copies too, so a trigger on a legacy type only fires when
-that legacy type is listed.
+With `EVENTARC_CHANNEL` set, the functions publish `onStart` and `onError` from
+the trigger and `onSuccess` from `syncBigQuery`. Each event is published under
+both `firebase.extensions.firestore-bigquery-export.v1.*` and the extension's
+legacy `firebase.extensions.firestore-counter.v1.*`; write new triggers against
+the first. `EXT_SELECTED_EVENTS` filters by exact type, legacy copies included.
+A config exported from the extension carries its `EXT_SELECTED_EVENTS` over, so
+check it lists what you expect.
 
 ## Provisioning
 
-The BigQuery dataset, table, and views are created by the two lifecycle tasks,
-`initBigQuerySync` and `setupBigQuerySync`: task functions the CLI runs for
-you after a deploy (a lifecycle hook). Both tasks share one provisioning path,
-are idempotent and retry on transient BigQuery failures (up to 15 attempts,
-60s minimum backoff).
+`initBigQuerySync` runs after the first deploy and `setupBigQuerySync` after
+later ones, creating or updating the dataset, table and view (15 attempts, 60s
+backoff). A redeploy with no changes is skipped, and so is
+`setupBigQuerySync`. Writes never create resources: if they're missing, writes
+fail into the queue and backup collection until a lifecycle task runs.
 
-Deploy wiring (declared in the package):
-
-- First deploy runs `initBigQuerySync` automatically (`afterFirstDeploy`).
-- Later deploys run `setupBigQuerySync` automatically (`afterRedeploy`).
-
-The `afterRedeploy` hook only runs when the deploy actually updates the
-functions. If nothing changed since the last deploy, the CLI skips the codebase
-(`No resources modified for codebase: <id>. Skipping afterRedeploy lifecycle
-hook.`) and `setupBigQuerySync` does not run. To force it, either change any
-value in the instance's `.env` file and redeploy, or enqueue the task manually
-as shown below, substituting `setupBigQuerySync` into the snippet.
-
-`initBigQuerySync` and `setupBigQuerySync` call the same handler; they exist as
-separate task functions so first-deploy and redeploy can target different
-queues, matching the extension's install vs update/configure split.
-
-If automatic post-deploy enqueue did not run, enqueue a task yourself. Prefer
-`initBigQuerySync` after a first deploy and `setupBigQuerySync` after a
-redeploy or schema-related config change (`TABLE_PARTITIONING`, `CLUSTERING`,
-`WILDCARD_IDS`, `VIEW_TYPE`, and related fields).
-
-Before running the snippets below:
-
-- Run them from your functions codebase directory (the project root in the
-  [Usage](#usage) layout, `function-kits/<kit-name>/source` with the guided
-  installer).
-- Make `firebase-admin` a direct dependency of that codebase (see
-  [Install](#install)).
-- Sign in with application-default credentials, for example
-  `gcloud auth application-default login`. The account needs
-  `roles/cloudtasks.enqueuer`.
-- Set the project and the task functions' region. The region is the one shown
-  for the functions in the Cloud console, normally your `DATABASE_REGION` with
-  `nam5`/`nam7` mapped to `us-central1` and `eur3` to `europe-west1`:
-
-  ```sh
-  export GOOGLE_CLOUD_PROJECT=<project-id>
-  export FUNCTION_REGION=us-central1
-  ```
-
-The snippets use the `default` instance; replace `default` in the
-`kit-<instance-id>-` prefix with your instance id.
+To run one by hand, from your codebase directory with `firebase-admin`
+installed, application-default credentials (`gcloud auth
+application-default login`) and `roles/cloudtasks.enqueuer`:
 
 ```sh
+export GOOGLE_CLOUD_PROJECT=<project-id> FUNCTION_REGION=us-central1
 node -e '
 const { initializeApp } = require("firebase-admin/app");
 const { getFunctions } = require("firebase-admin/functions");
 initializeApp();
 getFunctions()
-  .taskQueue("locations/'"$FUNCTION_REGION"'/functions/kit-default-initBigQuerySync")
+  .taskQueue("locations/'"$FUNCTION_REGION"'/functions/kit-<instance-id>-setupBigQuerySync")
   .enqueue({})
-  .then(() => console.log("init task enqueued"));
+  .then(() => console.log("enqueued"));
 '
 ```
 
-Under the hood the task queue is an authenticated HTTP endpoint, so for a quick
-manual run you can also POST to it directly — note this skips the queue, so a
-failure is not retried. This needs the
-[Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`),
-signed in:
-
-```sh
-URL=$(gcloud functions describe kit-default-initBigQuerySync \
-  --region "$FUNCTION_REGION" --gen2 --format='value(url)')
-
-curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
-  -H "Authorization: Bearer $(gcloud auth print-identity-token --audiences="$URL")" "$URL"
-```
-
-Writes never provision resources themselves. If resources are missing when a
-write arrives, the inline write fails and the change buffers
-through the `syncBigQuery` queue, which re-attempts the write on Cloud Tasks'
-schedule. The queue handler does not provision, as in the extension: if the
-resources are still missing the retries fail and the row lands in
-`BACKUP_COLLECTION` (when configured); run the lifecycle task to recreate them, either by
-enqueueing `setupBigQuerySync` manually (see above) or by redeploying with a
-config change so the deploy is not skipped.
-
 ## Failure handling
 
-The write path mirrors the extension's Cloud Tasks buffer:
+1. The trigger inserts the row inline. If that fails, the row is written to
+   `BACKUP_COLLECTION` (when set) and the change is enqueued on `syncBigQuery`.
+2. `syncBigQuery` retries 5 times with 60s minimum backoff, writing to
+   `BACKUP_COLLECTION` after each failure. Then the task is dropped.
+3. If the enqueue also fails, the trigger logs an error, publishes `onError`
+   and gives up. The event isn't redelivered.
 
-1. The trigger attempts the BigQuery insert inline. On success, done. If the
-   insert fails, the tracker writes the row to `BACKUP_COLLECTION` (when
-   configured), keyed by the event id.
-2. It then enqueues the serialized change onto the `syncBigQuery` queue (up to
-   `MAX_ENQUEUE_ATTEMPTS` in-process attempts with backoff, keyed by event id
-   so a retried enqueue cannot buffer the same event twice) and the execution
-   succeeds. The trigger declares no retry policy, as in the extension: a
-   failure _before_ the write is attempted (serializing the change) fails the
-   execution once and the event is not redelivered. A failed `onStart` event
-   publish is only logged as a warning and does not stop the write (the
-   extension failed the execution here).
-3. `syncBigQuery` re-attempts the write on the queue's schedule: 5 attempts,
-   60 seconds minimum backoff, throttled to `MAX_DISPATCHES_PER_SECOND`
-   dispatches per second (500 concurrent max).
-4. Each failed queue attempt also writes the row to `BACKUP_COLLECTION` (when
-   configured) before the task fails. After the fifth attempt the task is
-   dropped. **Without a backup collection, the row is dropped with the task**,
-   so configure `BACKUP_COLLECTION`. A task refused with a Cloud Run 429 at the
-   instance ceiling on every attempt never ran the handler, so it is dropped
-   with no backup row either way (see
-   [Concurrency, CPU and timeouts](#concurrency-cpu-and-timeouts-match-the-extension)).
-5. If the enqueue itself fails (BigQuery AND Cloud Tasks both failing), the
-   trigger logs at error level, publishes an `onError` event, and the
-   execution succeeds: the event is not retried, exactly as the extension did
-   in this window. The only copy left is the backup row from step 1, when
-   `BACKUP_COLLECTION` is set and the failure was a BigQuery insert error.
-
-### Recovering parked rows
-
-Rows in `BACKUP_COLLECTION` are changelog-shaped documents, not plain document
-snapshots, so `fs-bq-import-collection` cannot consume them. Treat them as
-"possibly failed": a transient failure that later succeeded on retry also
-leaves one behind, and nothing cleans them up. To recover after an outage,
-load the backup docs into a temp table and `MERGE` them into the changelog
-table with a `WHEN NOT MATCHED` condition on `event_id` (the anti-join is
-mandatory because of those stale rows).
-
-Each backup document is keyed by the event id and shaped like the streaming
-insert row the tracker sent, plus the error:
-
-```json
-{
-  "insertId": "<event id>",
-  "json": {
-    "timestamp": "...",
-    "event_id": "<event id>",
-    "document_name": "...",
-    "document_id": "...",
-    "operation": "CREATE",
-    "data": "<JSON string>",
-    "old_data": "<JSON string or null>",
-    "path_params": "<JSON string, only with WILDCARD_IDS>"
-  },
-  "error_details": "..."
-}
-```
-
-The changelog columns sit under `json`, not at the top level. Load the `json`
-objects of the backup documents into a temp table with the changelog's schema
-(for example by exporting the collection and running `bq load` on the `json`
-field), then:
+Backup documents are keyed by event id, with the changelog columns under
+`json`. Some are left by failures that later succeeded, so merge them back with
+an anti-join on `event_id`:
 
 ```sql
 MERGE `<project-id>.<dataset>.<table>_raw_changelog` AS target
-USING `<project-id>.<dataset>.<temp-table>` AS backup
+USING `<project-id>.<dataset>.<backup-temp-table>` AS backup
 ON target.event_id = backup.event_id
 WHEN NOT MATCHED THEN
   INSERT (timestamp, event_id, document_name, document_id, operation, data, old_data)
@@ -569,338 +260,79 @@ WHEN NOT MATCHED THEN
           backup.document_id, backup.operation, backup.data, backup.old_data)
 ```
 
-Add `path_params` and any partition column to both lists if your table has
-them.
+Limits, all shared with the extension:
 
-### Known limits
-
-- A task queue is a project-level resource created for each task function.
-  Deleting the functions (or moving them to another region) disables the old
-  queue rather than removing it; it shows as `DISABLED` in the Cloud Tasks
-  console until you delete it there.
-- A row whose insert still fails on the last queue attempt with no
-  `BACKUP_COLLECTION` configured is gone. This matches the extension; it is
-  the reason the backup collection is strongly recommended.
-- The changelog can carry a duplicate `event_id`. BigQuery's `insertId`
-  dedupe on streaming inserts is best effort for about a minute and the
-  queue's minimum backoff is 60 seconds, so an insert that landed but reported
-  an error can be written again by the retry. The `_raw_latest` view keys on
-  `document_name` and takes the newest change, so duplicates do not affect it,
-  and the `MERGE` above expects duplicates to exist.
-- `BACKUP_COLLECTION` captures rows whose BigQuery insert fails. A failure
-  earlier in the tracker, such as a `TRANSFORM_FUNCTION` endpoint that is down
-  or returns malformed JSON, throws before the insert and is not backed up.
-  Same as the extension.
-- A change whose serialized payload exceeds the Cloud Tasks task size limit
-  (1 MB) cannot be enqueued: the enqueue failure is logged and the event is not
-  retried. Its only copy is the backup row the failed inline insert wrote, if
-  `BACKUP_COLLECTION` is set, and a row that large can also exceed Firestore's
-  1 MiB document limit. An update carries both `data` and `old_data`, so large
-  documents get there first; `EXCLUDE_OLD_DATA=yes` halves the payload. Same as
-  the extension.
+- Failures before the insert (for example a broken `TRANSFORM_FUNCTION`) aren't
+  backed up.
+- Changes over 1 MB can't be enqueued. `EXCLUDE_OLD_DATA=yes` halves update
+  payloads.
+- The changelog can contain duplicate `event_id`s; the latest view is
+  unaffected.
+- Deleting or moving the functions leaves their Cloud Tasks queues behind as
+  `DISABLED`.
 
 ## Migrating from the extension
 
-### Avoiding the cutover gap
-
-`firebase ext:migrate` deploys the kit and then uninstalls the extension. The
-extension's trigger stops delivering as it is uninstalled, while the kit's
-trigger is newly created and takes a few minutes to deliver reliably, so writes
-made in between can reach neither exporter. Those writes are never seen by a
-function, so they appear in neither the changelog nor `BACKUP_COLLECTION`, and
-the command reports no error.
-
-To migrate without that gap, keep both exporters running until the kit is
-confirmed to be working.
-
-Run `ext:migrate` without `--force` and answer no when it asks whether to
-uninstall the extension. That question comes last, after the kit has deployed.
-The prompts before it cover the migration and the kit installation, so
-declining one of those aborts the migration instead.
-
-Both exporters are now live, each logging under its own function name:
-`ext-<instance-id>-fsexportbigquery` for the extension and
-`kit-<instance-id>-fsexportbigquery` for the kit. Follow the kit's:
-
-```sh
-firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <project-id>
-```
-
-At the default `LOG_LEVEL` of `info`, each delivered write logs `Firestore
-event received by onDocumentWritten trigger` with the document name; `warn` and
-above suppress that line. Write to the collection and confirm the kit records
-every write rather than an intermittent few. A newly created trigger commonly
-needs several minutes to reach that point. Then uninstall the extension:
+`firebase ext:migrate` deploys the kit, then uninstalls the extension. Writes
+made while the new trigger warms up can reach neither exporter. To avoid the
+gap, answer no to the final uninstall prompt, confirm the kit logs every write
+(see [Check that it works](#deploy)), then uninstall:
 
 ```sh
 firebase ext:uninstall <instance-id> --project <project-id> --immediate
 ```
 
-Running both exporters together is safe. Both triggers receive the same event
-id, and the changelog row carries it as its BigQuery insert id, so BigQuery
-collapses the second copy. Deduplication is best effort, but a duplicate row
-would not change the latest view, which reports one row per document.
+Running both at once is safe: BigQuery deduplicates on the shared event id
+(best effort), and the latest view is unaffected by any duplicate.
 
-### Recovering documents missed during the gap
-
-If the cutover gap has already occurred, re-import the collection with
-`fs-bq-import-collection` from the extension repository, pointed at the dataset
-and table prefix the kit writes to. In non-interactive mode the script requires
-the project, collection path, dataset, table prefix,
-`--query-collection-group` and `--dataset-location`:
-
-```sh
-npx @firebaseextensions/fs-bq-import-collection \
-  --non-interactive \
-  --project <project-id> \
-  --source-collection-path <COLLECTION_PATH> \
-  --dataset <DATASET_ID> \
-  --table-name-prefix <TABLE_ID> \
-  --query-collection-group false \
-  --dataset-location <DATASET_LOCATION> \
-  --firestore-instance-id <DATABASE>
-```
-
-Import only once the kit is exporting, and pause writes to the collection while
-it runs: the script reads each document and writes its row shortly afterwards,
-so a write streamed mid-import can be superseded by the import row until that
-document changes again.
-
-Before importing, note what it does and does not restore:
-
-- The script imports the entire collection; it cannot target a subset. Every
-  document receives one `IMPORT` row holding its current value. Import rows
-  carry no event id, so running the import again adds a further row per
-  document rather than replacing the earlier one.
-- Rows are stamped with the time the import runs, so afterwards every document
-  reports operation `IMPORT` in the latest view. Current values remain correct
-  and the preceding rows remain in the changelog, but the latest view no longer
-  reflects the last real operation. (The extension's import guide describes
-  these rows as carrying an epoch timestamp; version 0.1.27 uses the import
-  time.)
-- Deletes cannot be recovered, because the import reflects only what Firestore
-  holds when it runs. A document deleted during the gap is no longer there to
-  import, so the delete never reaches the changelog and the document stays
-  visible in the latest view with its last exported value. An update that a
-  later write superseded is likewise unavailable, since only the current value
-  is imported.
+To recover writes already missed, re-import with
+[`fs-bq-import-collection`](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md),
+pointed at the kit's dataset and table prefix, while writes are paused. It
+imports every document's current value as an `IMPORT` row; deletes and
+superseded updates can't be recovered.
 
 ## Differences from the Stream Firestore to BigQuery extension
 
-This kit is the extension repackaged as an npm package, but a few things behave
-differently. If you are moving from an installed extension instance, read this
-section before you deploy.
+- **Region.** The extension's install-time Cloud Functions location is gone.
+  See [Region](#region).
+- **`DATASET_LOCATION` can change**, but only takes effect when a dataset is
+  created. To move, set a new `DATASET_ID` too, then backfill.
+- **No companion tools.** `fs-bq-import-collection`, `gen-schema-view` and the
+  cross-project grant scripts stay in the extension repository and work on the
+  kit's tables.
+- **A failed `onStart` publish** only logs a warning; the extension failed the
+  execution.
+- **Same runtime settings.** Concurrency 1, extension-sized CPU, internal-only
+  trigger ingress, 540s task timeouts, 100 trigger instances and 500 for
+  `syncBigQuery` (about 84 vCPU of regional Cloud Run quota). Raise
+  `setGlobalOptions({ maxInstances })` for more trigger throughput.
+- **`ext:migrate` carries global options.** Its generated entry file applies the
+  extension's memory, timeout, ingress and instance limits through
+  `setGlobalOptions`, wherever a function doesn't set its own. Check the
+  `EXT_MIGRATED_SYSTEM_*` values in `.env`.
 
-### Failed writes: same buffer
+### Region
 
-The kit keeps the extension's write-path architecture: a failed BigQuery write
-buffers through the `syncBigQuery` Cloud Tasks queue, with the same shape (5
-attempts, 60s minimum backoff, `MAX_DISPATCHES_PER_SECOND` throttling) and the
-same knobs (`MAX_DISPATCHES_PER_SECOND`, `MAX_ENQUEUE_ATTEMPTS`), so your
-migrated `.env` values carry over unchanged.
+Functions deploy to the region derived from `DATABASE_REGION`: regional
+locations as-is, `nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1`.
+The trigger still fires in the database's region. Set `DATABASE_REGION` in
+`.env` before the first deploy; a value given at the deploy prompt only applies
+from the next deploy.
 
-When the enqueue itself fails, the kit does what the extension does: logs at
-error level, publishes an `onError` event, and does not retry the event; only
-the backup row from the failed inline insert remains, when `BACKUP_COLLECTION`
-is set (see [Failure handling](#failure-handling)). The trigger declares no
-retry policy, so nothing is redelivered through Eventarc.
-
-Earlier release candidates of this kit had no queue: they retried every failed
-write through Eventarc redelivery for up to 24 hours and never lost a row
-inside that window. That property is gone by design: a row that exhausts the
-queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
-extension. Set `BACKUP_COLLECTION`.
-
-### DATABASE_REGION places the functions
-
-The extension's Cloud Functions location, chosen when you installed it (the
-Extensions platform's `firebaseextensions.v1beta.function/location` setting,
-which replaced the extension's own `LOCATION` parameter in 2023), is gone.
-Instead, the kit deploys its functions to the region derived from
-`DATABASE_REGION`: regional Firestore
-locations (`europe-west2`, `us-east1`, ...) are used as-is, and the
-multi-region locations map to a Cloud Run region inside them: `nam5` and
-`nam7` to `us-central1`, `eur3` to `europe-west1`. Multi-region values are
-never used directly: they are not Cloud Run regions and would fail the deploy.
-The Firestore trigger itself always fires in the database's own region,
-whatever region the function runs in.
-
-If you copied `DATABASE_REGION` into your `.env` from an extension install,
-it is honored: the functions deploy near your database.
-
-Placement needs Firebase CLI 15.28.0 or later. Older CLIs do not load `.env`
-values while analyzing your code before a deploy (the CLI calls this
-discovery), so the functions silently fall back to the no-region behavior
-below. As a result, your next deploy after upgrading the CLI can move the
-functions (see the note on region changes below). So can upgrading to this kit
-version, if your `.env` already had `DATABASE_REGION`.
-
-**Set `DATABASE_REGION` in `.env` before your first deploy.**
-`firebase functions:kits:install` and `firebase ext:migrate` prompt for it and
-write it to the instance's env file before anything is deployed, so a single
-deploy places the functions correctly. If you instead run `firebase deploy`
-with the value still missing, the prompt comes after discovery has already
-chosen a region, so your answer only takes effect on the following deploy.
-
-`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
-recording where the extension's functions ran. The entry file that
-`ext:migrate` and `firebase functions:kits:install` generate passes it to
-`setGlobalOptions({ region })`, but each function's own region takes precedence
-over that global default. While `DATABASE_REGION` is set, placement comes from
-`DATABASE_REGION` alone, so if the two disagree your next deploy moves the
-functions.
-
-With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
-no region of their own. In a codebase generated by `ext:migrate` or
-`functions:kits:install`, they then deploy to `FUNCTION_DEFAULT_REGION`, which
-that entry file requires. In a codebase that sets no global region, the
-Firebase CLI resolves one at deploy time: a function keeps the region it is
-already deployed in, and on a first deploy all four land in `us-central1`. The
-CLI would otherwise place `fsexportbigquery` next to the
-database, but it resolves the default region before it resolves params, so the
-`DATABASE` param this kit passes to the trigger is still an unresolved
-expression when the database is looked up, and the lookup falls back
-([firebase/firebase-tools#11020](https://github.com/firebase/firebase-tools/issues/11020)).
-Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
-running `firebase deploy` puts all of them in that region instead. Careful
-with that variable: it applies to every no-region function in the deploy, not
-just this kit. Omitting the line is not the same as an empty one: a
-non-interactive deploy fails with `In non-interactive mode but have no value
-for the following environment variables: DATABASE_REGION`. Note that changing
-an existing install's function region (via this variable or `DATABASE_REGION`)
-deletes and recreates the functions in the new region: new URLs, a recreated
-task queue, and any in-flight tasks are lost.
-
-### DATASET_LOCATION is not immutable
-
-The extension declared `DATASET_LOCATION` as immutable, so a reconfigure could
-not change it; moving the dataset meant uninstalling and reinstalling. The kit
-cannot enforce that: `firebase-functions/params` has no immutability, so a
-redeploy accepts any new value. The value only reaches BigQuery when the
-lifecycle task creates the dataset. On a redeploy the task finds the existing
-dataset by id and skips creation, so the dataset stays where it is and the new
-value is ignored, with no error and no warning. Nothing else reads it: writes,
-views, and the `syncBigQuery` queue address the dataset by id and BigQuery
-resolves the location itself, so a mismatched `.env` keeps working.
-
-To export to a different location, point the kit at a new dataset: set a new
-`DATASET_ID` together with the new `DATASET_LOCATION` and redeploy. The
-redeploy lifecycle task creates the new dataset in the new location; the old
-dataset is left behind with its table and view, as in the extension when the
-dataset id changes. Existing documents do not follow. Backfill them with
-`fs-bq-import-collection` from the extension repository (see "Tooling that is
-not included" below).
-
-### Tooling that is not included
-
-The extension shipped companion scripts that this package does not:
-
-- `fs-bq-import-collection`, for backfilling documents that already existed
-  before the export started.
-- `gen-schema-view`, for generating strongly typed BigQuery views over the
-  changelog.
-- The cross-project access grant scripts.
-
-`IMPORT_COLLECTION_PATH`, a setting of the extension's install-time backfill
-that later extension versions removed, is not a setting here either. If you rely on any of these,
-keep using the versions from the extension repository. They operate on the same
-BigQuery changelog table, so they still work against data this kit writes. See
-"Migrating from the extension" for using `fs-bq-import-collection` to recover
-documents missed during a migration.
-
-### Concurrency, CPU and timeouts match the extension
-
-Every function sets `concurrency: 1` and `cpu: "gcf_gen1"`, and
-`fsexportbigquery` also sets `ingressSettings: "ALLOW_INTERNAL_ONLY"`. The 2nd
-gen defaults would be concurrency `80`, `ALLOW_ALL`, and 1 vCPU at 256MiB. The
-extension deployed every function at 0.1666 vCPU with an instance handling one
-invocation at a time, and only internal traffic reached the Firestore trigger.
-The task-queue functions `syncBigQuery`, `initBigQuerySync` and
-`setupBigQuerySync` set `timeoutSeconds: 540`, the extension's 1st gen task
-timeout; `fsexportbigquery` keeps the 60 second default, which the deployed
-trigger ran at.
-
-The task-queue functions declare no `ingressSettings`, so they inherit the
-default `ALLOW_ALL`, or whatever your codebase sets with
-`setGlobalOptions({ ingressSettings })`. The deployed extension's task-queue
-functions ran with open ingress, and the `curl` into `initBigQuerySync` under
-[Provisioning](#provisioning) relies on it: setting `ALLOW_INTERNAL_ONLY`
-globally makes that request fail.
-
-A codebase generated by `firebase ext:migrate` already calls
-`setGlobalOptions` with the extension instance's memory, timeout, ingress,
-`maxInstances` and `minInstances`, taken from the `EXT_MIGRATED_SYSTEM_*` values
-it writes to `.env`. Options a function sets itself win, but those globals fill
-in everything this section says a function leaves unset: `fsexportbigquery`'s
-timeout, the task-queue functions' ingress, and the instance cap of
-`fsexportbigquery` and the two lifecycle tasks. Memory applies to every
-function, and with `cpu: "gcf_gen1"` it also changes each function's CPU. Check
-those values in `.env` after migrating.
-
-At concurrency `1`, a function serves as many requests at once as it has
-instances. `fsexportbigquery`, `initBigQuerySync` and `setupBigQuerySync` run
-on the Cloud Run default of 100 instances unless your codebase sets
-`setGlobalOptions({ maxInstances })`; the two lifecycle tasks receive one task
-per deploy, so no cap is declared on them. The trigger therefore handles 100
-events at once, the same as the deployed extension trigger (100 instances,
-concurrency `1`, no retry policy). An event above that ceiling waits up to
-about 10 seconds for a free instance and is then refused before the handler
-runs: no error log, no `onError` event, no enqueue and no backup row. Whether
-Eventarc redelivers a refused push under the trigger's
-`RETRY_POLICY_DO_NOT_RETRY` is not verified. Raise
-`setGlobalOptions({ maxInstances })` to lift the ceiling.
-
-`syncBigQuery` sets `maxInstances: 500` to match its `maxConcurrentDispatches`
-limit, and a global `maxInstances` does not override it: Cloud Tasks may
-dispatch 500 tasks at once, and 100 instances would take only 100 of them. A
-dispatch above the instance ceiling waits for a free instance for up to about
-10 seconds, then gets a Cloud Run 429. Cloud Tasks counts that as a failed
-attempt, retries it on the queue's schedule (5 attempts, 60 seconds minimum
-backoff), and slows the queue while 429s continue. The handler never ran for
-such a dispatch, so a task that exhausts its attempts that way writes no
-`BACKUP_COLLECTION` row.
-
-At 0.1666 vCPU, `maxInstances: 500` needs about 84 vCPU of Cloud Run CPU quota
-in the function's region (Cloud Run caps a service's instances at the regional
-CPU quota divided by the CPU per instance). Default quotas captured at the time
-of writing were 500 vCPU in most regions and 343 in `europe-west10` and
-`europe-west12`, so the default suffices everywhere captured. On a project
-whose quota is lower, `firebase deploy` creates the other functions, exits with
-an error on `syncBigQuery`, and skips the `afterFirstDeploy` lifecycle hook;
-after raising the quota, run
-`firebase functions:lifecycle:run afterFirstDeploy <instance-id>` or redeploy.
-To lower the cap instead, change `SYNC_MAX_CONCURRENT_DISPATCHES` in the kit's
-own source (`src/index.ts` in this package, not your entry file), which sets both `maxInstances` and `maxConcurrentDispatches`,
-and deploy from your modified copy: the kit exposes no parameter for it, and
-lowering only `maxInstances` recreates the 429 loss above. The separate Cloud
-Run Instances quota (100 per project per region in some regions, unlimited in
-`us-central1` and `europe-west1`) also caps the instances running across all
-services in the region.
+With `DATABASE_REGION=` left blank, functions go to `FUNCTION_DEFAULT_REGION`
+in installer- or migrate-generated codebases, and otherwise to `us-central1`
+(or their current region). Changing region deletes and recreates the functions
+and their queue.
 
 ## API surface
 
-- **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): exports
-  `fsexportbigquery`, `syncBigQuery`, `initBigQuerySync`, and
-  `setupBigQuerySync`, registers the first-deploy / redeploy provisioning
-  hooks, and re-exports everything from the library entry. Deploy-time
-  settings (function region, the blank-value check, the Eventarc declarations)
-  are read from the environment when the module loads; the handlers' runtime
-  config is resolved on first invocation. Use this entry from Firebase
-  deploy/emulator/runtime. For your own triggers, import from the library
-  entry instead.
-- **Library entry**
-  (`@firebase-function-kits/firestore-bigquery-export/lib`):
-  `handleDocumentWrite` and `handleSyncBigQueryTask`, the raw handlers for
-  owning trigger registration yourself, plus the types and helpers for building
-  their injected `HandlerContext`: `ExportConfig`, `ResolvedExportConfig`,
-  `resolveExportConfig`, `toTrackerConfig`, `ViewType`, `DocumentWriteEvent`,
-  `HandlerContext` and `SerializedDocumentChange`. It also re-exports
-  `ChangeType` and the types `ChangeTrackerConfig` and
-  `FirestoreBigQueryEventHistoryTracker` from the change tracker. Safe to
-  import anywhere.
-
-The change-tracker engine itself is internal: only its types and `ChangeType`
-are exported.
+- **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): the
+  four functions, the lifecycle hooks, and everything from the library entry.
+- **Library entry** (`@firebase-function-kits/firestore-bigquery-export/lib`):
+  `handleDocumentWrite` and `handleSyncBigQueryTask` for registering triggers
+  yourself, plus `ExportConfig`, `ResolvedExportConfig`, `resolveExportConfig`,
+  `toTrackerConfig`, `ViewType`, `DocumentWriteEvent`, `HandlerContext`,
+  `SerializedDocumentChange` and `ChangeType`.
 
 ## License
 
