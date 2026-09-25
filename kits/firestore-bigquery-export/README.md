@@ -16,13 +16,12 @@ codebase named after its instance id.
 
 ## Install
 
-You need a Firebase project on the Blaze plan with Cloud Firestore, Node.js 24
-(22 or later is supported), and the latest Firebase CLI (15.28.0 at minimum)
-with the `kits` experiment:
+This assumes the latest Firebase CLI is installed and signed in.
+You also need a Firebase project on the Blaze plan with Cloud Firestore, and
+Node.js 24 (22 or later is supported). Enable the `kits` experiment and select
+the project:
 
 ```sh
-npm install -g firebase-tools@latest
-firebase login
 firebase experiments:enable kits
 echo '{}' > firebase.json   # firebase use needs a firebase.json
 firebase use --add <project-id> --alias default
