@@ -18,11 +18,9 @@ codebase named after its instance id.
 
 This assumes the latest Firebase CLI is installed and signed in.
 You also need a Firebase project on the Blaze plan with Cloud Firestore, and
-Node.js 24 (22 or later is supported). Enable the `kits` experiment and select
-the project:
+Node.js 24 (22 or later is supported). Select the project:
 
 ```sh
-firebase experiments:enable kits
 echo '{}' > firebase.json   # firebase use needs a firebase.json
 firebase use --add <project-id> --alias default
 ```
