@@ -51,6 +51,18 @@ describe("generateResizedImage", () => {
     expect(generateResizedImage).toBeInstanceOf(Function);
   });
 
+  test("the deploy manifest preserves the extension's concurrency and ingress", () => {
+    const endpoint = (
+      generateResizedImage as unknown as { __endpoint: unknown }
+    ).__endpoint;
+
+    expect(endpoint).toMatchObject({
+      platform: "gcfv2",
+      concurrency: 1,
+      ingressSettings: "ALLOW_INTERNAL_ONLY",
+    });
+  });
+
   test("re-exports the library surface alongside the function", async () => {
     const index = await import("../src/index");
     expect(index.generateResizedImageHandler).toBeInstanceOf(Function);
