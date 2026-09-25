@@ -1,3 +1,9 @@
+## Version 0.1.31
+
+feat - add Gemini 3.6 Flash, 3.5 Flash, 3.5 Flash Lite, 3.1 Flash Lite, and 3.1 Pro Preview model options; default to Gemini 3.6 Flash. Gemini 2.5 models retire in October 2026.
+
+fix - send Vertex AI translation requests to the `global` endpoint instead of the Cloud Functions location. Gemini 3.x is only served from the `global`, `us` and `eu` endpoints, so a single-region endpoint fails for the new default model.
+
 ## Version 0.1.30
 
 chore: remove unused rimraf dependency
