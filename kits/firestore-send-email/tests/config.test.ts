@@ -164,6 +164,8 @@ describe("SMTP_CONNECTION_URI validationRegex", () => {
       "smtps://smtp.gmail.com:465",
       "smtps://username@gmail.com:password@smtp.gmail.com:465",
       "smtp://smtp.gmail.com:587?pool=true",
+      // Password containing the separator characters the regex reasons about.
+      "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
       "",
     ]) {
       expect(connectionUriRegex().test(uri)).toBe(true);
@@ -175,13 +177,15 @@ describe("SMTP_CONNECTION_URI validationRegex", () => {
     expect(connectionUriRegex().test("smtp://smtp.gmail.com")).toBe(false);
   });
 
-  // Inherited from the legacy extension.yaml regex; anchoring is tracked in #3067.
-  test("accepts trailing garbage after a valid prefix because the first alternative is unanchored", () => {
+  // #3067: the first alternative used to be unanchored, so anything following a
+  // valid prefix was accepted. The legacy suite already asserted the first case
+  // is invalid, but against an anchored copy of the regex that never shipped.
+  test("rejects trailing text after an otherwise valid URI", () => {
     for (const uri of [
       "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
       "smtps://smtp.gmail.com:465 and then total garbage",
     ]) {
-      expect(connectionUriRegex().test(uri)).toBe(true);
+      expect(connectionUriRegex().test(uri)).toBe(false);
     }
   });
 });
