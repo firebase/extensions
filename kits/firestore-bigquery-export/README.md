@@ -109,8 +109,9 @@ DATABASE_REGION=europe-west2
 BACKUP_COLLECTION=users_bigquery_failures
 ```
 
-`COLLECTION_PATH` and `TABLE_ID` otherwise default to `posts`. Without
-`BACKUP_COLLECTION`, rows that fail every retry are lost.
+Any setting you leave out is asked for at deploy (see
+[Configuration](#configuration)). Without `BACKUP_COLLECTION`, rows that fail
+every retry are lost.
 
 ## Deploy
 
