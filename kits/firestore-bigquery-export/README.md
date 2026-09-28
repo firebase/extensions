@@ -51,6 +51,13 @@ roles (`This codebase uses declarative security … Continue? (y/N)`), then
 creates a service account for the kit, grants them, and enables the APIs. Don't
 set a custom runtime service account.
 
+Without a terminal (for example in CI), there's no one to answer, so confirm
+with `--force`. It accepts every prompt, so limit it to one instance:
+
+```sh
+firebase deploy --only functions:<instance-id> --force
+```
+
 | Role / API                     | Why                                                          |
 | ------------------------------ | ------------------------------------------------------------ |
 | `roles/bigquery.dataEditor`    | create the dataset, table and views; insert rows             |
