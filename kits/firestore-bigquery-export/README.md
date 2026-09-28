@@ -104,8 +104,10 @@ export {
 ```sh
 # functions/.env — set these before the first deploy
 COLLECTION_PATH=users
+DATASET_ID=firestore_export
 TABLE_ID=users
-DATABASE_REGION=europe-west2
+DATABASE_REGION=nam5          # your Firestore database's location
+DATASET_LOCATION=us           # keep BigQuery data near the database
 BACKUP_COLLECTION=users_bigquery_failures
 ```
 
