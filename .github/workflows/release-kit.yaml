@@ -65,6 +65,12 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Print inputs
+        env:
+          INPUTS: ${{ toJSON(inputs) }}
+        run: |
+          echo "$INPUTS"
+
       # Kits live only on the kits branch; the ref is pinned so dispatching
       # from any branch (including next, which lists the workflow in the UI)
       # releases the same content.
@@ -94,7 +100,7 @@ jobs:
         run: |
           npm ci
           if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
-            npm install --save firebase-functions@next
+            npm install --save --registry=https://registry.npmjs.org firebase-functions@next
           fi
           npm test
 
@@ -219,7 +225,7 @@ jobs:
           else
             NEW_VER=$(npx --yes semver@7.8.5 -i "$BUMP_LEVEL" "$HIGHEST_STABLE")
             BUMP_TYPE="$BUMP_LEVEL"
-            TARGET_TAG="latest (and next)"
+            TARGET_TAG="latest"
           fi
 
           for v in $TAKEN; do
@@ -245,7 +251,7 @@ jobs:
         run: |
           npm ci --registry=https://registry.npmjs.org
           if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
-            npm install --save firebase-functions@next
+            npm install --save --registry=https://registry.npmjs.org firebase-functions@next
           fi
           npm run build
 
@@ -368,10 +374,9 @@ jobs:
           if [ "$IS_PRERELEASE" = "true" ]; then
             npm publish --tag next --provenance --access public $DRY_RUN_FLAG
           else
+            # No `npm dist-tag add` here: the trusted-publishing token only
+            # authorises publish, so a dist-tag mutation fails with E401.
             npm publish --tag latest --provenance --access public $DRY_RUN_FLAG
-            if [ "$DRY_RUN" != "true" ]; then
-              npm dist-tag add ${PKG_NAME}@${VERSION} next
-            fi
           fi
 
       # Pushed only after a successful publish: a failed publish leaves the
