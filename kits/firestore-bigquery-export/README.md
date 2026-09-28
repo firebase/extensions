@@ -26,7 +26,7 @@ adds the `kit` entry to `firebase.json`, and prompts for each setting, writing
 the answers to `function-kits/<kit-name>/config-<instance-id>/.env.<project-id>`:
 
 ```sh
-firebase functions:kits:install --package @firebase-function-kits/firestore-bigquery-export
+firebase functions:kits:install --package @firebase-function-kits/firestore-bigquery-export@latest
 ```
 
 It also asks for `FUNCTION_DEFAULT_REGION`. Enter the region your functions
@@ -39,8 +39,8 @@ can't see: without them the deploy fails with `Couldn't find firebase-functions
 package in your source code`.
 
 ```sh
-npm install @firebase-function-kits/firestore-bigquery-export firebase-functions@latest firebase-admin@latest
-npm install --save-dev typescript@latest
+npm install @firebase-function-kits/firestore-bigquery-export@0.1.0 firebase-functions@7 firebase-admin@14
+npm install --save-dev typescript@5
 ```
 
 ## Required IAM
@@ -128,9 +128,8 @@ firebase deploy --only functions                 # all instances
 firebase deploy --only functions:<instance-id>   # one instance
 ```
 
-Deploy with Firebase CLI 15.28.0 or later: older versions don't set
-`FIREBASE_KIT_INSTANCE_ID`, so enqueues fail, and don't read `.env` early enough
-to place the functions.
+Deploy with the **latest** Firebase CLI. Older versions can fail to deploy the
+kit or deploy it with problems.
 
 **Check that it works.** The first deploy runs `initBigQuerySync`, which creates
 the dataset with a `<TABLE_ID>_raw_changelog` table (one row per change) and a
