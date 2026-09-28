@@ -245,16 +245,20 @@ backoff). A redeploy with no changes is skipped, and so is
 `setupBigQuerySync`. Writes never create resources: if they're missing, writes
 fail into the queue and backup collection until a lifecycle task runs.
 
-To run one by hand, from your codebase directory with `firebase-admin`
-installed, application-default credentials (`gcloud auth
-application-default login`) and `roles/cloudtasks.enqueuer`:
+To run one by hand, run this from your codebase directory with `firebase-admin`
+installed and application-default credentials (`gcloud auth
+application-default login`). You need `roles/cloudtasks.enqueuer`, plus
+`roles/iam.serviceAccountUser` on the kit's service account, which signs the
+task; `KIT_SA` looks that account up:
 
 ```sh
 export GOOGLE_CLOUD_PROJECT=<project-id> FUNCTION_REGION=us-central1
+export KIT_SA=$(gcloud functions describe kit-<instance-id>-setupBigQuerySync \
+  --region "$FUNCTION_REGION" --format 'value(serviceConfig.serviceAccountEmail)')
 node -e '
 const { initializeApp } = require("firebase-admin/app");
 const { getFunctions } = require("firebase-admin/functions");
-initializeApp();
+initializeApp({ serviceAccountId: process.env.KIT_SA });
 getFunctions()
   .taskQueue("locations/'"$FUNCTION_REGION"'/functions/kit-<instance-id>-setupBigQuerySync")
   .enqueue({})
