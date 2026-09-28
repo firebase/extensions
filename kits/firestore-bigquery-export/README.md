@@ -32,7 +32,8 @@ firebase functions:kits:install --package @firebase-function-kits/firestore-bigq
 It also asks for `FUNCTION_DEFAULT_REGION`. Enter the region your functions
 will run in (`us-central1` for `nam5`; see [Region](#region)).
 
-**Your own codebase.** Install the kit plus `firebase-functions` and
+**Your own codebase.** From the `functions/` directory that `firebase init
+functions` creates, install the kit plus `firebase-functions` and
 `firebase-admin` as direct dependencies, on the major versions the kit uses
 (currently 7 and 14). The kit's shrinkwrap nests its own copies, which the CLI
 can't see: without them the deploy fails with `Couldn't find firebase-functions
@@ -69,20 +70,21 @@ grant the BigQuery service account access to your KMS key.
 ## Usage
 
 With your own codebase, this layout keeps the codebase and the instance's
-`.env` at the project root:
+`.env` in the `functions/` directory that `firebase init functions` creates:
 
 ```text
 my-project/
   .firebaserc
   firebase.json
-  package.json      # "main": "lib/index.js", "engines": { "node": "24" }, "scripts": { "build": "tsc" }
-  tsconfig.json     # compiles src/ to lib/
-  .env
-  src/index.ts
+  functions/
+    package.json    # "main": "lib/index.js", "engines": { "node": "24" }, "scripts": { "build": "tsc" }
+    tsconfig.json   # compiles src/ to lib/
+    .env
+    src/index.ts
 ```
 
 ```ts
-// src/index.ts
+// functions/src/index.ts
 export {
   fsexportbigquery, // Firestore trigger
   syncBigQuery, // retries failed writes from the queue
@@ -92,7 +94,7 @@ export {
 ```
 
 ```sh
-# .env — set these before the first deploy
+# functions/.env — set these before the first deploy
 COLLECTION_PATH=users
 TABLE_ID=users
 DATABASE_REGION=europe-west2
@@ -104,13 +106,16 @@ BACKUP_COLLECTION=users_bigquery_failures
 
 ## Deploy
 
+In the `functions` entry `firebase init` created, add `kit` and `instances` and
+remove `codebase` (a `kit` entry can't have one):
+
 ```json
 {
   "functions": [
     {
-      "source": ".",
+      "source": "functions",
       "kit": "firestore-bigquery-export",
-      "instances": { "default": "." },
+      "instances": { "default": "functions" },
       "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ]
