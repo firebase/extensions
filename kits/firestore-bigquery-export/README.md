@@ -169,39 +169,41 @@ kit-<instance-id>-fsexportbigquery`).
 
 ## Configuration
 
-Settings go in the instance's `.env` (or `.env.<project-id>`). A deploy prompts
-for every unset setting and saves the answers to `.env.<project-id>`. Settings
-marked † fail the deploy if present but blank: omit the line to get the
-default.
+Settings go in the instance's `.env` (or `.env.<project-id>`). If a setting
+isn't there, the deploy asks you for it, suggesting the default, and saves your
+answer to `.env.<project-id>`.
 
-| Env var                             | Default            | Description                                                         |
-| ----------------------------------- | ------------------ | ------------------------------------------------------------------- |
-| `DATABASE_REGION` (required)        | (prompted)         | Firestore database location; also places the functions             |
-| `COLLECTION_PATH` †                 | `posts`            | Collection or collection-group path to export                      |
-| `DATASET_ID` †                      | `firestore_export` | BigQuery dataset                                                    |
-| `TABLE_ID` †                        | `posts`            | Prefix of the changelog table and view                              |
-| `DATASET_LOCATION` †                | `us`               | Dataset location; used only when the dataset is created            |
-| `DATABASE` †                        | `(default)`        | Firestore database id                                               |
-| `BIGQUERY_PROJECT_ID` †             | project id         | Dataset project, if different                                       |
-| `BACKUP_COLLECTION`                 | (empty)            | Firestore collection for rows whose insert failed. Recommended.     |
-| `MAX_DISPATCHES_PER_SECOND`         | `100`              | `syncBigQuery` dispatch rate (1-500)                                |
-| `MAX_ENQUEUE_ATTEMPTS`              | `3`                | Enqueue attempts before giving up (1-10)                            |
-| `TRANSFORM_FUNCTION`                | (empty)            | URL of an HTTP function that transforms rows before insert          |
-| `TABLE_PARTITIONING`                | `NONE`             | `HOUR`, `DAY`, `MONTH`, `YEAR` or `NONE`                            |
-| `TIME_PARTITIONING_FIELD`           | (empty)            | Partitioning column name                                            |
-| `TIME_PARTITIONING_FIELD_TYPE`      | `omit`             | `TIMESTAMP`, `DATETIME`, `DATE` or `omit`                           |
-| `TIME_PARTITIONING_FIRESTORE_FIELD` | (empty)            | Firestore field to partition on                                     |
-| `CLUSTERING`                        | (empty)            | Up to 4 comma-separated columns, e.g. `data,document_id,timestamp`  |
-| `WILDCARD_IDS`                      | `false`            | Store path-param values as columns                                  |
-| `USE_NEW_SNAPSHOT_QUERY_SYNTAX` †   | `no`               | `yes` / `no`                                                        |
-| `EXCLUDE_OLD_DATA`                  | `no`               | Skip the previous document state on updates (`yes` / `no`)          |
-| `VIEW_TYPE` †                       | `view`             | `view`, `materialized_incremental`, `materialized_non_incremental`  |
-| `MAX_STALENESS`                     | (empty)            | Materialized views: e.g. `INTERVAL "8:0:0" HOUR TO SECOND`          |
-| `REFRESH_INTERVAL_MINUTES`          | (empty)            | Materialized views: refresh interval in minutes                     |
-| `KMS_KEY_NAME`                      | (empty)            | `projects/<p>/locations/<l>/keyRings/<r>/cryptoKeys/<k>`            |
-| `LOG_LEVEL` †                       | `info`             | `debug`, `info`, `warn`, `error`, `silent`                          |
-| `EVENTARC_CHANNEL`                  | (unset)            | Channel for lifecycle events; unset or blank disables events        |
-| `EXT_SELECTED_EVENTS`               | (unset)            | Event types to publish; unset publishes all, blank publishes none   |
+A setting with **No** under "Can be blank" fails the deploy on a line like
+`DATASET_ID=`. Give it a value, or remove the line and answer the prompt.
+
+| Env var                             | Default            | Can be blank | Description                                                        |
+| ----------------------------------- | ------------------ | ------------ | ------------------------------------------------------------------ |
+| `DATABASE_REGION` (required)        | (prompted)         | Yes          | Firestore database location; also places the functions             |
+| `COLLECTION_PATH`                   | `posts`            | No           | Collection or collection-group path to export                      |
+| `DATASET_ID`                        | `firestore_export` | No           | BigQuery dataset                                                   |
+| `TABLE_ID`                          | `posts`            | No           | Prefix of the changelog table and view                             |
+| `DATASET_LOCATION`                  | `us`               | No           | Dataset location; used only when the dataset is created            |
+| `DATABASE`                          | `(default)`        | No           | Firestore database id                                              |
+| `BIGQUERY_PROJECT_ID`               | project id         | No           | Dataset project, if different                                      |
+| `BACKUP_COLLECTION`                 | (empty)            | Yes          | Firestore collection for rows whose insert failed. Recommended.    |
+| `MAX_DISPATCHES_PER_SECOND`         | `100`              | Yes          | `syncBigQuery` dispatch rate (1-500)                               |
+| `MAX_ENQUEUE_ATTEMPTS`              | `3`                | Yes          | Enqueue attempts before giving up (1-10)                           |
+| `TRANSFORM_FUNCTION`                | (empty)            | Yes          | URL of an HTTP function that transforms rows before insert         |
+| `TABLE_PARTITIONING`                | `NONE`             | Yes          | `HOUR`, `DAY`, `MONTH`, `YEAR` or `NONE`                           |
+| `TIME_PARTITIONING_FIELD`           | (empty)            | Yes          | Partitioning column name                                           |
+| `TIME_PARTITIONING_FIELD_TYPE`      | `omit`             | Yes          | `TIMESTAMP`, `DATETIME`, `DATE` or `omit`                          |
+| `TIME_PARTITIONING_FIRESTORE_FIELD` | (empty)            | Yes          | Firestore field to partition on                                    |
+| `CLUSTERING`                        | (empty)            | Yes          | Up to 4 comma-separated columns, e.g. `data,document_id,timestamp` |
+| `WILDCARD_IDS`                      | `false`            | Yes          | Store path-param values as columns                                 |
+| `USE_NEW_SNAPSHOT_QUERY_SYNTAX`     | `no`               | No           | `yes` / `no`                                                       |
+| `EXCLUDE_OLD_DATA`                  | `no`               | Yes          | Skip the previous document state on updates (`yes` / `no`)         |
+| `VIEW_TYPE`                         | `view`             | No           | `view`, `materialized_incremental`, `materialized_non_incremental` |
+| `MAX_STALENESS`                     | (empty)            | Yes          | Materialized views: e.g. `INTERVAL "8:0:0" HOUR TO SECOND`         |
+| `REFRESH_INTERVAL_MINUTES`          | (empty)            | Yes          | Materialized views: refresh interval in minutes                    |
+| `KMS_KEY_NAME`                      | (empty)            | Yes          | `projects/<p>/locations/<l>/keyRings/<r>/cryptoKeys/<k>`           |
+| `LOG_LEVEL`                         | `info`             | No           | `debug`, `info`, `warn`, `error`, `silent`                         |
+| `EVENTARC_CHANNEL`                  | (unset)            | Yes          | Channel for lifecycle events; unset or blank disables events       |
+| `EXT_SELECTED_EVENTS`               | (unset)            | Yes          | Event types to publish; unset publishes all, blank publishes none  |
 
 ## Multiple instances
 
