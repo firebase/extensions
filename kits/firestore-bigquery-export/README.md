@@ -138,14 +138,30 @@ kit or deploy it with problems.
 
 **Check that it works.** The first deploy runs `initBigQuerySync`, which creates
 the dataset with a `<TABLE_ID>_raw_changelog` table (one row per change) and a
-`<TABLE_ID>_raw_latest` view (current state per document). Write a document,
-then:
+`<TABLE_ID>_raw_latest` view (current state per document). In the
+[Firebase console](https://console.firebase.google.com/), add a document to
+your `COLLECTION_PATH` collection. With the `.env` from [Usage](#usage), add
+this to `users`:
+
+```text
+Document ID: alice
+Fields:      name (string) = Alice
+             age (number)  = 30
+```
+
+Then run this in the
+[BigQuery console](https://console.cloud.google.com/bigquery):
 
 ```sql
 SELECT document_id, operation, data, timestamp
 FROM `<project-id>.<DATASET_ID>.<TABLE_ID>_raw_changelog`
 ORDER BY timestamp DESC LIMIT 10
 ```
+
+For the example document, the table is
+`<project-id>.firestore_export.users_raw_changelog`, and the newest row has
+`document_id` `alice`, `operation` `CREATE` and `data`
+`{"name":"Alice","age":30}`.
 
 At `LOG_LEVEL=info`, each write logs `Firestore event received by
 onDocumentWritten trigger` (`firebase functions:log --only
