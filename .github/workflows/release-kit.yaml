@@ -343,7 +343,7 @@ jobs:
           else
             npm publish --tag latest --provenance --access public $DRY_RUN_FLAG
             if [ "$DRY_RUN" != "true" ]; then
-              npm dist-tag add ${PKG_NAME}@${VERSION} next
+              npm dist-tag add "${PKG_NAME}@${VERSION}" next || echo "::warning::Failed to add next dist-tag (OIDC token lacks dist-tag permissions)"
             fi
           fi
 
