@@ -262,13 +262,20 @@ Limits, all shared with the extension:
 
 ## Migrating from the extension
 
-`firebase ext:migrate` deploys the kit, then uninstalls the extension. Writes
-made while the new trigger warms up can reach neither exporter. To avoid the
-gap, answer no to the final uninstall prompt, confirm the kit logs every write
-(see [Check that it works](#deploy)), then uninstall:
+Run the migration from your Firebase project directory, naming the extension
+instance to replace (without `--ext-instance`, it asks you to pick one):
 
 ```sh
-firebase ext:uninstall <instance-id> --project <project-id> --immediate
+firebase ext:migrate --ext-instance <instance-id>
+```
+
+It exports the instance's configuration, deploys the kit, then offers to
+uninstall the extension. Writes made while the new trigger warms up can reach
+neither exporter. To avoid the gap, answer no to the uninstall prompt, confirm
+the kit logs every write (see [Check that it works](#deploy)), then uninstall:
+
+```sh
+firebase ext:uninstall <instance-id> --immediate
 ```
 
 Running both at once is safe: BigQuery deduplicates on the shared event id
