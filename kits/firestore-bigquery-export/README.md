@@ -145,7 +145,9 @@ kit or deploy it with problems.
 
 **Check that it works.** The first deploy runs `initBigQuerySync`, which creates
 the dataset with a `<TABLE_ID>_raw_changelog` table (one row per change) and a
-`<TABLE_ID>_raw_latest` view (current state per document). In the
+`<TABLE_ID>_raw_latest` view (current state per document). This takes a
+minute or two; wait until `firebase functions:log --only
+kit-<instance-id>-initBigQuerySync` shows the view. Then, in the
 [Firebase console](https://console.firebase.google.com/), add a document to
 your `COLLECTION_PATH` collection. With the `.env` from [Usage](#usage), add
 this to `users`:
@@ -170,9 +172,9 @@ For the example document, the table is
 `document_id` `alice`, `operation` `CREATE` and `data`
 `{"name":"Alice","age":30}`.
 
-At `LOG_LEVEL=info`, each write logs `Firestore event received by
-onDocumentWritten trigger` (`firebase functions:log --only
-kit-<instance-id>-fsexportbigquery`).
+The row can take a minute to appear. If it's missing, wait until `firebase
+functions:log --only kit-<instance-id>-fsexportbigquery` shows `Firestore event
+received by onDocumentWritten trigger` (at `LOG_LEVEL=info`), then query again.
 
 ## Configuration
 
