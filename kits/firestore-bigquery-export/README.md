@@ -266,14 +266,18 @@ getFunctions()
 
 1. The trigger inserts the row inline. If that fails, the row is written to
    `BACKUP_COLLECTION` (when set) and the change is enqueued on `syncBigQuery`.
-2. `syncBigQuery` retries 5 times with 60s minimum backoff, writing to
-   `BACKUP_COLLECTION` after each failure. Then the task is dropped.
+2. `syncBigQuery` tries up to 5 times, at least 60s apart, and writes to
+   `BACKUP_COLLECTION` after each failed try. After the last one, the task is
+   dropped. If every instance is busy, Cloud Run refuses the try with a 429
+   before the kit's code runs, so no backup row is written.
 3. If the enqueue also fails, the trigger logs an error, publishes `onError`
    and gives up. The event isn't redelivered.
 
 Backup documents are keyed by event id, with the changelog columns under
-`json`. Some are left by failures that later succeeded, so merge them back with
-an anti-join on `event_id`:
+`json`. Load those `json` objects into a temp table with the changelog's schema
+(for example, export the collection and `bq load` the `json` field). Some are
+left by failures that later succeeded, so merge them back with an anti-join on
+`event_id`:
 
 ```sql
 MERGE `<project-id>.<dataset>.<table>_raw_changelog` AS target
@@ -283,6 +287,22 @@ WHEN NOT MATCHED THEN
   INSERT (timestamp, event_id, document_name, document_id, operation, data, old_data)
   VALUES (backup.timestamp, backup.event_id, backup.document_name,
           backup.document_id, backup.operation, backup.data, backup.old_data)
+```
+
+With `WILDCARD_IDS=true`, add `path_params` to both lists. With a custom
+partition field, add your `TIME_PARTITIONING_FIELD` column too. For example,
+with both and `TIME_PARTITIONING_FIELD=created_at`:
+
+```sql
+MERGE `<project-id>.<dataset>.<table>_raw_changelog` AS target
+USING `<project-id>.<dataset>.<backup-temp-table>` AS backup
+ON target.event_id = backup.event_id
+WHEN NOT MATCHED THEN
+  INSERT (timestamp, event_id, document_name, document_id, operation, data, old_data,
+          path_params, created_at)
+  VALUES (backup.timestamp, backup.event_id, backup.document_name,
+          backup.document_id, backup.operation, backup.data, backup.old_data,
+          backup.path_params, backup.created_at)
 ```
 
 Limits, all shared with the extension:
