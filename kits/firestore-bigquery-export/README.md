@@ -18,7 +18,8 @@ codebase named after its instance id.
 
 This assumes the latest Firebase CLI is installed and signed in, and that you
 run the commands from your Firebase project directory (the one containing
-`firebase.json`; `firebase init` creates it). You also need Cloud Firestore on
+`firebase.json`; `firebase init` creates it), linked to your project
+(`firebase use <project-id>`). You also need Cloud Firestore on
 the Blaze plan and Node.js 24 (22 or later is supported).
 
 **Guided installer.** This creates the codebase under `function-kits/<kit-name>/`,
