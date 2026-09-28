@@ -59,16 +59,16 @@ with `--force`. It accepts every prompt, so limit it to one instance:
 firebase deploy --only functions:<instance-id> --force
 ```
 
-| Role / API                     | Why                                                          |
-| ------------------------------ | ------------------------------------------------------------ |
-| `roles/bigquery.dataEditor`    | create the dataset, table and views; insert rows             |
-| `roles/bigquery.user`          | run BigQuery jobs and materialized views                     |
-| `roles/datastore.user`         | write failed rows to `BACKUP_COLLECTION` (always granted)    |
-| `roles/eventarc.eventReceiver` | receive Firestore trigger events                             |
-| `roles/run.invoker`            | let Eventarc and Cloud Tasks invoke the functions            |
-| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto `syncBigQuery`                    |
-| `firestore.googleapis.com`     | receive document change events                               |
-| `bigquery.googleapis.com`      | write to BigQuery                                            |
+| Role / API                     | Why                                                       |
+| ------------------------------ | --------------------------------------------------------- |
+| `roles/bigquery.dataEditor`    | create the dataset, table and views; insert rows          |
+| `roles/bigquery.user`          | run BigQuery jobs and materialized views                  |
+| `roles/datastore.user`         | write failed rows to `BACKUP_COLLECTION` (always granted) |
+| `roles/eventarc.eventReceiver` | receive Firestore trigger events                          |
+| `roles/run.invoker`            | let Eventarc and Cloud Tasks invoke the functions         |
+| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto `syncBigQuery`                 |
+| `firestore.googleapis.com`     | receive document change events                            |
+| `bigquery.googleapis.com`      | write to BigQuery                                         |
 
 Setting `EVENTARC_CHANNEL` also adds `roles/eventarc.publisher` and
 `eventarcpublishing.googleapis.com`. For a dataset in another project, grant
@@ -191,8 +191,8 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 
 | Env var                             | Default            | Can be blank | Description                                                        |
 | ----------------------------------- | ------------------ | ------------ | ------------------------------------------------------------------ |
-| `DATABASE_REGION` (required)        | (prompted)         | Yes          | Firestore database location; also places the functions             |
-| `COLLECTION_PATH`                   | `posts`            | No           | Collection or collection-group path to export                      |
+| `DATABASE_REGION`                   | (none)             | Yes          | Firestore location; places the functions. No default: always set   |
+| `COLLECTION_PATH`                   | `posts`            | No           | Collection to export; `{wildcard}` segments match subcollections   |
 | `DATASET_ID`                        | `firestore_export` | No           | BigQuery dataset                                                   |
 | `TABLE_ID`                          | `posts`            | No           | Prefix of the changelog table and view                             |
 | `DATASET_LOCATION`                  | `us`               | No           | Dataset location; used only when the dataset is created            |
@@ -207,7 +207,7 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | `TIME_PARTITIONING_FIELD_TYPE`      | `omit`             | Yes          | `TIMESTAMP`, `DATETIME`, `DATE` or `omit`                          |
 | `TIME_PARTITIONING_FIRESTORE_FIELD` | (empty)            | Yes          | Firestore field to partition on                                    |
 | `CLUSTERING`                        | (empty)            | Yes          | Up to 4 comma-separated columns, e.g. `data,document_id,timestamp` |
-| `WILDCARD_IDS`                      | `false`            | Yes          | Store path-param values as columns                                 |
+| `WILDCARD_IDS`                      | `false`            | Yes          | Add a `path_params` column of `{wildcard}` values as JSON          |
 | `USE_NEW_SNAPSHOT_QUERY_SYNTAX`     | `no`               | No           | `yes` / `no`                                                       |
 | `EXCLUDE_OLD_DATA`                  | `no`               | Yes          | Skip the previous document state on updates (`yes` / `no`)         |
 | `VIEW_TYPE`                         | `view`             | No           | `view`, `materialized_incremental`, `materialized_non_incremental` |
@@ -215,7 +215,7 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | `REFRESH_INTERVAL_MINUTES`          | (empty)            | Yes          | Materialized views: refresh interval in minutes                    |
 | `KMS_KEY_NAME`                      | (empty)            | Yes          | `projects/<p>/locations/<l>/keyRings/<r>/cryptoKeys/<k>`           |
 | `LOG_LEVEL`                         | `info`             | No           | `debug`, `info`, `warn`, `error`, `silent`                         |
-| `EVENTARC_CHANNEL`                  | (unset)            | Yes          | Channel for lifecycle events; unset or blank disables events       |
+| `EVENTARC_CHANNEL`                  | (unset)            | Yes          | Channel for the kit's [events](#events); unset or blank disables   |
 | `EXT_SELECTED_EVENTS`               | (unset)            | Yes          | Event types to publish; unset publishes all, blank publishes none  |
 
 ## Multiple instances
