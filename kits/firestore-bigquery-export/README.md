@@ -359,12 +359,14 @@ and their queue.
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): the
-  four functions, the lifecycle hooks, and everything from the library entry.
+  four functions and everything from the library entry. Importing it also
+  registers the `afterFirstDeploy` / `afterRedeploy` tasks.
 - **Library entry** (`@firebase-function-kits/firestore-bigquery-export/lib`):
   `handleDocumentWrite` and `handleSyncBigQueryTask` for registering triggers
   yourself, plus `ExportConfig`, `ResolvedExportConfig`, `resolveExportConfig`,
   `toTrackerConfig`, `ViewType`, `DocumentWriteEvent`, `HandlerContext`,
-  `SerializedDocumentChange` and `ChangeType`.
+  `SerializedDocumentChange`, `ChangeType`, and the types
+  `ChangeTrackerConfig` and `FirestoreBigQueryEventHistoryTracker`.
 
 ## License
 
