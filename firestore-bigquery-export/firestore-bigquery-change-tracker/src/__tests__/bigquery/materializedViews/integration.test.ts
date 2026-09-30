@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {
   BigQuery,
   Dataset,
@@ -18,7 +34,7 @@ import {
   changeTrackerEvent,
 } from "../../fixtures/changeTracker";
 import { getBigQueryTableData } from "../../fixtures/queries";
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 process.env.PROJECT_ID = "dev-extensions-testing";
 
@@ -29,7 +45,7 @@ process.env.PROJECT_ID = "dev-extensions-testing";
 //   eventId = "testing",
 //   documentId = "testing",
 //   pathParams = { documentId: "12345" },
-//   data = { end_date: firestore.Timestamp.now() },
+//   data = { end_date: Timestamp.now() },
 //   oldData = null,
 //   useNewSnapshotQuerySyntax = false,
 // }: any): FirestoreDocumentChangeEvent => {
@@ -49,7 +65,7 @@ process.env.PROJECT_ID = "dev-extensions-testing";
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 const event2: FirestoreDocumentChangeEvent = changeTrackerEvent({
-  data: { end_date: firestore.Timestamp.now() },
+  data: { end_date: Timestamp.now() },
   eventId: "testing2",
 });
 let randomID: string;
@@ -313,7 +329,7 @@ describe("integration", () => {
         eventId: "testing3",
         documentId: "doc3",
         pathParams: { documentId: "doc3" },
-        data: { end_date: firestore.Timestamp.now(), status: "completed" },
+        data: { end_date: Timestamp.now(), status: "completed" },
         oldData: null,
       });
 
@@ -324,7 +340,7 @@ describe("integration", () => {
         eventId: "testing4",
         documentId: "doc4",
         pathParams: { documentId: "doc4" },
-        data: { end_date: firestore.Timestamp.now(), status: "pending" },
+        data: { end_date: Timestamp.now(), status: "pending" },
         oldData: null,
       });
 

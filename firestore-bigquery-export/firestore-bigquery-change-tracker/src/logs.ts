@@ -15,7 +15,7 @@
  */
 
 import { Table } from "@google-cloud/bigquery";
-import { firestore } from "firebase-admin";
+import type { Timestamp } from "firebase-admin/firestore";
 import { logger } from "./logger";
 
 export const arrayFieldInvalid = (fieldName: string) => {
@@ -137,9 +137,24 @@ export const dataInserted = (rowCount: number) => {
   logger.debug(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 
-export const dataInsertRetried = (rowCount: number) => {
+/**
+ * Warn rather than debug, and name the columns: this is the one retry path that
+ * leaves a column permanently null, and debug is off at the default log level.
+ */
+export const dataInsertRetriedWithoutColumns = (
+  rowCount: number,
+  columns: string[]
+) => {
+  logger.warn(
+    `Retrying insert of ${rowCount} row(s) of data into BigQuery without ${columns.join(
+      ", "
+    )}. BigQuery does not have those columns yet, so they will be null for these rows.`
+  );
+};
+
+export const dataInsertRetriedAfterTransientError = (rowCount: number) => {
   logger.debug(
-    `Retried to insert ${rowCount} row(s) of data into BigQuery (ignoring unknown columns)`
+    `Retrying insert of ${rowCount} row(s) of data into BigQuery after a transient failure, with options unchanged`
   );
 };
 
@@ -192,7 +207,7 @@ export const firestoreTimePartitioningParametersWarning = (
   fieldName: string | undefined,
   fieldType: string | undefined,
   firestoreFieldName: string | undefined,
-  dataFirestoreField: firestore.Timestamp | string | undefined
+  dataFirestoreField: Timestamp | string | undefined
 ) => {
   logger.warn(
     "All TimePartitioning option parameters need to be available to create new custom schema field"
@@ -217,14 +232,26 @@ export const bigQueryTableInsertErrors = (
 ) => {
   logger.warn(`Error when inserting data to table.`);
 
-  insertErrors?.forEach((error) => {
-    logger.warn("ROW DATA JSON:");
-    logger.warn(error.row);
+  // Runs on the terminal path of a failed insert, so a throw here would replace
+  // the insert error the caller needs.
+  if (!Array.isArray(insertErrors)) return;
 
-    error.errors?.forEach((error) =>
-      logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
+  insertErrors.forEach((error) => {
+    logger.warn("ROW DATA JSON:");
+    logger.warn(error?.row);
+
+    if (!Array.isArray(error?.errors)) return;
+
+    error.errors.forEach((error) =>
+      logger.warn(`ROW ERROR MESSAGE: ${error?.message}`)
     );
   });
+};
+
+export const failedBackupWrite = (error: unknown) => {
+  logger.warn(
+    `Could not write failed rows to the backup collection. The original insert error is still thrown. Backup error: ${error}`
+  );
 };
 
 export const updatedClustering = (fields: string) => {

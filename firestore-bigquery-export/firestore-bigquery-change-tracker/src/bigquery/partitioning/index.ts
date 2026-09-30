@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as bigquery from "@google-cloud/bigquery";
 import * as functions from "firebase-functions";
 import { TableField } from "@google-cloud/bigquery";
@@ -49,6 +65,19 @@ export class Partitioning {
       description:
         "The document TimePartition partition field selected by user",
     };
+  }
+
+  /**
+   * True when the configured partition column belongs in the schema but the
+   * given fields do not contain it. Pure: reads only the config and the
+   * fields passed in, so update checks can call it without a network round
+   * trip. `addPartitioningToSchema` adds exactly this column, which is what
+   * lets a metadata update gated on this check converge.
+   */
+  customPartitionFieldMissingFromSchema(fields: TableField[]): boolean {
+    const partitionField = this.getNewPartitionField();
+    if (!partitionField) return false;
+    return !fields.some((field) => field.name === partitionField.name);
   }
 
   getPartitionValue(
@@ -146,20 +175,13 @@ export class Partitioning {
   }
 
   async addPartitioningToSchema(fields: TableField[]): Promise<void> {
-    if (
-      !this.config.isFirestoreFieldPartitioning() &&
-      !this.config.isFirestoreTimestampPartitioning()
-    ) {
-      return;
-    }
-
     const newField = this.getNewPartitionField();
 
     if (!newField) {
       return;
     }
 
-    if (fields.some((field) => field.name === newField.name)) {
+    if (!this.customPartitionFieldMissingFromSchema(fields)) {
       return;
     }
 
