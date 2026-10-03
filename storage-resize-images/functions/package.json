@@ -16,11 +16,11 @@
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
-    "@genkit-ai/vertexai": "^1.2.0",
+    "@genkit-ai/google-genai": "^1.24.0",
     "@types/node": "^20.10.3",
     "firebase-admin": "^13.2.0",
     "firebase-functions": "^6.3.1",
-    "genkit": "^1.2.0",
+    "genkit": "^1.24.0",
     "p-queue": "^6.6.2",
     "sharp": "^0.35.3",
     "shx": "^0.4.0",

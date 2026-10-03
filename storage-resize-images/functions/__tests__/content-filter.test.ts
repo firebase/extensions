@@ -16,7 +16,6 @@
 
 import { checkImageContent } from "../src/content-filter";
 import * as path from "path";
-import { HarmBlockThreshold } from "@google-cloud/vertexai";
 import { ValidationError } from "@genkit-ai/core/schema";
 
 // Mock genkit module
@@ -28,11 +27,10 @@ jest.mock("genkit", () => ({
   },
 }));
 
-// Mock vertexAI module
-jest.mock("@genkit-ai/vertexai", () => ({
-  __esModule: true,
-  default: jest.fn(),
-  gemini: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
+jest.mock("@genkit-ai/google-genai", () => ({
+  vertexAI: Object.assign(jest.fn(), {
+    model: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
+  }),
 }));
 
 // Mock logs so we can assert on which filter-blocked log fired.
@@ -82,7 +80,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       null,
       "image/png"
     );
@@ -107,7 +105,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "Is this image containing inappropriate content?",
       "image/png"
     );
@@ -133,7 +131,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       null,
       "image/png",
       1
@@ -155,7 +153,7 @@ describe("checkImageContent with mocks", () => {
     await expect(
       checkImageContent(
         imagePath,
-        HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "BLOCK_MEDIUM_AND_ABOVE",
         null,
         "image/png",
         1
@@ -176,7 +174,7 @@ describe("checkImageContent with mocks", () => {
 
     await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       null,
       "image/png"
     );
@@ -187,7 +185,7 @@ describe("checkImageContent with mocks", () => {
 
     // Check basic structure without checking exact values of complex objects
     expect(callArgs.model?.name ?? callArgs.model).toBe(
-      "vertexai/gemini-2.5-flash"
+      "vertexai/gemini-3.1-flash-lite"
     );
     expect(callArgs.messages[0].role).toBe("user");
     expect(callArgs.messages[0].content[0].text).toBe(
@@ -213,7 +211,7 @@ describe("checkImageContent with mocks", () => {
 
     await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       customPrompt,
       "image/png"
     );
@@ -244,7 +242,7 @@ describe("checkImageContent with mocks", () => {
 
     let result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       null,
       "image/png"
     );
@@ -268,7 +266,7 @@ describe("checkImageContent with mocks", () => {
 
     result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_ONLY_HIGH,
+      "BLOCK_ONLY_HIGH",
       null,
       "image/png"
     );
@@ -305,7 +303,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "Is this image inappropriate?",
       "image/png"
     );
@@ -334,7 +332,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "Is this image inappropriate?",
       "image/png"
     );
@@ -362,7 +360,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "prompt",
       "image/png"
     );
@@ -383,7 +381,7 @@ describe("checkImageContent with mocks", () => {
     await expect(
       checkImageContent(
         imagePath,
-        HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        "BLOCK_LOW_AND_ABOVE",
         "prompt",
         "image/png",
         3
