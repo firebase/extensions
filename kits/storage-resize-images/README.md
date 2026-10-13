@@ -170,7 +170,10 @@ region with Vertex AI support if you use content filtering, or leave
 
 `generateResizedImage` is a 2nd gen Cloud Storage function, where the extension
 was 1st gen. `FUNCTION_MEMORY` still accepts the same values (512 through 8192)
-and maps onto the equivalent 2nd gen memory setting.
+and maps onto the equivalent 2nd gen memory setting. Like the extension, the
+function handles one event per instance (`concurrency: 1`) and gets the CPU
+1st gen gave that memory size (`cpu: "gcf_gen1"`), so a burst of uploads
+scales out across instances instead of sharing one.
 
 The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
