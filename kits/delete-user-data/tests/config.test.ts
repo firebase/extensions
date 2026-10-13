@@ -121,6 +121,21 @@ describe("configFromEnv", () => {
     expect(config.searchDepth).toBeUndefined();
   });
 
+  test("falls back to the default search fields when set to an empty value", async () => {
+    const { configFromEnv } = await importConfig();
+    const { resolveDeleteUserDataConfig } = await import(
+      "../src/export-config"
+    );
+    vi.stubEnv("AUTO_DISCOVERY_SEARCH_FIELDS", "");
+
+    const config = configFromEnv();
+
+    expect(config.searchFields).toBeUndefined();
+    expect(resolveDeleteUserDataConfig(config).searchFields).toBe(
+      "id,uid,userId"
+    );
+  });
+
   test("parses the predecessor's yes/no values", async () => {
     const { configFromEnv } = await importConfig();
 

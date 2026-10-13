@@ -214,7 +214,7 @@ export function configFromEnv(): DeleteUserDataConfig {
     storagePaths: optional(params.storagePaths.value()),
     enableAutoDiscovery: params.enableAutoDiscovery.value() === "yes",
     searchDepth: optionalInt(params.searchDepth),
-    searchFields: params.searchFields.value(),
+    searchFields: optional(params.searchFields.value()),
     searchFunction: optional(params.searchFunction.value()),
     instanceId,
     discoveryTopicName: optional(params.discoveryTopicName.value()),

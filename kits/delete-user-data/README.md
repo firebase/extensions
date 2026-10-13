@@ -194,12 +194,6 @@ Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
 This mainly matters if you have infrastructure or alerting keyed to function
 generation.
 
-### Empty search fields no longer error
-
-Setting `AUTO_DISCOVERY_SEARCH_FIELDS` to an empty value used to raise an
-invalid field path error during discovery. It is now treated as "match on the
-document path only". The default is unchanged (`id,uid,userId`).
-
 ### Events need an existing channel, and their source has changed
 
 The extension created its Eventarc channel when you installed it with events
@@ -221,8 +215,10 @@ Event types and payloads are the same. The functions still publish
 `EXT_SELECTED_EVENTS`, as the extension published only the types selected at
 install. Path syntax (`{UID}` substitution, comma
 separated lists, `{DEFAULT}` for the default Storage bucket), the shallow and
-recursive Firestore delete modes, the search depth and field matching rules,
-and the custom `SEARCH_FUNCTION` contract all behave as they did. RTDB
+recursive Firestore delete modes, the search depth and field matching rules
+(an empty `AUTO_DISCOVERY_SEARCH_FIELDS` falls back to the default
+`id,uid,userId`, as it did on an installed extension), and the custom
+`SEARCH_FUNCTION` contract all behave as they did. RTDB
 deletion also keeps the extension's gate: paths are only cleared when a
 database URL can be derived from `SELECTED_DATABASE_INSTANCE` and
 `SELECTED_DATABASE_LOCATION`; otherwise they are skipped with a
