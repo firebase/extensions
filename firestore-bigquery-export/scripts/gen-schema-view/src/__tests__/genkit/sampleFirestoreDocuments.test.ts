@@ -14,22 +14,7 @@
  * limitations under the License.
  */
 
-interface FirestoreModule {
-  (): {
-    collection: jest.Mock;
-    collectionGroup: jest.Mock;
-    where: jest.Mock;
-    limit: jest.Mock;
-    get: jest.Mock;
-  };
-  GeoPoint: new (latitude: number, longitude: number) => {
-    latitude: number;
-    longitude: number;
-  };
-  DocumentReference: new (path: string) => { path: string };
-}
-
-jest.mock("firebase-admin", () => {
+jest.mock("firebase-admin/firestore", () => {
   const mockFirestore = {
     collection: jest.fn().mockReturnThis(),
     collectionGroup: jest.fn().mockReturnThis(),
@@ -65,17 +50,14 @@ jest.mock("firebase-admin", () => {
     }
   }
 
-  const firestoreModule = jest.fn(
-    () => mockFirestore
-  ) as unknown as FirestoreModule;
-  firestoreModule.GeoPoint = GeoPoint;
-  firestoreModule.DocumentReference = DocumentReference;
-
   return {
-    firestore: firestoreModule,
+    getFirestore: jest.fn(() => mockFirestore),
+    GeoPoint,
+    DocumentReference,
   };
 });
 
+import { getFirestore } from "firebase-admin/firestore";
 import { sampleFirestoreDocuments } from "../../schema/genkit";
 
 jest.mock("../../schema/genkit", () => {
@@ -108,8 +90,7 @@ describe("sampleFirestoreDocuments", () => {
 
     const result = await sampleFirestoreDocuments(collectionPath, sampleSize);
 
-    const firebase = require("firebase-admin");
-    const mockFirestore = firebase.firestore();
+    const mockFirestore = (getFirestore as jest.Mock)();
 
     expect(mockFirestore.collection).toHaveBeenCalledWith(collectionPath);
     expect(mockFirestore.where).toHaveBeenCalledWith(
@@ -126,8 +107,7 @@ describe("sampleFirestoreDocuments", () => {
   });
 
   it("should handle errors properly", async () => {
-    const firebase = require("firebase-admin");
-    const mockFirestore = firebase.firestore();
+    const mockFirestore = (getFirestore as jest.Mock)();
 
     mockFirestore.get.mockRejectedValueOnce(new Error("Firestore error"));
 
@@ -146,8 +126,7 @@ describe("sampleFirestoreDocuments", () => {
       const isCollectionGroupQuery = true;
 
       // Mock collection group data (subcollections from different parents)
-      const firebase = require("firebase-admin");
-      const mockFirestore = firebase.firestore();
+      const mockFirestore = (getFirestore as jest.Mock)();
 
       // Clear mocks and set up specific mock for this test
       jest.clearAllMocks();
@@ -189,8 +168,7 @@ describe("sampleFirestoreDocuments", () => {
       const sampleSize = 2;
       const isCollectionGroupQuery = false;
 
-      const firebase = require("firebase-admin");
-      const mockFirestore = firebase.firestore();
+      const mockFirestore = (getFirestore as jest.Mock)();
 
       // Clear mocks for this test
       jest.clearAllMocks();
@@ -207,8 +185,7 @@ describe("sampleFirestoreDocuments", () => {
     });
 
     it("should handle errors properly for collection group queries", async () => {
-      const firebase = require("firebase-admin");
-      const mockFirestore = firebase.firestore();
+      const mockFirestore = (getFirestore as jest.Mock)();
 
       // Clear mocks and set up error for this test
       jest.clearAllMocks();
@@ -228,5 +205,26 @@ describe("sampleFirestoreDocuments", () => {
         )
       ).rejects.toThrow("Collection group error");
     });
+  });
+
+  describe("named databases", () => {
+    beforeEach(() => {
+      (getFirestore as jest.Mock).mockClear();
+    });
+
+    it("should use the named database when databaseId is set", async () => {
+      await sampleFirestoreDocuments("test-collection", 2, false, "my-db");
+
+      expect(getFirestore).toHaveBeenCalledWith("my-db");
+    });
+
+    it.each([undefined, "(default)"])(
+      "should use the default database when databaseId is %p",
+      async (databaseId) => {
+        await sampleFirestoreDocuments("test-collection", 2, false, databaseId);
+
+        expect(getFirestore).toHaveBeenCalledWith();
+      }
+    );
   });
 });

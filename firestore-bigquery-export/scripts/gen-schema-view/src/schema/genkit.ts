@@ -15,7 +15,11 @@
  */
 
 import type { CliConfig } from "../config";
-import { getFirestore, GeoPoint, DocumentReference } from "firebase-admin/firestore";
+import {
+  getFirestore,
+  GeoPoint,
+  DocumentReference,
+} from "firebase-admin/firestore";
 import { genkit, z } from "genkit";
 import { googleAI } from "@genkit-ai/googleai";
 import * as fs from "fs";
@@ -28,9 +32,10 @@ export async function sampleFirestoreDocuments(
   isCollectionGroupQuery: boolean = false,
   databaseId?: string
 ): Promise<any[]> {
-  const db = (databaseId && databaseId !== "(default)")
-    ? getFirestore(databaseId)
-    : getFirestore();
+  const db =
+    databaseId && databaseId !== "(default)"
+      ? getFirestore(databaseId)
+      : getFirestore();
 
   try {
     const query = isCollectionGroupQuery

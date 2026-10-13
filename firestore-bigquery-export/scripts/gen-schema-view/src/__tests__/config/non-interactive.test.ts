@@ -85,7 +85,7 @@ describe("Command Line Parser", () => {
       expect(commander.version).toHaveBeenCalledWith("1.0.0");
 
       // Check that all options are configured
-      expect(commander.option).toHaveBeenCalledTimes(11);
+      expect(commander.option).toHaveBeenCalledTimes(12);
 
       // Check specific options - just a sample to ensure we're setting up correctly
       expect(commander.option).toHaveBeenCalledWith(

@@ -79,6 +79,7 @@ describe("parseConfig", () => {
         bigQueryProjectId: "test-bq-project",
         datasetId: "test-dataset",
         tableNamePrefix: "test-prefix",
+        databaseId: "(default)",
         schemas: mockSchemas,
         geminiAnalyzeCollectionPath: undefined,
         googleAiKey: undefined,
