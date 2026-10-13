@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { validatePayload, ValidationError } from "../src/validation";
 
 describe("validatePayload", () => {
@@ -212,6 +228,28 @@ describe("validatePayload", () => {
     });
   });
 
+  it("should validate a SendGrid payload with customArgs", () => {
+    const validPayload = {
+      to: "test@example.com",
+      sendGrid: {
+        templateId: "d-template-id",
+        customArgs: { campaign: "welcome", source: "signup" },
+      },
+    };
+    expect(() => validatePayload(validPayload)).not.toThrow();
+  });
+
+  it("should validate a SendGrid payload with ipPoolName", () => {
+    const validPayload = {
+      to: "test@example.com",
+      sendGrid: {
+        templateId: "d-template-id",
+        ipPoolName: "transactional",
+      },
+    };
+    expect(() => validatePayload(validPayload)).not.toThrow();
+  });
+
   it("should validate a SendGrid payload with only mailSettings", () => {
     const validPayload = {
       to: "test@example.com",
@@ -253,6 +291,26 @@ describe("validatePayload", () => {
       expect(() => validatePayload(invalidPayload)).toThrow(
         "Invalid sendGrid configuration: Field 'templateId' is required when 'dynamicTemplateData' is provided"
       );
+    });
+
+    it("should throw ValidationError for SendGrid customArgs with non-string values", () => {
+      const invalidPayload = {
+        to: "test@example.com",
+        sendGrid: {
+          customArgs: { campaign: 123 },
+        },
+      };
+      expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
+    });
+
+    it("should throw ValidationError for SendGrid ipPoolName with non-string value", () => {
+      const invalidPayload = {
+        to: "test@example.com",
+        sendGrid: {
+          ipPoolName: 123,
+        },
+      };
+      expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
     });
 
     it("should throw ValidationError for custom template without name", () => {

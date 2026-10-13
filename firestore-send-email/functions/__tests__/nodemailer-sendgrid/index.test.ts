@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as sgMail from "@sendgrid/mail";
 import { SendGridTransport } from "../../src/nodemailer-sendgrid";
 import {
@@ -398,6 +414,62 @@ describe("SendGridTransport", () => {
       sandboxMode: { enable: true },
       personalization: { enable: false },
     });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
+  });
+
+  test("send: forwards customArgs object", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "a@x.com" },
+          to: [{ address: "b@x.com" }],
+          subject: "Custom args test",
+          customArgs: { campaign: "welcome", source: "signup" },
+        }),
+    };
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.customArgs).toEqual({ campaign: "welcome", source: "signup" });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
+  });
+
+  test("send: forwards ipPoolName string", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "a@x.com" },
+          to: [{ address: "b@x.com" }],
+          subject: "IP pool test",
+          ipPoolName: "transactional",
+        }),
+    };
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.ipPoolName).toEqual("transactional");
     expect(cb).toHaveBeenCalledWith(null, {
       messageId: null,
       queueId: "test-message-id",

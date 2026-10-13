@@ -28,68 +28,26 @@ FROM
         SELECT
           document_name,
           document_id,
-          FIRST_VALUE(timestamp) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS timestamp,
-          FIRST_VALUE(operation) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS operation,
-          FIRST_VALUE(operation) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) = "DELETE" AS is_deleted,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.name')) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS name,
-          `test.test_dataset.firestoreArray`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.favorite_numbers')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS favorite_numbers,
-          `test.test_dataset.firestoreTimestamp`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.last_login')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS last_login,
-          `test.test_dataset.firestoreGeopoint`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.last_location')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS last_location,
+          timestamp,
+          operation,
+          operation = "DELETE" AS is_deleted,
+          JSON_EXTRACT_SCALAR(data, '$.name') AS name,
+          `test.test_dataset.firestoreArray`(JSON_EXTRACT(data, '$.favorite_numbers')) AS favorite_numbers,
+          `test.test_dataset.firestoreTimestamp`(JSON_EXTRACT(data, '$.last_login')) AS last_login,
+          `test.test_dataset.firestoreGeopoint`(JSON_EXTRACT(data, '$.last_location')) AS last_location,
           SAFE_CAST(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.last_location._latitude')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            ) AS NUMERIC
+            JSON_EXTRACT_SCALAR(data, '$.last_location._latitude') AS NUMERIC
           ) AS last_location_latitude,
           SAFE_CAST(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.last_location._longitude')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            ) AS NUMERIC
+            JSON_EXTRACT_SCALAR(data, '$.last_location._longitude') AS NUMERIC
           ) AS last_location_longitude,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.friends.name')) OVER(
+          JSON_EXTRACT_SCALAR(data, '$.friends.name') AS friends_name
+        FROM
+          `test.test_dataset.test_table` QUALIFY RANK() OVER(
             PARTITION BY document_name
             ORDER BY
               timestamp DESC
-          ) AS friends_name
-        FROM
-          `test.test_dataset.test_table`
+          ) = 1
       )
     WHERE
       NOT is_deleted

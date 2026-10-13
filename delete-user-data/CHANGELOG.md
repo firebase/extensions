@@ -1,3 +1,21 @@
+## Version 0.1.30
+
+chore: remove unused runtime dependencies
+
+## Version 0.1.29
+
+chore: bump dependencies
+
+## Version 0.1.28
+
+chore: bump dependencies
+
+## Version 0.1.27
+
+chore: update Cloud Functions runtime to Node.js 22
+chore: ran npm run adit fix
+chore: add esModuleInterop and skipLibCheck to tsconfig.json
+
 ## Version 0.1.26
 
 chore: bump dependencies

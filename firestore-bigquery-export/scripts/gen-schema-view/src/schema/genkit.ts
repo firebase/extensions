@@ -25,6 +25,7 @@ import inquirer from "inquirer";
 export async function sampleFirestoreDocuments(
   collectionPath: string,
   sampleSize: number,
+  isCollectionGroupQuery: boolean = false,
   databaseId?: string
 ): Promise<any[]> {
   const db = (databaseId && databaseId !== "(default)")
@@ -32,11 +33,19 @@ export async function sampleFirestoreDocuments(
     : getFirestore();
 
   try {
-    const snapshot = await db
-      .collection(collectionPath)
-      .where("__name__", ">=", Math.random().toString())
-      .limit(sampleSize)
-      .get();
+    const query = isCollectionGroupQuery
+      ? db.collectionGroup(collectionPath)
+      : db.collection(collectionPath);
+
+    let snapshot = null;
+    if (isCollectionGroupQuery) {
+      snapshot = await query.limit(sampleSize).get();
+    } else {
+      snapshot = await query
+        .where("__name__", ">=", Math.random().toString())
+        .limit(sampleSize)
+        .get();
+    }
 
     const documents = snapshot.docs.map((doc) => {
       const data = doc.data();
@@ -201,6 +210,7 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   const sampleData = await sampleFirestoreDocuments(
     config.geminiAnalyzeCollectionPath!,
     config.agentSampleSize!,
+    config.isCollectionGroupQuery || false,
     config.databaseId
   );
 
