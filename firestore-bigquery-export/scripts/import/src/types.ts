@@ -16,6 +16,11 @@
 
 import * as admin from "firebase-admin";
 
+export type ViewType =
+  | "view"
+  | "materialized_incremental"
+  | "materialized_non_incremental";
+
 export interface CliConfig {
   kind: "CONFIG";
   projectId: string;
@@ -34,6 +39,9 @@ export interface CliConfig {
   failedBatchOutput?: string;
   transformFunctionUrl?: string;
   firestoreInstanceId: string;
+
+  clustering?: string[] | null;
+  viewType?: ViewType;
 }
 
 export interface CliConfigError {

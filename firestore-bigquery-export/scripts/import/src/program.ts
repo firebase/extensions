@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as program from "commander";
+import { program } from "commander";
 
 const packageJson = require("../package.json");
 
@@ -86,5 +86,13 @@ export const getCLIOptions = () => {
       "--firestore-instance-id <database-id>",
       "The Firestore database instance ID. Use '(default)' for the default database.",
       "(default)"
+    )
+    .option(
+      "--view-type <view-type>",
+      "View type of the latest view: view, materialized_incremental, materialized_non_incremental. Defaults to the deployed view's type, or view if none exists."
+    )
+    .option(
+      "--clustering <clustering>",
+      "Comma-separated clustering fields for the raw changelog table, e.g. timestamp or timestamp,document_id. Defaults to the deployed table's clustering."
     );
 };
