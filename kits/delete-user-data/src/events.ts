@@ -19,12 +19,24 @@ import { logger } from "firebase-functions";
 
 let eventChannel: eventArc.Channel | undefined;
 
+/**
+ * Opens the Eventarc channel only when event types are selected.
+ *
+ * The extension emitted only the types selected at install. With none
+ * selected, the platform cleared the channel and nothing was published.
+ * firebase-admin reads a missing allowlist as "allow every type", so an unset
+ * or empty `EXT_SELECTED_EVENTS` has to disable publishing here.
+ */
 export const setupEventChannel = (): void => {
-  eventChannel = process.env.EVENTARC_CHANNEL
-    ? eventArc.getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-        allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-      })
-    : undefined;
+  const channel = process.env.EVENTARC_CHANNEL;
+  const selectedEvents = process.env.EXT_SELECTED_EVENTS;
+
+  eventChannel =
+    channel && selectedEvents
+      ? eventArc.getEventarc().channel(channel, {
+          allowedEventTypes: selectedEvents,
+        })
+      : undefined;
 };
 
 /**
