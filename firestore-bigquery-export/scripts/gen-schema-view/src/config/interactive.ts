@@ -64,13 +64,6 @@ export const questions = [
   },
   {
     message:
-      "What is your Firestore database ID? (Leave as default '(default)' for the default database)",
-    name: "databaseId",
-    type: "input",
-    default: "(default)",
-  },
-  {
-    message:
       "Would you like to use a Gemini to automatically analyze your data and generate a draft schema?",
     name: "useGemini",
     type: "confirm",
@@ -102,6 +95,14 @@ export const questions = [
     type: "confirm",
     when: (answers) => answers.useGemini,
     default: false,
+  },
+  {
+    message:
+      "What is your Firestore database ID? (Leave as default '(default)' for the default database)",
+    name: "databaseId",
+    type: "input",
+    when: (answers) => answers.useGemini,
+    default: "(default)",
   },
   {
     message:
