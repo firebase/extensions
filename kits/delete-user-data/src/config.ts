@@ -214,7 +214,9 @@ export function configFromEnv(): DeleteUserDataConfig {
     storagePaths: optional(params.storagePaths.value()),
     enableAutoDiscovery: params.enableAutoDiscovery.value() === "yes",
     searchDepth: optionalInt(params.searchDepth),
-    searchFields: params.searchFields.value(),
+    // The Extensions platform stores an empty value as unset and applies the
+    // `id,uid,userId` default, so an empty value falls back to it here too.
+    searchFields: optional(params.searchFields.value()),
     searchFunction: optional(params.searchFunction.value()),
     instanceId,
     discoveryTopicName: optional(params.discoveryTopicName.value()),
