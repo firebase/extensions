@@ -659,7 +659,7 @@ describe("validatePayload", () => {
         );
       });
 
-      it("should throw error for non-array attachments", () => {
+      it("should suggest wrapping a single attachment object in an array", () => {
         const invalidPayload = {
           to: "test@example.com",
           message: {
@@ -673,7 +673,25 @@ describe("validatePayload", () => {
         };
         expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
         expect(() => validatePayload(invalidPayload)).toThrow(
-          "Invalid message configuration: Field 'message.attachments' must be an array"
+          new ValidationError(
+            "Invalid message configuration: Field 'message.attachments' must be an array. To send a single attachment, wrap it in an array: [{ filename: '...', path: '...' }]"
+          )
+        );
+      });
+
+      it("should not suggest wrapping when attachments is not an object", () => {
+        const invalidPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: "test.txt",
+          },
+        };
+        expect(() => validatePayload(invalidPayload)).toThrow(
+          new ValidationError(
+            "Invalid message configuration: Field 'message.attachments' must be an array"
+          )
         );
       });
     });
