@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
 import { resolveProjectId } from "../../bigquery/projectId";
+import { ChangeTrackerConfig } from "../../bigquery/types";
 
 const ENV_VARS = ["PROJECT_ID", "GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT"];
 const saved: Record<string, string | undefined> = {};
@@ -59,5 +61,63 @@ describe("resolveProjectId", () => {
 
   test("returns undefined when no project is available", () => {
     expect(resolveProjectId(undefined)).toBeUndefined();
+  });
+});
+
+const trackerConfig = (
+  overrides: Partial<ChangeTrackerConfig> = {}
+): ChangeTrackerConfig =>
+  ({
+    datasetId: "dataset",
+    tableId: "table",
+    ...overrides,
+  } as ChangeTrackerConfig);
+
+describe("FirestoreBigQueryEventHistoryTracker project ID", () => {
+  test("uses bqProjectId for the BigQuery client", () => {
+    process.env.PROJECT_ID = "env-project";
+    const tracker = new FirestoreBigQueryEventHistoryTracker(
+      trackerConfig({ bqProjectId: "explicit-project" })
+    );
+    expect(tracker.bq.projectId).toBe("explicit-project");
+  });
+
+  test("uses GCLOUD_PROJECT for the BigQuery client when nothing else is set", () => {
+    process.env.GCLOUD_PROJECT = "gcloud-project";
+    const tracker = new FirestoreBigQueryEventHistoryTracker(trackerConfig());
+    expect(tracker.bq.projectId).toBe("gcloud-project");
+  });
+
+  test("leaves the client's project for auto-detection when no project is available", () => {
+    const tracker = new FirestoreBigQueryEventHistoryTracker(trackerConfig());
+    expect(tracker.bq.projectId).toBe("{{projectId}}");
+  });
+
+  test("detects the project before building BigQuery resources", async () => {
+    const tracker = new FirestoreBigQueryEventHistoryTracker(trackerConfig());
+    const projectIdAtStep: Record<string, string> = {};
+    const record = (step: string) => async () => {
+      projectIdAtStep[step] = tracker.bq.projectId;
+    };
+
+    jest.spyOn(tracker.bq, "getProjectId").mockImplementation(async () => {
+      tracker.bq.projectId = "detected-project";
+      return "detected-project";
+    });
+    const t = tracker as any;
+    jest.spyOn(t, "initializeDataset").mockImplementation(record("dataset"));
+    jest
+      .spyOn(t, "initializeRawChangeLogTable")
+      .mockImplementation(record("table"));
+    jest.spyOn(t, "_initializeLatestView").mockImplementation(record("view"));
+    jest.spyOn(t, "_waitForInitialization").mockResolvedValue(undefined);
+
+    await tracker.initialize();
+
+    expect(projectIdAtStep).toEqual({
+      dataset: "detected-project",
+      table: "detected-project",
+      view: "detected-project",
+    });
   });
 });
