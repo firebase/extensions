@@ -1,4 +1,20 @@
-import * as admin from "firebase-admin";
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { Timestamp } from "firebase-admin/firestore";
 import { PartitionValueConverter } from "../../../bigquery/partitioning/converter";
 
 describe("PartitionValueConverter", () => {
@@ -6,9 +22,7 @@ describe("PartitionValueConverter", () => {
     const converter = new PartitionValueConverter("TIMESTAMP");
 
     test("converts Firebase Timestamp to BigQuery timestamp string", () => {
-      const timestamp = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:30:00Z")
-      );
+      const timestamp = Timestamp.fromDate(new Date("2024-01-15T10:30:00Z"));
       const result = converter.convert(timestamp);
       expect(result).toBeDefined();
       expect(typeof result).toBe("string");
@@ -179,9 +193,7 @@ describe("PartitionValueConverter", () => {
     const converter = new PartitionValueConverter("DATE");
 
     test("converts Firebase Timestamp to BigQuery date string", () => {
-      const timestamp = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:30:00Z")
-      );
+      const timestamp = Timestamp.fromDate(new Date("2024-01-15T10:30:00Z"));
       const result = converter.convert(timestamp);
       expect(result).toBe("2024-01-15");
     });
@@ -232,9 +244,7 @@ describe("PartitionValueConverter", () => {
     const converter = new PartitionValueConverter("DATETIME");
 
     test("converts Firebase Timestamp to BigQuery datetime string", () => {
-      const timestamp = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:30:00Z")
-      );
+      const timestamp = Timestamp.fromDate(new Date("2024-01-15T10:30:00Z"));
       const result = converter.convert(timestamp);
       expect(result).toBeDefined();
       expect(result).toContain("2024-01-15");
