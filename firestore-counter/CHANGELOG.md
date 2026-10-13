@@ -1,3 +1,11 @@
+## Version 0.2.17
+
+chore: replace uuid and deep-equal dependencies with Node.js built-ins
+
+## Version 0.2.16
+
+chore: bump dependencies
+
 ## Version 0.2.15
 
 chore: bump dependencies

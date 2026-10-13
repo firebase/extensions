@@ -1,3 +1,11 @@
+## Version 0.2.6
+
+chore: remove unused rimraf dependency
+
+## Version 0.2.5
+
+chore: bump dependencies
+
 ## Version 0.2.4
 
 chore: bump dependencies

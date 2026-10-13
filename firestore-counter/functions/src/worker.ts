@@ -15,7 +15,8 @@
  */
 
 import { firestore } from "firebase-admin";
-import deepEqual from "deep-equal";
+import { isDeepStrictEqual } from "util";
+import * as crypto from "crypto";
 import { logger } from "firebase-functions";
 import * as events from "./events";
 import {
@@ -27,7 +28,6 @@ import {
 } from "./common";
 import { Planner } from "./planner";
 import { Aggregator, NumericUpdate } from "./aggregator";
-import * as uuid from "uuid";
 import { FieldValue } from "firebase-admin/firestore";
 
 const SHARDS_LIMIT = 100;
@@ -111,7 +111,10 @@ export class ShardedCounterWorker {
           await this.db.runTransaction(async (t) => {
             try {
               const snap = await t.get(this.metadoc.ref);
-              if (snap.exists && deepEqual(snap.data(), this.metadata)) {
+              if (
+                snap.exists &&
+                isDeepStrictEqual(snap.data(), this.metadata)
+              ) {
                 t.update(snap.ref, {
                   timestamp: FieldValue.serverTimestamp(),
                   stats: stats,
@@ -145,7 +148,7 @@ export class ShardedCounterWorker {
 
       unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
         // if something's changed in the worker metadata since we were called, abort.
-        if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
+        if (!snap.exists || !isDeepStrictEqual(snap.data(), this.metadata)) {
           logger.log("Shutting down because metadoc changed.");
           shutdown().then(resolve).catch(reject);
         }
@@ -239,7 +242,10 @@ export class ShardedCounterWorker {
           }
 
           // Check that we still own the slice.
-          if (!metadoc.exists || !deepEqual(metadoc.data(), this.metadata)) {
+          if (
+            !metadoc.exists ||
+            !isDeepStrictEqual(metadoc.data(), this.metadata)
+          ) {
             logger.log("Metadata has changed, bailing out...");
             return [];
           }
@@ -351,7 +357,7 @@ export class ShardedCounterWorker {
               }
               t.set(
                 snap.ref,
-                update.toPartialShard(() => uuid.v4())
+                update.toPartialShard(() => crypto.randomUUID())
               );
             }
           } catch (err) {
