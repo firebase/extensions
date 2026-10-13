@@ -1,23 +1,44 @@
 version: 2
+
 updates:
   - package-ecosystem: "npm"
     directories:
       - "/**"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
+      semver-major-days: 7
+      semver-minor-days: 7
+      semver-patch-days: 7
+
     labels:
       - "dependencies"
       - "automated"
+
     commit-message:
       prefix: "chore"
       include: "scope"
+
     groups:
-      minor-and-patch:
+      version-minor-and-patch:
+        applies-to: version-updates
         patterns:
           - "*"
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
+
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - major
+          - minor
+          - patch
+
     ignore:
       - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+        update-types:
+          - "version-update:semver-major"
