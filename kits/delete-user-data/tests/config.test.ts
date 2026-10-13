@@ -123,7 +123,9 @@ describe("configFromEnv", () => {
 
   test("falls back to the default search fields when set to an empty value", async () => {
     const { configFromEnv } = await importConfig();
-    const { resolveDeleteUserDataConfig } = await import("../src/export-config");
+    const { resolveDeleteUserDataConfig } = await import(
+      "../src/export-config"
+    );
     vi.stubEnv("AUTO_DISCOVERY_SEARCH_FIELDS", "");
 
     const config = configFromEnv();
