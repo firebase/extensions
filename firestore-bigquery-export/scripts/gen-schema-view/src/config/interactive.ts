@@ -98,6 +98,14 @@ export const questions = [
   },
   {
     message:
+      "What is your Firestore database ID? (Leave as default '(default)' for the default database)",
+    name: "databaseId",
+    type: "input",
+    when: (answers) => answers.useGemini,
+    default: "(default)",
+  },
+  {
+    message:
       "What is the Firestore collection or collection group path you want Gemini to analyze?",
     name: "geminiAnalyzeCollectionPath",
     type: "input",
