@@ -26,43 +26,75 @@ vi.mock("firebase-admin/eventarc", () => ({
 
 const CHANNEL = "projects/p/locations/l/channels/firebase";
 
-async function importEvents(channelName?: string) {
-  vi.resetModules();
-  if (channelName) {
-    process.env.EVENTARC_CHANNEL = channelName;
+const ALL_EVENTS = [
+  "firebase.extensions.delete-user-data.v1.firestore",
+  "firebase.extensions.delete-user-data.v1.database",
+  "firebase.extensions.delete-user-data.v1.storage",
+].join(",");
+
+// `null` unsets the variable; `undefined` would trip importEvents' default.
+function setEnv(name: string, value: string | null | undefined) {
+  if (value === null || value === undefined) {
+    delete process.env[name];
   } else {
-    delete process.env.EVENTARC_CHANNEL;
+    process.env[name] = value;
   }
+}
+
+async function importEvents(
+  channelName?: string,
+  selectedEvents: string | null = ALL_EVENTS
+) {
+  vi.resetModules();
+  setEnv("EVENTARC_CHANNEL", channelName);
+  setEnv("EXT_SELECTED_EVENTS", selectedEvents);
   const events = await import("../src/events");
   events.setupEventChannel();
   return events;
 }
 
 const ORIGINAL_CHANNEL = process.env.EVENTARC_CHANNEL;
+const ORIGINAL_SELECTED_EVENTS = process.env.EXT_SELECTED_EVENTS;
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 afterEach(() => {
-  if (ORIGINAL_CHANNEL === undefined) {
-    delete process.env.EVENTARC_CHANNEL;
-  } else {
-    process.env.EVENTARC_CHANNEL = ORIGINAL_CHANNEL;
-  }
+  setEnv("EVENTARC_CHANNEL", ORIGINAL_CHANNEL);
+  setEnv("EXT_SELECTED_EVENTS", ORIGINAL_SELECTED_EVENTS);
 });
 
 describe("setupEventChannel", () => {
   test("opens the configured channel with the selected event types", async () => {
-    process.env.EXT_SELECTED_EVENTS =
-      "firebase.extensions.delete-user-data.v1.firestore";
-    await importEvents(CHANNEL);
+    await importEvents(
+      CHANNEL,
+      "firebase.extensions.delete-user-data.v1.firestore"
+    );
 
     expect(channel).toHaveBeenCalledWith(CHANNEL, {
       allowedEventTypes: "firebase.extensions.delete-user-data.v1.firestore",
     });
-    delete process.env.EXT_SELECTED_EVENTS;
   });
+
+  // The extension cleared its channel when no event types were selected, so
+  // it published nothing. firebase-admin reads a missing allowlist as "allow
+  // every type", which would publish all three.
+  test.each([
+    ["unset", null],
+    ["empty", ""],
+  ])(
+    "stays disabled when a channel is set but EXT_SELECTED_EVENTS is %s",
+    async (_label, selectedEvents) => {
+      const events = await importEvents(CHANNEL, selectedEvents);
+
+      expect(channel).not.toHaveBeenCalled();
+      await events.publishDeletionEvent("firestore", { uid: "u1" });
+      await events.publishDeletionEvent("database", { uid: "u1" });
+      await events.publishDeletionEvent("storage", { uid: "u1" });
+      expect(publish).not.toHaveBeenCalled();
+    }
+  );
 
   test("stays disabled when no channel is configured", async () => {
     const events = await importEvents();

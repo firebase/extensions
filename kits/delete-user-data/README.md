@@ -138,9 +138,21 @@ in sync by hand.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the functions publish deletion events
-for each backend under `firebase.extensions.delete-user-data.v1.*`
-(`firestore`, `database`, and `storage`).
+The functions can publish deletion events for each backend under
+`firebase.extensions.delete-user-data.v1.*` (`firestore`, `database`, and
+`storage`). Set both of these in `.env` to turn them on:
+
+| Env var | Description |
+|---|---|
+| `EVENTARC_CHANNEL` | Full channel name, e.g. `projects/<project id>/locations/us-central1/channels/firebase` |
+| `EXT_SELECTED_EVENTS` | Comma-separated event types to publish, e.g. `firebase.extensions.delete-user-data.v1.firestore,firebase.extensions.delete-user-data.v1.storage` |
+
+Only the listed types are published. If `EXT_SELECTED_EVENTS` is unset or
+empty, nothing is published, which matches an extension instance installed with
+no event types selected.
+
+The channel must already exist. Deploying the kit does not create it, and
+publishing to a missing channel logs a warning without failing the function.
 
 ## Differences from the Delete User Data extension
 
@@ -182,15 +194,31 @@ Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
 This mainly matters if you have infrastructure or alerting keyed to function
 generation.
 
+### Events need an existing channel, and their source has changed
+
+The extension created its Eventarc channel when you installed it with events
+turned on. The kit does not, so create the channel before you set
+`EVENTARC_CHANNEL`.
+
+Each event's CloudEvent `source` used to identify the extension instance
+(`//firebaseextensions.googleapis.com/extensions/projects/<project id>/instances/<instance id>`).
+The Firebase CLI now sets it to the function that published the event
+(`projects/<project id>/locations/<region>/services/kit-<instance id>-<function>`),
+so it differs between `clearData`, `handleSearch` and `handleDeletion`. If your
+event triggers filter on `source`, filter on the event `type` instead.
+
 ### Unchanged
 
-Events are the same. When `EVENTARC_CHANNEL` is configured, the functions still
-publish `firebase.extensions.delete-user-data.v1.firestore`, `.database` and
-`.storage` with the same payloads. Path syntax (`{UID}` substitution, comma
+Event types and payloads are the same. The functions still publish
+`firebase.extensions.delete-user-data.v1.firestore`, `.database` and
+`.storage` with the same data, and only the types listed in
+`EXT_SELECTED_EVENTS`, as the extension published only the types selected at
+install. Path syntax (`{UID}` substitution, comma
 separated lists, `{DEFAULT}` for the default Storage bucket), the shallow and
 recursive Firestore delete modes, the search depth and field matching rules
 (an empty `AUTO_DISCOVERY_SEARCH_FIELDS` falls back to the default
-`id,uid,userId`, as it did on an installed extension), and the custom `SEARCH_FUNCTION` contract all behave as they did. RTDB
+`id,uid,userId`, as it did on an installed extension), and the custom
+`SEARCH_FUNCTION` contract all behave as they did. RTDB
 deletion also keeps the extension's gate: paths are only cleared when a
 database URL can be derived from `SELECTED_DATABASE_INSTANCE` and
 `SELECTED_DATABASE_LOCATION`; otherwise they are skipped with a
