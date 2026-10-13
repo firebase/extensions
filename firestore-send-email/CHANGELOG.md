@@ -1,3 +1,11 @@
+## Version 0.2.10
+
+chore: bump nodemailer to v9 and remove unused rimraf dependency
+
+## Version 0.2.9
+
+chore: bump dependencies
+
 ## Version 0.2.8
 
 chore: bump dependencies

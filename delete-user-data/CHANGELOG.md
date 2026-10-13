@@ -1,3 +1,11 @@
+## Version 0.1.30
+
+chore: remove unused runtime dependencies
+
+## Version 0.1.29
+
+chore: bump dependencies
+
 ## Version 0.1.28
 
 chore: bump dependencies
