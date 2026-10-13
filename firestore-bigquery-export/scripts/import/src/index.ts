@@ -16,12 +16,14 @@
  * limitations under the License.
  */
 import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { BigQuery } from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import * as fs from "fs";
 import * as util from "util";
 
 import { parseConfig } from "./config";
+import { resolveDeployedConfig } from "./deployed-config";
 import { initializeDataSink } from "./helper";
 import * as logs from "./logs";
 import { getCLIOptions } from "./program";
@@ -52,8 +54,6 @@ const run = async (): Promise<number> => {
     cursorPositionFile,
     transformFunctionUrl,
     firestoreInstanceId,
-    clustering,
-    viewType,
   } = config;
   if (useEmulator) {
     console.log("Using emulator");
@@ -83,6 +83,19 @@ const run = async (): Promise<number> => {
     firestoreInstanceId && firestoreInstanceId !== "(default)"
       ? getFirestore(app, firestoreInstanceId)
       : getFirestore(app);
+
+  const dataset = new BigQuery({ projectId: bigQueryProjectId }).dataset(
+    datasetId,
+    { location: datasetLocation }
+  );
+  const { viewType, clustering, errors } = await resolveDeployedConfig(
+    dataset,
+    config
+  );
+  if (errors.length) {
+    errors.forEach((e) => console.error(`[ERROR] ${e}`));
+    process.exit(1);
+  }
 
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.

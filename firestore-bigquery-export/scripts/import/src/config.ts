@@ -18,7 +18,7 @@ import { program } from "commander";
 import filenamify from "filenamify";
 import inquirer from "inquirer";
 
-import { CliConfig, CliConfigError } from "./types";
+import { CliConfig, CliConfigError, ViewType } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 // regex of ^[^/]+(/[^/]+/[^/]+)*$
@@ -30,7 +30,7 @@ const PROJECT_ID_MAX_CHARS = 6144;
 export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
-const VALID_VIEW_TYPES = [
+const VALID_VIEW_TYPES: ViewType[] = [
   "view",
   "materialized_incremental",
   "materialized_non_incremental",
@@ -235,21 +235,6 @@ const questions = [
     name: "failedBatchOutput",
     type: "input",
   },
-  {
-    message:
-      "What type of latest view is used by the deployed extension? (view, materialized_incremental, materialized_non_incremental)",
-    name: "viewType",
-    type: "list",
-    choices: VALID_VIEW_TYPES,
-    default: "view",
-  },
-  {
-    message:
-      "What clustering fields should be preserved on the raw changelog table? (Comma-separated, leave blank for none)",
-    name: "clustering",
-    type: "input",
-    default: "",
-  },
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
@@ -335,7 +320,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       transformFunctionUrl: program.transformFunctionUrl,
       firestoreInstanceId: program.firestoreInstanceId || "(default)",
       clustering: parseClustering(program.clustering),
-      viewType: program.viewType || "view",
+      viewType: program.viewType,
     };
   }
   const {
@@ -353,8 +338,6 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator,
     failedBatchOutput,
     transformFunctionUrl,
-    viewType,
-    clustering,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -383,8 +366,6 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     failedBatchOutput,
     transformFunctionUrl,
     firestoreInstanceId: firestoreInstanceId || "(default)",
-    clustering: parseClustering(clustering),
-    viewType: viewType || "view",
   };
 }
 
