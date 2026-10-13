@@ -16,7 +16,7 @@
 
 import { resolveGcpProjectIdForBigQuery } from "../../bigquery/gcpProject";
 
-const ENV_VARS = ["PROJECT_ID", "GOOGLE_CLOUD_PROJECT"];
+const ENV_VARS = ["PROJECT_ID", "GOOGLE_CLOUD_PROJECT", "GCLOUD_PROJECT"];
 
 function clearEnv() {
   for (const v of ENV_VARS) delete process.env[v];
@@ -42,6 +42,12 @@ describe("resolveGcpProjectIdForBigQuery", () => {
   it("falls back to PROJECT_ID when GOOGLE_CLOUD_PROJECT is absent", () => {
     process.env.PROJECT_ID = "gen1-project";
     expect(resolveGcpProjectIdForBigQuery(undefined)).toBe("gen1-project");
+  });
+
+  it("falls back to GCLOUD_PROJECT set by the Firebase CLI on Gen2 deploys", () => {
+    process.env.GCLOUD_PROJECT = "cli-project";
+    process.env.PROJECT_ID = "gen1-project";
+    expect(resolveGcpProjectIdForBigQuery(undefined)).toBe("cli-project");
   });
 
   it("returns undefined when no source is available", () => {
