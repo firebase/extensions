@@ -121,9 +121,6 @@ describe("configFromEnv", () => {
     expect(config.searchDepth).toBeUndefined();
   });
 
-  // The Extensions platform stores an empty AUTO_DISCOVERY_SEARCH_FIELDS as
-  // unset and applies the `id,uid,userId` default, so the extension never
-  // runs with empty search fields.
   test("falls back to the default search fields when set to an empty value", async () => {
     const { configFromEnv } = await importConfig();
     const { resolveDeleteUserDataConfig } = await import("../src/export-config");
