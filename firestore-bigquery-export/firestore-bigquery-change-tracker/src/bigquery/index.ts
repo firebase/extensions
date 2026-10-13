@@ -197,13 +197,20 @@ export class FirestoreBigQueryEventHistoryTracker
 
   private async transformRows(rows: any[]) {
     if (this.config.transformFunction && this.config.transformFunction !== "") {
-      let authHeaders = {};
+      let authHeaders: Record<string, string> = {};
       try {
         const auth = new GoogleAuth();
         const client = await auth.getIdTokenClient(
           this.config.transformFunction
         );
-        authHeaders = await client.getRequestHeaders();
+        const authorization = new Headers(await client.getRequestHeaders()).get(
+          "authorization"
+        );
+        // Callable functions reject a Google ID token in Authorization, while
+        // Cloud Run's IAM check also accepts it in X-Serverless-Authorization.
+        if (authorization) {
+          authHeaders = { "X-Serverless-Authorization": authorization };
+        }
       } catch (err) {
         logs.transformFunctionAuthFailed(err);
       }

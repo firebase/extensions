@@ -70,11 +70,10 @@ describe("transformRows", () => {
     });
   });
 
-  it("attaches an Authorization header when an ID token can be minted", async () => {
+  it("sends the ID token as X-Serverless-Authorization, not Authorization", async () => {
     mockGetIdTokenClient.mockResolvedValue({
-      getRequestHeaders: async () => ({
-        Authorization: "Bearer test-id-token",
-      }),
+      getRequestHeaders: async () =>
+        new Headers({ Authorization: "Bearer test-id-token" }),
     });
 
     const tracker = buildTracker(TRANSFORM_URL);
@@ -82,10 +81,22 @@ describe("transformRows", () => {
 
     expect(mockGetIdTokenClient).toHaveBeenCalledWith(TRANSFORM_URL);
     const [, init] = mockFetch.mock.calls[0];
-    expect(init.headers).toMatchObject({
+    expect(init.headers).toEqual({
       "Content-Type": "application/json",
-      Authorization: "Bearer test-id-token",
+      "X-Serverless-Authorization": "Bearer test-id-token",
     });
+  });
+
+  it("sends no auth header when the client returns no token", async () => {
+    mockGetIdTokenClient.mockResolvedValue({
+      getRequestHeaders: async () => new Headers(),
+    });
+
+    const tracker = buildTracker(TRANSFORM_URL);
+    await tracker.record([buildEvent()]);
+
+    const [, init] = mockFetch.mock.calls[0];
+    expect(init.headers).toEqual({ "Content-Type": "application/json" });
   });
 
   it("falls back to an unauthenticated call when minting the token fails", async () => {
@@ -108,7 +119,7 @@ describe("transformRows", () => {
 
   it("throws when the transform function returns a non-2xx response", async () => {
     mockGetIdTokenClient.mockResolvedValue({
-      getRequestHeaders: async () => ({}),
+      getRequestHeaders: async () => new Headers(),
     });
     mockFetch.mockResolvedValue({
       ok: false,
