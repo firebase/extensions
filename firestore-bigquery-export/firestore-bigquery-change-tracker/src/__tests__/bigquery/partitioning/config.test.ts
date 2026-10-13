@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import {
   PartitioningConfig,
   PartitioningType,
@@ -21,6 +22,8 @@ import {
 
 describe("PartitioningConfig", () => {
   describe("determineType", () => {
+    afterEach(() => jest.restoreAllMocks());
+
     test("returns NONE when granularity is undefined", () => {
       const config = new PartitioningConfig({});
       expect(config.getType()).toBe(PartitioningType.NONE);
@@ -37,6 +40,45 @@ describe("PartitioningConfig", () => {
       const config = new PartitioningConfig({ granularity: "NONE" });
       expect(config.getType()).toBe(PartitioningType.NONE);
       expect(config.isNoPartitioning()).toBe(true);
+    });
+
+    test("returns NONE and warns when granularity is unrecognised", () => {
+      const warn = jest.spyOn(logger, "warn").mockImplementation();
+      for (const granularity of ["UNKNOWN", "day", "WEEK"]) {
+        const config = new PartitioningConfig({
+          granularity: granularity as any,
+        });
+        expect(config.getType()).toBe(PartitioningType.NONE);
+      }
+      expect(warn).toHaveBeenCalledTimes(3);
+      expect(warn).toHaveBeenCalledWith(
+        "Invalid partitioning granularity UNKNOWN, expected one of HOUR, DAY, MONTH, YEAR. Skipping partitioning"
+      );
+    });
+
+    test("returns NONE for an unrecognised granularity with a custom field", () => {
+      jest.spyOn(logger, "warn").mockImplementation();
+      const config = new PartitioningConfig({
+        granularity: "UNKNOWN" as any,
+        bigqueryColumnName: "created",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "created",
+      });
+      expect(config.getType()).toBe(PartitioningType.NONE);
+    });
+
+    test("returns NONE and warns when a custom field has an unrecognised column type", () => {
+      const warn = jest.spyOn(logger, "warn").mockImplementation();
+      const config = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "created",
+        bigqueryColumnType: "unknown" as any,
+        firestoreFieldName: "created",
+      });
+      expect(config.getType()).toBe(PartitioningType.NONE);
+      expect(warn).toHaveBeenCalledWith(
+        "Invalid partitioning field type unknown, expected one of TIMESTAMP, DATE, DATETIME. Skipping partitioning"
+      );
     });
 
     test("returns INGESTION_TIME when only granularity is provided", () => {

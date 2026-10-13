@@ -281,6 +281,18 @@ export function hourAndDatePartitioningWarning() {
   );
 }
 
+export function invalidPartitioningGranularity(granularity: string) {
+  logger.warn(
+    `Invalid partitioning granularity ${granularity}, expected one of HOUR, DAY, MONTH, YEAR. Skipping partitioning`
+  );
+}
+
+export function invalidPartitioningFieldType(fieldType: string) {
+  logger.warn(
+    `Invalid partitioning field type ${fieldType}, expected one of TIMESTAMP, DATE, DATETIME. Skipping partitioning`
+  );
+}
+
 export function invalidClusteringTypes(fields: string) {
   logger.warn(
     `Unable to add clustering, field(s) ${fields} have invalid types.`
