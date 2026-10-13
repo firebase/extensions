@@ -69,10 +69,7 @@ export const attachmentSchema = z
   });
 
 export const attachmentsSchema = z
-  .array(attachmentSchema, {
-    invalid_type_error:
-      "Field 'attachments' must be an array. If you have a single attachment object, wrap it in an array (e.g., [{ filename: '...', path: '...' }])",
-  })
+  .array(attachmentSchema)
   .optional()
   .transform((attachments) =>
     attachments
@@ -203,21 +200,18 @@ function formatZodError(
     const path = issue.path.length > 0 ? issue.path.join(".") : context;
     switch (issue.code) {
       case "invalid_type":
-        if (issue.received === "undefined") {
-          const expected = issue.expected === "object" ? "map" : issue.expected;
-          const article = ["a", "e", "i", "o", "u"].includes(expected[0])
-            ? "an"
-            : "a";
-          return `Field '${path}' must be ${article} ${expected}`;
-        }
-
         if (issue.expected === "string") {
           return `Field '${path}' must be a string`;
         }
         if (issue.expected === "array") {
+          if (
+            issue.received === "object" &&
+            issue.path[issue.path.length - 1] === "attachments"
+          ) {
+            return `Field '${path}' must be an array. To send a single attachment, wrap it in an array: [{ filename: '...', path: '...' }]`;
+          }
           return `Field '${path}' must be an array`;
         }
-
         if (issue.expected === "object") {
           return `Field '${path}' must be a map`;
         }
@@ -282,6 +276,27 @@ function validateField(
     const adjustedError = adjustZodErrorIssues(result.error, [fieldName]);
     throw new ValidationError(formatZodError(adjustedError, context));
   }
+}
+
+/**
+ * Parses attachments with attachmentsSchema, throwing a ValidationError that names the field on failure.
+ * @param attachments - The attachments value to parse
+ * @param path - The path of the field the attachments came from
+ * @param context - The context for error messages
+ * @returns The parsed attachments
+ * @throws {ValidationError} When validation fails
+ */
+export function parseAttachments(
+  attachments: unknown,
+  path: string[],
+  context: string
+) {
+  const result = attachmentsSchema.safeParse(attachments);
+  if (!result.success) {
+    const adjustedError = adjustZodErrorIssues(result.error, path);
+    throw new ValidationError(formatZodError(adjustedError, context));
+  }
+  return result.data;
 }
 
 /**
