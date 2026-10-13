@@ -46,6 +46,7 @@ import { logger, LogLevel } from "../logger";
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import type { ChangeTrackerConfig } from "./types";
 import { PartitioningConfig } from "./partitioning/config";
+import { resolveProjectId } from "./projectId";
 export type { ChangeTrackerConfig } from "./types";
 
 interface InsertAllError {
@@ -143,7 +144,7 @@ export class FirestoreBigQueryEventHistoryTracker
   constructor(public config: ChangeTrackerConfig) {
     this.bq = new bigquery.BigQuery();
 
-    this.bq.projectId = config.bqProjectId || process.env.PROJECT_ID;
+    this.bq.projectId = resolveProjectId(config.bqProjectId);
 
     this.partitioningConfig = new PartitioningConfig(this.config.partitioning);
 
