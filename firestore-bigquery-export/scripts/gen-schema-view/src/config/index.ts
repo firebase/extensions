@@ -33,6 +33,7 @@ export interface CliConfig {
   googleAiKey?: string;
   schemaDirectory?: string;
   geminiSchemaFileName?: string;
+  isCollectionGroupQuery?: boolean;
 }
 
 export async function parseConfig(): Promise<CliConfig> {
@@ -55,6 +56,7 @@ export async function parseConfig(): Promise<CliConfig> {
       googleAiKey: program.googleAiKey,
       schemaDirectory: program.schemaDirectory,
       geminiSchemaFileName: program.geminiSchemaFileName,
+      isCollectionGroupQuery: program.queryCollectionGroup,
     };
   }
   const {
@@ -68,6 +70,7 @@ export async function parseConfig(): Promise<CliConfig> {
     googleAiKey,
     schemaDirectory,
     geminiSchemaFileName,
+    isCollectionGroupQuery,
   } = await promptInquirer();
 
   return {
@@ -82,5 +85,6 @@ export async function parseConfig(): Promise<CliConfig> {
     googleAiKey,
     schemaDirectory,
     geminiSchemaFileName,
+    isCollectionGroupQuery,
   };
 }

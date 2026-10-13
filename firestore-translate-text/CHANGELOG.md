@@ -1,3 +1,21 @@
+## Version 0.1.30
+
+chore: remove unused rimraf dependency
+
+## Version 0.1.29
+
+chore: bump dependencies
+
+## Version 0.1.28
+
+chore: switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
+
+fix - remove deprecated gemini-2.0-flash and gemini-2.0-flash-lite model options
+
+## Version 0.1.27
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.1.26
 
 chore: bump dependencies

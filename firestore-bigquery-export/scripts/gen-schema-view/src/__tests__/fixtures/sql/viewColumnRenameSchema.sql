@@ -44,145 +44,41 @@ FROM
         SELECT
           document_name,
           document_id,
-          FIRST_VALUE(timestamp) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS timestamp,
-          FIRST_VALUE(operation) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS operation,
-          FIRST_VALUE(operation) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) = "DELETE" AS is_deleted,
-          `test.test_dataset.firestoreArray`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.order')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newArray,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.limit')) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS newString,
-          `test.test_dataset.firestoreNumber`(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.from')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newNumber,
-          `test.test_dataset.firestoreBoolean`(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.select')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newBoolean,
-          `test.test_dataset.firestoreGeopoint`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.where')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newGeopoint,
+          timestamp,
+          operation,
+          operation = "DELETE" AS is_deleted,
+          `test.test_dataset.firestoreArray`(JSON_EXTRACT(data, '$.order')) AS newArray,
+          JSON_EXTRACT_SCALAR(data, '$.limit') AS newString,
+          `test.test_dataset.firestoreNumber`(JSON_EXTRACT_SCALAR(data, '$.from')) AS newNumber,
+          `test.test_dataset.firestoreBoolean`(JSON_EXTRACT_SCALAR(data, '$.select')) AS newBoolean,
+          `test.test_dataset.firestoreGeopoint`(JSON_EXTRACT(data, '$.where')) AS newGeopoint,
           SAFE_CAST(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.where._latitude')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            ) AS NUMERIC
+            JSON_EXTRACT_SCALAR(data, '$.where._latitude') AS NUMERIC
           ) AS newGeopoint_latitude,
           SAFE_CAST(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.where._longitude')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            ) AS NUMERIC
+            JSON_EXTRACT_SCALAR(data, '$.where._longitude') AS NUMERIC
           ) AS newGeopoint_longitude,
-          `test.test_dataset.firestoreTimestamp`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.between')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newTimestamp,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.like')) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS newReference,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.and.like')) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS newMapColumnName_referenceMap,
-          `test.test_dataset.firestoreArray`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.and.order')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newMapColumnName_arrayMap,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.and.limit')) OVER(
-            PARTITION BY document_name
-            ORDER BY
-              timestamp DESC
-          ) AS newMapColumnName_stringMap,
-          `test.test_dataset.firestoreNumber`(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.and.from')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newMapColumnName_numberMap,
-          `test.test_dataset.firestoreBoolean`(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.and.select')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newMapColumnName_booleanMap,
-          `test.test_dataset.firestoreGeopoint`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.and.where')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newMapColumnName_geopointMap,
+          `test.test_dataset.firestoreTimestamp`(JSON_EXTRACT(data, '$.between')) AS newTimestamp,
+          JSON_EXTRACT_SCALAR(data, '$.like') AS newReference,
+          JSON_EXTRACT_SCALAR(data, '$.and.like') AS newMapColumnName_referenceMap,
+          `test.test_dataset.firestoreArray`(JSON_EXTRACT(data, '$.and.order')) AS newMapColumnName_arrayMap,
+          JSON_EXTRACT_SCALAR(data, '$.and.limit') AS newMapColumnName_stringMap,
+          `test.test_dataset.firestoreNumber`(JSON_EXTRACT_SCALAR(data, '$.and.from')) AS newMapColumnName_numberMap,
+          `test.test_dataset.firestoreBoolean`(JSON_EXTRACT_SCALAR(data, '$.and.select')) AS newMapColumnName_booleanMap,
+          `test.test_dataset.firestoreGeopoint`(JSON_EXTRACT(data, '$.and.where')) AS newMapColumnName_geopointMap,
           SAFE_CAST(
-            FIRST_VALUE(
-              JSON_EXTRACT_SCALAR(data, '$.and.where._latitude')
-            ) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            ) AS NUMERIC
+            JSON_EXTRACT_SCALAR(data, '$.and.where._latitude') AS NUMERIC
           ) AS newMapColumnName_geopointMap_latitude,
           SAFE_CAST(
-            FIRST_VALUE(
-              JSON_EXTRACT_SCALAR(data, '$.and.where._longitude')
-            ) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            ) AS NUMERIC
+            JSON_EXTRACT_SCALAR(data, '$.and.where._longitude') AS NUMERIC
           ) AS newMapColumnName_geopointMap_longitude,
-          `test.test_dataset.firestoreTimestamp`(
-            FIRST_VALUE(JSON_EXTRACT(data, '$.and.between')) OVER(
-              PARTITION BY document_name
-              ORDER BY
-                timestamp DESC
-            )
-          ) AS newMapColumnName_timestampMap
+          `test.test_dataset.firestoreTimestamp`(JSON_EXTRACT(data, '$.and.between')) AS newMapColumnName_timestampMap
         FROM
-          `test.test_dataset.test_table`
+          `test.test_dataset.test_table` QUALIFY RANK() OVER(
+            PARTITION BY document_name
+            ORDER BY
+              timestamp DESC
+          ) = 1
       )
     WHERE
       NOT is_deleted

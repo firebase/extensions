@@ -82,6 +82,8 @@ When using SendGrid, you can use SendGrid Dynamic Templates to create and send t
 
 Add this document to the Firestore mail collection to send an email using a SendGrid Dynamic Template. The `templateId` is required and should be your SendGrid Dynamic Template ID (always starts with 'd-'). The `dynamicTemplateData` object contains the variables that will be used in your template.
 
+You can also include optional SendGrid fields in the same `sendGrid` object, such as `customArgs` (string key/value metadata) and `ipPoolName` (IP pool selection).
+
 For more details, see the [SendGrid Dynamic Templates documentation](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
 
 #### Understanding SendGrid Email IDs

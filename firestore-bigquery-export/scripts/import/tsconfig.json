@@ -6,7 +6,9 @@
     "outDir": "lib",
     "sourceMap": false,
     "target": "es2018",
-    "types": ["node", "chai", "jest"]
+    "types": ["node", "chai", "jest"],
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "compileOnSave": true,
   "include": ["src"],

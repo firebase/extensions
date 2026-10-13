@@ -1,3 +1,19 @@
+## Version 0.2.6
+
+chore: remove unused rimraf dependency
+
+## Version 0.2.5
+
+chore: bump dependencies
+
+## Version 0.2.4
+
+chore: bump dependencies
+
+## Version 0.2.3
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.2.2
 
 fix: remove default value on DATABASE_REGION

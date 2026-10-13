@@ -42,10 +42,7 @@ const eventTrackerConfig = {
   datasetLocation: config.datasetLocation,
   backupTableId: config.backupCollectionId,
   transformFunction: config.transformFunction,
-  timePartitioning: config.timePartitioning,
-  timePartitioningField: config.timePartitioningField,
-  timePartitioningFieldType: config.timePartitioningFieldType,
-  timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+  partitioning: config.partitioning,
   // Database related configurations
   databaseId: config.databaseId,
   clustering: config.clustering,
@@ -173,7 +170,7 @@ export const fsexportbigquery = onDocumentWritten(
     const fullResourceName = `projects/${projectId}/databases/${config.databaseId}/documents/${relativeName}`;
     const eventId = context.id;
     const operation = changeType;
-    
+
     if (config.ignoreDocumentDeletion && isDeleted) {
       logs.logEventAction(
         "Firestore event received and ignored by onDocumentWritten trigger",
