@@ -102,6 +102,9 @@ export const generateResizedImage = onObjectFinalized(
     ...(functionRegion ? { region: functionRegion } : {}),
     bucket: CONFIG_EXPRESSIONS.bucket,
     memory: CONFIG_EXPRESSIONS.memory,
+    // Preserve the extension's per-instance concurrency and ingress restrictions.
+    concurrency: 1,
+    ingressSettings: "ALLOW_INTERNAL_ONLY",
   },
   (event) => handleObjectFinalized(event, getContext())
 );
