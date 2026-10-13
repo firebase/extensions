@@ -112,6 +112,26 @@ describe("parseConfig", () => {
       expect(result.bigQueryProjectId).toBe("test-project");
     });
 
+    it("should use the database ID if specified", async () => {
+      const mockProgram = {
+        nonInteractive: true,
+        project: "test-project",
+        dataset: "test-dataset",
+        tableNamePrefix: "test-prefix",
+        schemaFiles: ["schema.json"],
+        databaseId: "my-db",
+        outputHelp: jest.fn(),
+      };
+
+      (parseProgram as jest.Mock).mockReturnValue(mockProgram);
+      (validateNonInteractiveParams as jest.Mock).mockReturnValue(true);
+      (readSchemas as jest.Mock).mockReturnValue({});
+
+      const result = await parseConfig();
+
+      expect(result.databaseId).toBe("my-db");
+    });
+
     it("should use gemini if specified", async () => {
       // Setup mocks with useGemini = true
       const mockProgram = {
