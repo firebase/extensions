@@ -109,6 +109,42 @@ describe("transformRows", () => {
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
   });
 
+  it("reuses the ID token client across batches", async () => {
+    mockGetIdTokenClient.mockResolvedValue({
+      getRequestHeaders: async () =>
+        new Headers({ Authorization: "Bearer test-id-token" }),
+    });
+
+    const tracker = buildTracker(TRANSFORM_URL);
+    await tracker.record([buildEvent()]);
+    await tracker.record([buildEvent()]);
+
+    expect(mockGetIdTokenClient).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries creating the ID token client after a failure", async () => {
+    mockGetIdTokenClient
+      .mockRejectedValueOnce(new Error("metadata server unavailable"))
+      .mockResolvedValue({
+        getRequestHeaders: async () =>
+          new Headers({ Authorization: "Bearer test-id-token" }),
+      });
+
+    const tracker = buildTracker(TRANSFORM_URL);
+    await tracker.record([buildEvent()]);
+    await tracker.record([buildEvent()]);
+
+    expect(mockGetIdTokenClient).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[0][1].headers).toEqual({
+      "Content-Type": "application/json",
+    });
+    expect(mockFetch.mock.calls[1][1].headers).toEqual({
+      "Content-Type": "application/json",
+      "X-Serverless-Authorization": "Bearer test-id-token",
+    });
+  });
+
   it("skips the transform call when no URL is configured", async () => {
     const tracker = buildTracker("");
     await tracker.record([buildEvent()]);

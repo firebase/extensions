@@ -17,7 +17,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
-import { GoogleAuth } from "google-auth-library";
+import { GoogleAuth, IdTokenClient } from "google-auth-library";
 import {
   RawChangelogSchema,
   documentIdField,
@@ -141,6 +141,7 @@ export class FirestoreBigQueryEventHistoryTracker
   bq: bigquery.BigQuery;
   _initialized: boolean = false;
   partitioningConfig: PartitioningConfig;
+  private transformAuthClient?: IdTokenClient;
 
   constructor(public config: ChangeTrackerConfig) {
     this.bq = new bigquery.BigQuery();
@@ -199,13 +200,14 @@ export class FirestoreBigQueryEventHistoryTracker
     if (this.config.transformFunction && this.config.transformFunction !== "") {
       let authHeaders: Record<string, string> = {};
       try {
-        const auth = new GoogleAuth();
-        const client = await auth.getIdTokenClient(
-          this.config.transformFunction
-        );
-        const authorization = new Headers(await client.getRequestHeaders()).get(
-          "authorization"
-        );
+        if (!this.transformAuthClient) {
+          this.transformAuthClient = await new GoogleAuth().getIdTokenClient(
+            this.config.transformFunction
+          );
+        }
+        const authorization = new Headers(
+          await this.transformAuthClient.getRequestHeaders()
+        ).get("authorization");
         // Callable functions reject a Google ID token in Authorization, while
         // Cloud Run's IAM check also accepts it in X-Serverless-Authorization.
         if (authorization) {
