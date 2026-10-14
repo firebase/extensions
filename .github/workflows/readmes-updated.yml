@@ -56,12 +56,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-global-deps-v1-
 
-      - name: Install Firebase and Lerna
+      # Lerna runs package scripts through pnpm because of the root
+      # pnpm-lock.yaml. pnpm 11 runs `pnpm install` before every script.
+      - name: Install Firebase, Lerna and pnpm
         env:
           GLOBAL_DEPS_DIR: ${{ steps.global-deps-setup.outputs.dir }}
         run: |
           echo "$GLOBAL_DEPS_DIR/bin" >> $GITHUB_PATH
-          npm install -g firebase-tools lerna
+          npm install -g firebase-tools lerna pnpm@10
 
       - name: Install local dependencies
         run: npm ci
