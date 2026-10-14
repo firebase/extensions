@@ -102,6 +102,13 @@ export const generateResizedImage = onObjectFinalized(
     ...(functionRegion ? { region: functionRegion } : {}),
     bucket: CONFIG_EXPRESSIONS.bucket,
     memory: CONFIG_EXPRESSIONS.memory,
+    // The extension's 1st gen trigger handled one event per instance. Left
+    // unset, the CLI defaults a 2nd gen function to 1 vCPU and concurrency 80,
+    // so a burst of uploads lands on one instance and every resize shares its
+    // CPU until the requests hit the 60s timeout. The trigger has no retry
+    // policy, so those images are never resized.
+    concurrency: 1,
+    cpu: "gcf_gen1",
   },
   (event) => handleObjectFinalized(event, getContext())
 );
