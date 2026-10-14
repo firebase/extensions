@@ -398,6 +398,25 @@ The Java/Beam restoration pipeline lives in
 GoogleCloudPlatform/firebase-extensions and is consumed as a pinned release by
 `scripts/setup.sh` - see The restoration pipeline.
 
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `firestore-incremental-capture kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/firestore-incremental-capture` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+  Setting `LOG_LEVEL=debug` and reproducing again gives the most detail.
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
 ## License
 
 Apache-2.0
