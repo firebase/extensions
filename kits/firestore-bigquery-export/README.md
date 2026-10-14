@@ -399,10 +399,12 @@ File bugs in the
 using the bug template, with `firestore-bigquery-export kit` in the title.
 Include:
 
-- The kit version (`npm ls @firebase-function-kits/firestore-bigquery-export`),
-  your `firebase-tools` version (`firebase --version`) and Node.js version.
-- Your configuration from the kit's `.env` file, with secrets and project
-  details redacted.
+- The kit version (run `npm ls @firebase-function-kits/firestore-bigquery-export`
+  in your `functions/` or `function-kits/<kit-name>/` directory), your
+  `firebase-tools` version (`firebase --version`) and Node.js version.
+- Your configuration, with secrets and project details redacted. This is
+  `functions/.env`, or `function-kits/<kit-name>/config-<instance-id>/.env.<project-id>`
+  if you used the guided installer.
 - Steps to reproduce, the result you expected, and the result you got.
 - Logs from the `fsexportbigquery` and `syncBigQuery` functions in Cloud
   Logging (with their `kit-<instance-id>-` prefix if you deploy instances).
