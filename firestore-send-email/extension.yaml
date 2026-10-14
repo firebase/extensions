@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.2.10
+version: 0.2.11
 specVersion: v1beta
 
 displayName: Trigger Email from Firestore
@@ -229,7 +229,7 @@ params:
     type: string
     example: smtps://username@smtp.hostname.com:465
     validationRegex:
-      "^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)|^$"
+      "^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)$|^$"
     validationErrorMessage:
       Invalid SMTP connection URI. Must be in the form
       `smtp(s)://username:password@hostname:port` or
