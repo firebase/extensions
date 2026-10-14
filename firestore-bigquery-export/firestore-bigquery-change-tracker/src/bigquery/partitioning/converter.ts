@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as firebase from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { BigQuery } from "@google-cloud/bigquery";
 
 export class PartitionValueConverter {
@@ -34,13 +34,10 @@ export class PartitionValueConverter {
   convert(value: unknown): string | null {
     let date: Date;
 
-    if (value instanceof firebase.firestore.Timestamp) {
+    if (value instanceof Timestamp) {
       date = value.toDate();
     } else if (this.isTimestampLike(value)) {
-      date = new firebase.firestore.Timestamp(
-        value._seconds,
-        value._nanoseconds
-      ).toDate();
+      date = new Timestamp(value._seconds, value._nanoseconds).toDate();
     } else if (value instanceof Date && !isNaN(value.getTime())) {
       date = value;
     } else if (typeof value === "string") {

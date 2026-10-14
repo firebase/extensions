@@ -1,3 +1,11 @@
+## Version 0.3.4
+
+chore: bump firestore-bigquery-change-tracker dependency to v2.2.1
+
+fix: failed BigQuery inserts are no longer reported as successful while silently dropping unrecognised fields; rows BigQuery rejects are now written to `BACKUP_COLLECTION` (when set), logged as errors, and retried through Cloud Tasks
+
+fix: stop updating the BigQuery table metadata every time the extension is configured or updated when nothing has changed
+
 ## Version 0.3.3
 
 chore: remove unused runtime dependencies and bump change-tracker consumers

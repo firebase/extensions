@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { PartitionValueConverter } from "../../../bigquery/partitioning/converter";
 
 describe("PartitionValueConverter", () => {
@@ -22,9 +22,7 @@ describe("PartitionValueConverter", () => {
     const converter = new PartitionValueConverter("TIMESTAMP");
 
     test("converts Firebase Timestamp to BigQuery timestamp string", () => {
-      const timestamp = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:30:00Z")
-      );
+      const timestamp = Timestamp.fromDate(new Date("2024-01-15T10:30:00Z"));
       const result = converter.convert(timestamp);
       expect(result).toBeDefined();
       expect(typeof result).toBe("string");
@@ -195,9 +193,7 @@ describe("PartitionValueConverter", () => {
     const converter = new PartitionValueConverter("DATE");
 
     test("converts Firebase Timestamp to BigQuery date string", () => {
-      const timestamp = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:30:00Z")
-      );
+      const timestamp = Timestamp.fromDate(new Date("2024-01-15T10:30:00Z"));
       const result = converter.convert(timestamp);
       expect(result).toBe("2024-01-15");
     });
@@ -248,9 +244,7 @@ describe("PartitionValueConverter", () => {
     const converter = new PartitionValueConverter("DATETIME");
 
     test("converts Firebase Timestamp to BigQuery datetime string", () => {
-      const timestamp = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:30:00Z")
-      );
+      const timestamp = Timestamp.fromDate(new Date("2024-01-15T10:30:00Z"));
       const result = converter.convert(timestamp);
       expect(result).toBeDefined();
       expect(result).toContain("2024-01-15");

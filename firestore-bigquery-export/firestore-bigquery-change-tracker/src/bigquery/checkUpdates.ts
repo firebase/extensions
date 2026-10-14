@@ -39,7 +39,7 @@ export async function tableRequiresUpdate({
   const { metadata } = table;
 
   /** Check clustering */
-  const configCluster = JSON.stringify(config.clustering);
+  const configCluster = JSON.stringify(config.clustering || []);
   const tableCluster = JSON.stringify(metadata.clustering?.fields || []);
   if (configCluster !== tableCluster) return true;
 
@@ -55,6 +55,14 @@ export async function tableRequiresUpdate({
   /** Check partitioning */
   const partitioningConfig = new PartitioningConfig(config.partitioning);
   const partitioning = new Partitioning(partitioningConfig, table);
+
+  /** Check the configured partition column exists in the schema */
+  const partitionFieldMissing =
+    partitioning.customPartitionFieldMissingFromSchema(
+      metadata.schema?.fields || []
+    );
+  if (partitionFieldMissing) return true;
+
   const isValidPartition =
     await partitioning.isValidPartitionForExistingTable();
   if (isValidPartition) return true;

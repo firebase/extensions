@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
@@ -236,7 +236,7 @@ describeIfBigQueryIntegration("processing partitions on a new table", () => {
         bqProjectId: undefined,
       };
 
-      const end_date = admin.firestore.Timestamp.now();
+      const end_date = Timestamp.now();
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",
@@ -382,7 +382,7 @@ describeIfBigQueryIntegration("processing partitions on a new table", () => {
         bqProjectId: undefined,
       };
 
-      const end_date = admin.firestore.Timestamp.now();
+      const end_date = Timestamp.now();
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",
@@ -415,7 +415,7 @@ describeIfBigQueryIntegration("processing partitions on a new table", () => {
         bqProjectId: undefined,
       };
 
-      const end_date = admin.firestore.Timestamp.now();
+      const end_date = Timestamp.now();
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",
@@ -449,7 +449,7 @@ describeIfBigQueryIntegration("processing partitions on a new table", () => {
         bqProjectId: undefined,
       };
 
-      const end_date = admin.firestore.Timestamp.now();
+      const end_date = Timestamp.now();
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",
@@ -777,9 +777,7 @@ describeIfBigQueryIntegration(
         firestoreFieldName: "endDate",
       });
 
-      const oldDate = admin.firestore.Timestamp.fromDate(
-        new Date("2024-01-15T10:00:00Z")
-      );
+      const oldDate = Timestamp.fromDate(new Date("2024-01-15T10:00:00Z"));
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",

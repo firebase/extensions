@@ -34,7 +34,7 @@ import {
   changeTrackerEvent,
 } from "../../fixtures/changeTracker";
 import { getBigQueryTableData } from "../../fixtures/queries";
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 process.env.PROJECT_ID = "dev-extensions-testing";
 
@@ -45,7 +45,7 @@ process.env.PROJECT_ID = "dev-extensions-testing";
 //   eventId = "testing",
 //   documentId = "testing",
 //   pathParams = { documentId: "12345" },
-//   data = { end_date: firestore.Timestamp.now() },
+//   data = { end_date: Timestamp.now() },
 //   oldData = null,
 //   useNewSnapshotQuerySyntax = false,
 // }: any): FirestoreDocumentChangeEvent => {
@@ -65,7 +65,7 @@ process.env.PROJECT_ID = "dev-extensions-testing";
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 const event2: FirestoreDocumentChangeEvent = changeTrackerEvent({
-  data: { end_date: firestore.Timestamp.now() },
+  data: { end_date: Timestamp.now() },
   eventId: "testing2",
 });
 let randomID: string;
@@ -329,7 +329,7 @@ describe("integration", () => {
         eventId: "testing3",
         documentId: "doc3",
         pathParams: { documentId: "doc3" },
-        data: { end_date: firestore.Timestamp.now(), status: "completed" },
+        data: { end_date: Timestamp.now(), status: "completed" },
         oldData: null,
       });
 
@@ -340,7 +340,7 @@ describe("integration", () => {
         eventId: "testing4",
         documentId: "doc4",
         pathParams: { documentId: "doc4" },
-        data: { end_date: firestore.Timestamp.now(), status: "pending" },
+        data: { end_date: Timestamp.now(), status: "pending" },
         oldData: null,
       });
 
