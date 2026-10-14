@@ -4,6 +4,14 @@ Distributed, sharded counters for Firestore. This is the Distributed Counter
 Firebase Extension as an npm package you add to your own Firebase Functions
 codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-counter@next
+> ```
+
 It maintains counter shards under watched documents, flushes them on a schedule
 via a controller, and aggregates totals with workers. The functions run in your
 own Firebase project; there is no hosted version, so you deploy them yourself.
@@ -45,7 +53,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json
@@ -119,18 +127,21 @@ such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
 ## Differences from the Distributed Counter extension
 
 This kit is the extension repackaged as an npm package. It is a very close port:
-both settings keep their name, type and default, so an existing `.env` is a
-lift-and-shift, and the counting itself is untouched. Shards still live in the
+`INTERNAL_STATE_PATH` and `SCHEDULE_FREQUENCY` keep their name, type and
+default, so an existing `.env` carries over once you add the new
+`DATABASE_REGION` setting (see below), and the counting itself is untouched. Shards still live in the
 `_counter_shards_` subcollection, are aggregated by the same algorithm on the
 same schedule, and your existing security rules and client code keep working
 without changes. The differences below are worth knowing before you deploy.
 
-### Your settings are no longer validated before deploy
+### Settings already in `.env` are not validated
 
 `INTERNAL_STATE_PATH` must be a document path, meaning an even number of
-segments such as `_firebase_ext_/sharded_counter`. The extension rejected
-anything else at install time. Nothing checks it now, so a collection path such
-as `_firebase_ext_` deploys happily and then throws on every controller run:
+segments such as `_firebase_ext_/sharded_counter`. The CLI prompt rejects
+anything else, as the extension's install did, but a value already in your
+`.env` (copied across, or written by hand) is not checked. A collection path
+such as `_firebase_ext_` there deploys happily and then throws on every
+controller run:
 
 ```
 Value for argument "documentPath" must point to a document, but was
@@ -141,9 +152,9 @@ Counters silently stop aggregating, and the only sign is the error in your
 function logs.
 
 `SCHEDULE_FREQUENCY` is still a plain number of minutes, and the kit builds the
-same `every N minutes` schedule from it. It is also unvalidated now, so a value
-like `*/5 * * * *` or `5 minutes`, which the install prompt used to reject,
-reaches your deploy instead.
+same `every N minutes` schedule from it. The prompt still rejects a value like
+`*/5 * * * *` or `5 minutes`, but the same value in `.env` reaches your deploy
+unchecked.
 
 ### The worker function publishes no events
 
@@ -166,8 +177,8 @@ values in your `.env`. If you set `EVENTARC_CHANNEL` and leave
 ### Your codebase's global options apply to these functions
 
 The functions are exported from your own functions codebase, so a
-`setGlobalOptions` call there applies to them: region, memory, and instance
-limits. The extension deployed with fixed settings you could not influence, and
+`setGlobalOptions` call there applies to them: memory, instance limits, and
+region when `DATABASE_REGION` is empty. The extension deployed with fixed settings you could not influence, and
 always in `us-central1`.
 
 The controller and shard-write functions keep their own limit of one instance,
@@ -242,8 +253,8 @@ scheduler locations list`, not from a failed deploy.
 
 ### Unchanged
 
-- Both settings, with the same names and the same defaults
-  (`_firebase_ext_/sharded_counter`, `1` minute).
+- `INTERNAL_STATE_PATH` and `SCHEDULE_FREQUENCY`, with the same names and the
+  same defaults (`_firebase_ext_/sharded_counter`, `1` minute).
 - The `_counter_shards_` subcollection name, the shard document format, and
   therefore your security rules.
 - The aggregation behaviour: inline aggregation up to 200 shards, workers above

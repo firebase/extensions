@@ -4,6 +4,14 @@ Schedule a BigQuery query and write each run's rows and metadata to Firestore.
 This is the Export BigQuery to Firestore Firebase Extension as an npm package
 you add to your own Firebase Functions codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/bigquery-firestore-export@next
+> ```
+
 The kit creates or reconciles a BigQuery Data Transfer scheduled query, listens
 for its Pub/Sub completion notifications, reads the destination table, and
 writes the rows to Firestore. The functions run in your own Firebase project;
@@ -66,7 +74,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment - earlier CLIs do not provide the
 `FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
@@ -153,7 +161,7 @@ associates the deployment with its transfer config.
 The kit wires `upsertTransferConfig` to both `afterFirstDeploy` and
 `afterRedeploy`. The lifecycle task creates the Pub/Sub topic and scheduled
 query on first deploy, then reconciles supported query, table, schedule,
-dataset, partitioning, and topic changes on later deploys. It retries transient
+dataset, partitioning, display name, and topic changes on later deploys. It retries transient
 failures up to five times with at least 30 seconds of backoff.
 
 The kit stores `extInstanceId` on the Firestore config document and uses that
@@ -264,14 +272,13 @@ The install, update and configure hooks are replaced by an `upsertTransferConfig
 task that the CLI runs after your first deploy and after every redeploy. It does
 the same work: create the scheduled query if this instance has none, otherwise
 reconcile the existing one against your current `QUERY_STRING`, `DATASET_ID`,
-`TABLE_NAME`, `PARTITIONING_FIELD` and `SCHEDULE`.
+`TABLE_NAME`, `PARTITIONING_FIELD`, `DISPLAY_NAME` and `SCHEDULE`.
 
 Two consequences of it now being an ordinary task rather than a lifecycle event.
 There is no install UI to report progress into, so failures show up in the task's
 function logs, and the task retries up to five times with a 30 second minimum
-backoff. And `DISPLAY_NAME` is no longer immutable, but changing it does not
-rename an existing scheduled query, because display name is not part of the
-update; it only applies to a config the kit creates.
+backoff. And `DISPLAY_NAME` is no longer immutable: changing it renames the
+existing scheduled query on the next deploy.
 
 Removing `PARTITIONING_FIELD` once it has been set still fails, with the same
 explanation, because the BigQuery Data Transfer API cannot clear it.
@@ -283,13 +290,10 @@ explanation, because the BigQuery Data Transfer API cannot clear it.
 picked at install. `BIGQUERY_DATASET_LOCATION` is unchanged and still tells the
 result query where your dataset lives.
 
-### Failed notifications are retried
+### Both functions are 2nd gen
 
-`processMessages` is a 2nd gen Pub/Sub function with retries enabled, where the
-extension's 1st gen trigger did not retry. A run whose results fail to copy, for
-example because BigQuery or Firestore is briefly unavailable, is now retried
-rather than dropped. A notification that keeps failing, such as one for a transfer
-config not tagged with this instance id, is also retried until Pub/Sub gives up.
+`processMessages` is a 2nd gen Pub/Sub function. Like the extension's 1st gen
+trigger, it does not retry: a run whose results fail to copy is not redelivered.
 
 Both functions' service accounts need `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the three roles the extension asked for, and the

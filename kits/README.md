@@ -37,7 +37,7 @@ functions it exports.
 ## Using a kit
 
 Kits need Firebase CLI 15.27.0 or later with the `kits` experiment enabled.
-The CLI provides each instance its id as the `FIREBASE_KIT_INSTANCE_ID`
+The CLI provides each instance with its id as the `FIREBASE_KIT_INSTANCE_ID`
 environment variable; earlier versions do not set it, and kits that use the
 instance id will not deploy or run without it.
 
@@ -71,8 +71,8 @@ for its exports, its settings, and the roles the CLI grants on deploy.
 ## Migrating from an extension
 
 A kit ports the extension's behavior, but it is not a drop-in replacement for
-an installed instance. Deployment still handles the platform setup for you: Firebase
-CLI 15.23.0 or later creates the runtime service account, grants it the roles
+an installed instance. Deployment still handles the platform setup for you: the Firebase
+CLI creates the runtime service account, grants it the roles
 the kit needs, enables the required APIs, and connects any secrets. What moves
 to you is the configuration itself, so check the kit's README against your
 installed instance's settings before deploying, rather than copying the `.env`

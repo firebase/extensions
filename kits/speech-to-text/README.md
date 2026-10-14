@@ -4,6 +4,14 @@ Transcribe audio files in Cloud Storage to text. This is the Transcribe Speech t
 Text Firebase Extension as an npm package you add to your own Firebase Functions
 codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/speech-to-text@next
+> ```
+
 It listens for audio files finalized in a Cloud Storage bucket, transcodes them
 to LINEAR16, runs a long-running Cloud Speech-to-Text recognition, and writes the
 transcript to Firestore (and/or back to Storage). The function runs in your own
@@ -30,7 +38,9 @@ conflicts with that automatic setup.
 | `roles/eventarc.eventReceiver` | receive Gen2 Storage trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
 | `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `firestore.googleapis.com` | write transcript documents to Firestore |
 | `speech.googleapis.com` | transcribe audio |
+| `eventarcpublishing.googleapis.com` | publish the kit's custom Eventarc events |
 
 ## Usage
 
@@ -48,7 +58,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json
@@ -93,8 +103,8 @@ loads them at deploy time and prompts for any required values that are missing.
 | `enableAutomaticPunctuation` | `ENABLE_AUTOMATIC_PUNCTUATION` | no | `true` | Speech option |
 
 The function timeout defaults to `540` seconds and memory to `1GiB` so long audio
-does not time out mid-transcription; both are overridable via `timeoutSeconds`
-and `memory`.
+does not time out mid-transcription. The main entry has no setting for either;
+to change them, register the trigger yourself from `./lib`.
 
 ## Multiple instances
 
@@ -136,8 +146,7 @@ ffmpeg transcode to LINEAR16, the same long-running recognition request, the sam
 per-channel transcript map, the same Firestore progress document and the same two
 Eventarc events. Every setting keeps its extension environment variable name and
 default, so a `.env` copied from your installed instance needs no value changes.
-What changes is how long the function may run and what is no longer checked
-for you.
+What changes is how long the function may run and when bad values are caught.
 
 ### Where the outputs land
 
@@ -183,12 +192,12 @@ the downloaded and transcoded files in `/tmp`, which is shared across warm
 invocations of the same instance and counts against the function's memory, so a
 busy instance could run itself out of space.
 
-### Nothing checks your settings at deploy time
+### Values set in `.env` skip the install prompt's validation
 
-The extension rejected a `LANGUAGE_CODE` that did not look like a BCP-47 code and
-a `COLLECTION_PATH` that was not a valid collection path, before it would install.
-Neither is checked now. `LANGUAGE_CODE` is still required, so the CLI prompts for
-it if it is missing, but any string is accepted and a bad value surfaces as a
+The install prompts reject a `LANGUAGE_CODE` that does not look like a BCP-47
+code and a `COLLECTION_PATH` that is not a valid collection path, the same as the
+extension did. Those checks only run when the CLI prompts you, though: a value
+you write into `.env` is used as-is, and a bad `LANGUAGE_CODE` surfaces as a
 Speech-to-Text error per file, with the failure recorded on the Firestore
 document and in the `fail` event.
 

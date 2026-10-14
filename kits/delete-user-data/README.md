@@ -4,9 +4,17 @@ Delete user data across Firestore, RTDB, and Storage on account deletion. This
 is the Delete User Data Firebase Extension as an npm package you add to your own
 Firebase Functions codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/delete-user-data@next
+> ```
+
 It listens for Firebase Auth user deletions, discovers configured (and optional
 auto-discovered) paths containing the user id, and clears matching data in
-Firestorestore, Realtime Database, and Cloud Storage. The functions run in your own
+Firestore, Realtime Database, and Cloud Storage. The functions run in your own
 Firebase project; there is no hosted version, so you deploy them yourself.
 
 ## Install
@@ -52,7 +60,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment — earlier CLIs do not provide the
 `FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
@@ -99,14 +107,14 @@ overridden there.
 | `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
 | `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
 | `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
-| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location |
+| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location: `us-central1`, `europe-west1` or `asia-southeast1` |
 | `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
 | `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
 | `storagePaths` | `STORAGE_PATHS` | no | (empty) | Comma-separated Storage paths with `{UID}` |
 | `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `no` | Auto-discover user-linked docs (`yes` or `no`) |
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
-| `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | Optional custom search function |
+| `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | URL of a custom search function that returns paths to delete |
 | `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
 | `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 

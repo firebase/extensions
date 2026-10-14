@@ -4,6 +4,14 @@ Resize images uploaded to Cloud Storage. This is the Resize Images Firebase
 Extension as an npm package you add to your own Firebase Functions codebase and
 deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/storage-resize-images@next
+> ```
+
 It listens for image objects finalized in a Cloud Storage bucket, optionally
 filters content, generates configured sizes/formats, and writes the resized
 outputs back to Storage. The function runs in your own Firebase project; there
@@ -32,6 +40,7 @@ conflicts with that automatic setup.
 | `roles/eventarc.publisher`         | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled                                                    |
 | `storage-component.googleapis.com` | use Cloud Storage                                                                          |
+| `eventarcpublishing.googleapis.com` | publish the kit's custom Eventarc events                                                  |
 
 ## Usage
 
@@ -49,7 +58,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json

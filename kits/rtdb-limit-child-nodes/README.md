@@ -4,6 +4,14 @@ Limit the number of child nodes under a Realtime Database path. This is the
 Limit Child Nodes Firebase Extension as an npm package you add to your own
 Firebase Functions codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/rtdb-limit-child-nodes@next
+> ```
+
 It listens for child creates under a path, and when the parent exceeds the
 configured max count it deletes the oldest children. The function runs in your
 own Firebase project; there is no hosted version, so you deploy it yourself.
@@ -49,7 +57,7 @@ the kit knows how many children to keep. `DATABASE_REGION`, `RTDB_NODE_PATH` and
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json

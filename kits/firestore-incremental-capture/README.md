@@ -4,6 +4,14 @@ Incremental point-in-time capture of Firestore changes. This is the Firestore
 Incremental Backup Stream Firebase Extension as an npm package you add to your
 own Firebase Functions codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-incremental-capture@next
+> ```
+
 Every write to a watched collection is serialized into a BigQuery changelog. A
 restoration then rebuilds a separate Firestore database as it stood at a chosen
 second: a Dataflow pipeline reads a point-in-time-recovery snapshot of the
@@ -105,7 +113,7 @@ the config values to use below.
 PITR only covers writes made after it is enabled, so a restoration can only
 target a point in time after setup ran.
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment - earlier CLIs do not provide the
 `FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
@@ -213,6 +221,10 @@ the instances cannot collide. Each instance learns its own id from the
 `FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; it namespaces the task
 queues, the Dataflow jobs and the run-status documents, and there is nothing to
 keep in sync by hand.
+
+Run `scripts/setup.sh` once per instance with `INSTANCE_ID` set to that
+instance's key (it defaults to `default`): the staged flex template is named
+after it, so a restoration on any other instance fails without it.
 
 Give each instance its own `SYNC_DATASET`/`SYNC_TABLE` or its own
 `BACKUP_INSTANCE_ID`. Two instances sharing a changelog table would replay each
@@ -324,8 +336,8 @@ correctly. Everything around the format moved:
 - **Configuration.** The instance id comes from this instance's key in the
   `instances` map in `firebase.json`, which the CLI provides to the functions
   as `FIREBASE_KIT_INSTANCE_ID` (the extension injected `EXT_INSTANCE_ID`
-  itself). `LOCATION` is free-form and mutable instead of an
-  immutable install-time select. `SYNC_COLLECTION_PATH` is optional with a
+  itself). `LOCATION` is mutable instead of an immutable
+  install-time select. `SYNC_COLLECTION_PATH` is optional with a
   default, and no longer advertises `{document=**}` whole-database capture -
   that pattern never produced a deployable trigger (see Configuration).
   `DATASET_LOCATION` is configurable instead of hardcoded to `us`.
