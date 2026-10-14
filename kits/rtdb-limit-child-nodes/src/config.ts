@@ -1,0 +1,179 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { defineInt, defineString, select } from "firebase-functions/params";
+import type { DeployTimeOptions, RtdbLimitConfig } from "./export-config";
+import { toTriggerRef } from "./export-config";
+
+function defaultDatabaseInstance(): string | undefined {
+  try {
+    const config = JSON.parse(process.env.FIREBASE_CONFIG ?? "{}") as {
+      databaseURL?: string;
+    };
+    return config.databaseURL
+      ? new URL(config.databaseURL).hostname.split(".")[0]
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const databaseInstanceDefault = defaultDatabaseInstance();
+
+const DATABASE_INSTANCE_VALIDATION = {
+  text: {
+    example: "my-instance",
+    // The extension's regex also matches "", and a project without a Realtime
+    // Database gives the param no default to fall back on.
+    validationRegex: /^([0-9a-z_.-]*)$/,
+    validationErrorMessage: "Invalid database instance",
+    nonEmpty: true,
+  },
+};
+
+const params = {
+  databaseRegion: defineString("DATABASE_REGION", {
+    label: "Realtime Database Instance Location",
+    description:
+      "Where is the Realtime Database instance located? You can check your instance's location at [https://console.firebase.google.com/project/_/database](https://console.firebase.google.com/project/_/database). The function in this kit deploys to this region, which a 2nd gen database trigger requires.",
+
+    input: select({
+      "Iowa (us-central1)": "us-central1",
+      "Belgium (europe-west1)": "europe-west1",
+      "Singapore (asia-southeast1)": "asia-southeast1",
+    }),
+  }),
+  // Do not use NODE_PATH: Node.js reserves it for module resolution and will
+  // overwrite the param at runtime (and can freeze a bad ref at deploy).
+  nodePath: defineString("RTDB_NODE_PATH", {
+    label: "Realtime Database path",
+    description:
+      "What is the Realtime Database path for which you want to limit the number of child nodes?",
+
+    input: {
+      text: {
+        example: "path/to/limit",
+
+        validationRegex: /^\S+$/,
+        validationErrorMessage: "Path cannot have spaces.",
+      },
+    },
+  }),
+  // Extension regex, kept verbatim for strict parity. It accepts 0 even
+  // though a MAX_COUNT of 0 would delete every child on every write;
+  // resolveRtdbLimitConfig still rejects non-positive values at runtime.
+  maxCount: defineInt("MAX_COUNT", {
+    label: "Maximum count of nodes to keep",
+    description:
+      "What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.",
+
+    input: {
+      text: {
+        example: "10",
+
+        validationRegex: /^\d+$/,
+        validationErrorMessage:
+          "Invalid MAX_COUNT, must be a positive integer.",
+      },
+    },
+  }),
+  databaseInstance: databaseInstanceDefault
+    ? defineString("SELECTED_DATABASE_INSTANCE", {
+        label: "Realtime Database",
+        description:
+          "From which Realtime Database instance do you want to limit child nodes?",
+
+        default: databaseInstanceDefault,
+        input: DATABASE_INSTANCE_VALIDATION,
+      })
+    : defineString("SELECTED_DATABASE_INSTANCE", {
+        label: "Realtime Database",
+        description:
+          "From which Realtime Database instance do you want to limit child nodes?",
+
+        input: DATABASE_INSTANCE_VALIDATION,
+      }),
+};
+
+export function configFromEnv(): RtdbLimitConfig {
+  return {
+    nodePath: params.nodePath.value(),
+    maxCount: params.maxCount.value(),
+    databaseInstance: params.databaseInstance.value(),
+  };
+}
+
+/**
+ * Builds deploy-time trigger options.
+ *
+ * `onValueCreated` requires `ref` to be a string, so the param Expression cannot
+ * be passed directly. During CLI discovery, preserve it as CEL inside the string;
+ * the CLI resolves that interpolation after loading the project's dotenv values.
+ * At runtime, resolve the param before constructing the path so event parameters
+ * are extracted against the concrete ref rather than the CEL placeholder.
+ */
+export function envDeployOptions(): DeployTimeOptions {
+  const nodePath =
+    process.env.FUNCTIONS_CONTROL_API === "true"
+      ? params.nodePath.toCEL()
+      : params.nodePath.value();
+
+  return {
+    // Realtime Database locations are Cloud Run regions already, so the param
+    // needs no mapping and passes through as a CEL expression. The CLI resolves
+    // it after prompting, so the value applies on the deploy that sets it.
+    region: params.databaseRegion,
+    ref: toTriggerRef(nodePath),
+    instance: params.databaseInstance,
+  };
+}
+
+// Params that must hold a value: those the published extension marks
+// `required: true`, plus DATABASE_REGION, which the function's region is
+// substituted from and which reaches Cloud Run as written. A value the user
+// never supplied is absent from process.env; one they deliberately blanked is
+// present and empty. Only the second is a misconfiguration, so the guard below
+// reads process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "DATABASE_REGION",
+  "RTDB_NODE_PATH",
+  "SELECTED_DATABASE_INSTANCE",
+  "MAX_COUNT",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
+}

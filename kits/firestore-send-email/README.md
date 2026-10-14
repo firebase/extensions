@@ -1,0 +1,316 @@
+# @firebase-function-kits/firestore-send-email
+
+Send emails based on documents written to Firestore. This is the Trigger Email
+from Firestore Firebase Extension as an npm package you add to your own Firebase
+Functions codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-send-email@next
+> ```
+
+It listens for documents written to a mail collection, renders optional
+templates, and delivers through SMTP (username/password or OAuth2). The function
+runs in your own Firebase project; there is no hosted version, so you deploy it
+yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/firestore-send-email
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles on the function's service account.
+Firebase CLI 15.23.0 or later creates that account, grants the roles below,
+and attaches it to every function in this kit. Do not set a custom runtime
+service account for this codebase — it conflicts with that automatic setup.
+
+| Role                           | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/datastore.user`         | read mail documents and write delivery status                                              |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+
+## Usage
+
+Export the function from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export { processQueue } from "@firebase-function-kits/firestore-send-email";
+```
+
+and configure it with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-send-email",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the function above
+deploys as `kit-default-processQueue`.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
+the CLI connects them to the function at deploy time.
+
+| Field                 | Env var                | Required | Default            | Description                                           |
+| --------------------- | ---------------------- | -------- | ------------------ | ----------------------------------------------------- |
+| `mailCollection`      | `MAIL_COLLECTION`      | no       | `mail`             | Firestore collection of outbound mail docs            |
+| `defaultFrom`         | `DEFAULT_FROM`         | yes      | —                  | Default From address                                  |
+| `defaultReplyTo`      | `DEFAULT_REPLY_TO`     | no       | (empty)            | Default Reply-To address                              |
+| `databaseRegion`      | `DATABASE_REGION`      | yes      | (prompted)         | Firestore database location; also places the function |
+| `databaseId`          | `DATABASE`             | no       | `(default)`        | Firestore database id                                 |
+| `authType`            | `AUTH_TYPE`            | no       | `UsernamePassword` | `UsernamePassword` or `OAuth2`                        |
+| `smtpConnectionUri`   | `SMTP_CONNECTION_URI`  | no       | (empty)            | SMTP connection URI (username/password auth)          |
+| `smtpPassword`        | `SMTP_PASSWORD`        | secret   | —                  | SMTP password                                         |
+| `host`                | `HOST`                 | no       | (empty)            | SMTP host (OAuth2)                                    |
+| `oauthPort`           | `OAUTH_PORT`           | no       | `465`              | SMTP port (OAuth2)                                    |
+| `oauthSecure`         | `OAUTH_SECURE`         | no       | `true`             | Use TLS (OAuth2)                                      |
+| `user`                | `USER`                 | no       | (empty)            | SMTP username (OAuth2)                                |
+| `clientId`            | `CLIENT_ID`            | secret   | —                  | OAuth2 client id                                      |
+| `clientSecret`        | `CLIENT_SECRET`        | secret   | —                  | OAuth2 client secret                                  |
+| `refreshToken`        | `REFRESH_TOKEN`        | secret   | —                  | OAuth2 refresh token                                  |
+| `templatesCollection` | `TEMPLATES_COLLECTION` | no       | (empty)            | Optional Handlebars templates collection              |
+| `usersCollection`     | `USERS_COLLECTION`     | no       | (empty)            | Optional users collection for recipient lookup        |
+| `ttlExpireType`       | `TTL_EXPIRE_TYPE`      | no       | `never`            | TTL policy for processed docs                         |
+| `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | no       | `1`                | TTL amount when expire type is set                    |
+| `tlsOptions`          | `TLS_OPTIONS`          | no       | `{}`               | JSON TLS options for the SMTP transport               |
+
+## Multiple instances
+
+To process several mail queues, add one entry per instance to the `instances`
+map, each pointing at its own config directory with its own `.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-send-email",
+      "instances": {
+        "transactional": "instances/transactional",
+        "marketing": "instances/marketing"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide.
+
+## Events
+
+When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
+such as `onStart`, `onProcessing`, `onSuccess`, `onError`, `onComplete`,
+`onPending`, and `onRetry` under
+`firebase.extensions.firestore-send-email.v1.*`.
+
+## Differences from the Trigger Email from Firestore extension
+
+This kit is version 0.2.10 of the extension repackaged as an npm package you add
+to your own functions codebase. Delivery, the `delivery` state machine, the
+lease and retry handling, Handlebars templates and partials, UID recipient
+lookup, the SendGrid transport, payload validation and the TTL field are all
+ported verbatim. Every setting keeps its extension environment variable name and
+default, so a `.env` copied from your installed instance needs no value changes.
+What does change is where the four secrets come from, where the function runs,
+and what is no longer checked or set up for you.
+
+### Create the four secrets by name, all of them
+
+The extension stored each secret param as `ext-<instance id>-<PARAM>` in Secret
+Manager. The kit asks for secrets named exactly `SMTP_PASSWORD`, `CLIENT_ID`,
+`CLIENT_SECRET` and `REFRESH_TOKEN`, so your existing extension secrets are not
+picked up. All four are attached to the function whatever `AUTH_TYPE` is set to,
+and were optional in the extension. If a secret does not exist, `firebase deploy`
+prompts you for a value, and fails outright when running non-interactively (CI).
+On username/password auth create the three OAuth2 secrets with a placeholder
+value. On OAuth2 auth do the same for `SMTP_PASSWORD`, unless you send through
+SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key whatever
+`AUTH_TYPE` is set to, so a connection URI pointing at `smtp.sendgrid.net` needs
+your real API key there and a placeholder fails every send with a 401.
+
+### DATABASE_REGION now decides where the function runs
+
+In the extension it only told the trigger where your database lived; the
+function itself always ran in `us-central1`, as the extension offered no
+location setting. The kit deploys the function to the region derived from
+`DATABASE_REGION`, so the function moves next to your database. Regional
+Firestore locations (`europe-west2`, `us-east1`, ...) are used as-is; the
+multi-region locations map to a Cloud Run region inside them - `nam5` and
+`nam7` to `us-central1`, `eur3` to `europe-west1` - because they are not Cloud
+Run regions themselves and would fail the deploy. The value is matched
+case-insensitively. The Firestore trigger always fires in the database's own
+region, whatever region the function runs in.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is honored: the function deploys near your database.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the function silently falls back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env`
+already carried `DATABASE_REGION`) can itself trigger the region move described
+below on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+it is already deployed in, and on a first deploy it lands in `us-central1`. The
+CLI would otherwise place it next to the database, but it resolves the default
+region before it resolves params, so the `DATABASE` param this kit passes to the
+trigger is still an unresolved expression when the database is looked up, and
+the lookup falls back
+([firebase/firebase-tools#11020](https://github.com/firebase/firebase-tools/issues/11020)).
+Set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy` to land somewhere else. Careful with that variable: it applies
+to every no-region function in the deploy, not just this kit. Omitting the line
+is not the same as an empty one: a non-interactive deploy fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Note that changing an existing install's function region
+deletes and recreates the function in the new region. `processQueue` is the
+kit's only function and nothing reconciles the mail collection afterwards, so
+any document written while the function is gone is never delivered. Stop
+writers and let the collection drain before a deploy that moves the region.
+
+### Create the Eventarc channel yourself for events
+
+Choosing events at install used to create the channel and set both event
+variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
+to a channel you have created, and the same seven
+`firebase.extensions.firestore-send-email.v1.*` events are published. Per-event
+selection is gone in practice, because the CLI rejects any `.env` key beginning
+with `EXT_`, so
+`EXT_SELECTED_EVENTS` cannot be set and every event type is published. With
+`EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
+unaffected.
+
+### Settings in `.env` are not validated at deploy time
+
+The extension rejected a malformed `DEFAULT_FROM`, a `MAIL_COLLECTION` that was
+not a valid collection path, an `SMTP_CONNECTION_URI` that was not
+`smtp(s)://...:port`, and a `TTL_EXPIRE_VALUE` that was not a positive integer,
+before it would install. The kit declares the same checks, but they apply only to
+a value entered at the `firebase deploy` prompt, not to one read from `.env`. A
+bad from address or connection URI in `.env` deploys cleanly and every document
+fails at send time with `delivery.state: ERROR` instead. `TTL_EXPIRE_VALUE: 0` is
+silently treated as `1`, and a negative value produces a `delivery.expireAt` in
+the past, which a TTL policy will act on immediately. Only a required setting
+left empty in `.env`, such as `DEFAULT_FROM=`, fails the deploy.
+
+### The setup steps and the OAuth2 helper are not in the README
+
+Two install-time instructions have no equivalent here. Automatic deletion still
+needs you to create a Firestore TTL policy on `delivery.expireAt` by hand for the
+collection the function watches, and the SendGrid guidance (categories, dynamic
+templates, the `sendgridQueueId` in `delivery.info`) is documented only in the
+extension. Both still apply unchanged. The standalone
+`oauth2-refresh-token-helper.js` script is not shipped with the package, but it
+is a plain download from the extension repository and still works for generating
+a refresh token.
+
+### A missing template name now says so
+
+Rendering a template whose name does not exist in your templates collection wrote
+a `TypeError` about reading `attachments` into `delivery.error`. It now writes
+`Tried to render non-existent template '<name>'`.
+
+### Unchanged
+
+- The watched path is still `MAIL_COLLECTION/{documentId}`, still matched as a
+  path pattern so nested collections such as `users/{uid}/mail` keep working, and
+  `MAIL_COLLECTION` still defaults to `mail`.
+- Every environment variable keeps its name, type and default, including
+  `OAUTH_SECURE`, which is still a `true`/`false` dropdown, and keeps the
+  extension's `Yes` / `No` option labels.
+- Document fields and their meanings are identical: `to`, `cc`, `bcc`, the
+  `*Uids` variants, `message`, `template`, `sendGrid`, `headers`, `categories`,
+  `from` and `replyTo`, along with the validation error messages written to
+  `delivery.error`.
+- The `delivery` state machine is unchanged, including the 60 second processing
+  lease, that a document in `SUCCESS` or `ERROR` is never reprocessed, and the
+  `delivery.info` shape.
+- SendGrid is still selected by an `smtp.sendgrid.net` connection URI with the
+  API key in `SMTP_PASSWORD`, and Outlook hosts still get their explicit
+  transport configuration.
+- The function still runs with a 120 second timeout, and `TLS_OPTIONS`,
+  `DATABASE`, `USERS_COLLECTION` and `TEMPLATES_COLLECTION` behave as before.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/firestore-send-email`): exports `processQueue`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
+- **Library entry** (`./lib`): config helpers, handlers, payload preparation,
+  template rendering, and transport setup for owning trigger registration
+  yourself.
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `firestore-send-email kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/firestore-send-email` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0

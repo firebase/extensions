@@ -1,0 +1,258 @@
+# @firebase-function-kits/firestore-genai-chatbot
+
+Conversational GenAI chatbot backed by Firestore. This is the Build Chatbot
+with the Gemini API Firebase Extension as an npm package you add to your own
+Firebase Functions codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-genai-chatbot@next
+> ```
+
+It listens for prompt documents written to a discussion collection, calls Google
+AI or Vertex AI, and writes the model response back to Firestore. The function
+runs in your own Firebase project; there is no hosted version, so you deploy it
+yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/firestore-genai-chatbot
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles and APIs for the function's service
+account. Firebase CLI 15.23.0 or later creates that account, grants the roles
+below, enables the listed APIs, and attaches the account to every function in
+this kit. Do not set a custom runtime service account for this codebase — it
+conflicts with that automatic setup.
+
+| Role / API | Why |
+|---|---|
+| `roles/datastore.user` | read prompts and write model responses |
+| `roles/aiplatform.user` | call Vertex AI when that provider is selected |
+| `roles/monitoring.metricWriter` | Genkit monitoring metrics |
+| `roles/cloudtrace.agent` | Genkit tracing |
+| `roles/logging.logWriter` | Genkit structured logs |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `aiplatform.googleapis.com` | Vertex AI Gemini access when selected |
+
+## Usage
+
+Export the function from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export { generateMessage } from "@firebase-function-kits/firestore-genai-chatbot";
+```
+
+and configure with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-genai-chatbot",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the function above
+deploys as `kit-default-generateMessage`.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
+the CLI connects them to the function at deploy time.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `provider` | `GENERATIVE_AI_PROVIDER` | no | `google-ai` | `google-ai` or `vertex-ai` |
+| `apiKey` | `API_KEY` | secret | — | Google AI API key |
+| `model` | `MODEL` | no | `gemini-2.5-flash` | Model id |
+| `vertexModelLocation` | `VERTEX_AI_MODEL_LOCATION` | no | `null` | Vertex model region; `null` uses the function's region |
+| `collectionName` | `COLLECTION_NAME` | no | `generate` | Discussion collection |
+| `promptField` | `PROMPT_FIELD` | no | `prompt` | Prompt field name |
+| `responseField` | `RESPONSE_FIELD` | no | `response` | Response field name |
+| `orderField` | `ORDER_FIELD` | no | `createTime` | Ordering field |
+| `candidatesField` | `CANDIDATES_FIELD` | no | `candidates` | Candidates field name |
+| `context` | `CONTEXT` | no | (empty) | System context |
+| `temperature` | `TEMPERATURE` | no | (empty) | Sampling temperature |
+| `topP` | `TOP_P` | no | (empty) | Top-p |
+| `topK` | `TOP_K` | no | (empty) | Top-k |
+| `candidateCount` | `CANDIDATE_COUNT` | no | `1` | Candidate count |
+| `maxOutputTokens` | `MAX_OUTPUT_TOKENS` | no | (empty) | Max output tokens |
+| `enableOverrides` | `ENABLE_DISCUSSION_OPTION_OVERRIDES` | no | `no` | Per-discussion option overrides (`yes` or `no`) |
+| `enableGenkitMonitoring` | `ENABLE_GENKIT_MONITORING` | no | `no` | Enable Genkit monitoring (`yes` or `no`) |
+| `harmHateSpeech` | `HARM_CATEGORY_HATE_SPEECH` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
+| `harmDangerous` | `HARM_CATEGORY_DANGEROUS_CONTENT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
+| `harmHarassment` | `HARM_CATEGORY_HARASSMENT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
+| `harmSexual` | `HARM_CATEGORY_SEXUALLY_EXPLICIT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
+
+## Multiple instances
+
+To run several chatbot instances, add one entry per instance to the `instances`
+map, each pointing at its own config directory with its own `.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-genai-chatbot",
+      "instances": {
+        "support": "instances/support",
+        "sales": "instances/sales"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide.
+
+## Differences from the Build Chatbot with the Gemini API extension
+
+This kit is version 0.0.19 of the extension repackaged as an npm package you add
+to your own functions codebase. The generation logic, the Firestore trigger, the
+`status` state machine, the per-discussion overrides and the safety settings are
+all ported verbatim. Config keeps the same environment variable names, so a
+`.env` copied from your installed instance is close to a lift-and-shift, with
+the exceptions below: the function region and the API key secret.
+`ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` keep the
+extension's `yes` / `no` values.
+
+### The function has no location setting
+
+The extension's `LOCATION` setting is gone. There is no replacement value, and
+neither the `LOCATION` nor the `FUNCTION_DEFAULT_REGION` that `firebase
+ext:migrate` writes to your `.env` is read. When the function does not exist
+yet, the Firebase CLI places it next to the Firestore database its trigger
+watches; a redeploy keeps whatever region it is already in. To choose the region
+yourself, set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase deploy`
+(it applies to every function in the deploy that declares no region), or register
+the trigger yourself from the package's `./lib` entry point and set `region` on
+it.
+
+That region also decides where Vertex AI is called when
+`VERTEX_AI_MODEL_LOCATION` is left at `null`. Gemini is not served in every
+Cloud Functions region, so a function in a region without it needs an explicit
+location, and preview models still require `global`.
+
+### An API_KEY secret is required even on Vertex AI
+
+`API_KEY` was optional, so a Vertex AI instance could be installed without one.
+It is now always bound to the function. If no `API_KEY` secret exists in Secret
+Manager, `firebase deploy` prompts you for a value, and fails outright when
+running non-interactively (CI). Create the secret with any placeholder value if
+your provider is `vertex-ai`.
+
+### Generation options now reach the model
+
+This is a deliberate divergence from the extension. `TEMPERATURE`, `TOP_P`,
+`TOP_K` and `CANDIDATE_COUNT` were accepted as config but never forwarded on the
+generation request, so they had no effect on output: sampling ran at the model
+defaults, and `CANDIDATE_COUNT` above 1 produced a `candidates` array holding
+the single response that came back. The kit forwards all four, so your sampling
+settings take effect, you get the number of candidates you asked for, and a
+request with `CANDIDATE_COUNT` above 1 costs more.
+
+Whether the `candidates` field is written is now decided per request from the
+count actually sent, rather than once from the deploy-time value. With
+per-discussion overrides enabled, a `candidateCount` set on a discussion
+document therefore decides the field for that message, and a discussion that
+overrides `candidateCount` to 1 gets no `candidates` field even when
+`CANDIDATE_COUNT` is higher.
+
+### Settings already in `.env` are not validated
+
+`TEMPERATURE`, `TOP_P`, `TOP_K`, `CANDIDATE_COUNT`, `MAX_OUTPUT_TOKENS` and
+`COLLECTION_NAME` are validated by the CLI prompt, as they were when you
+installed the extension, but a value already in your `.env` is not checked: a
+non-numeric value there is parsed to `NaN` and passed to the model call rather
+than being caught at deploy time.
+
+### Unchanged
+
+- The watched path is still `COLLECTION_NAME/{messageId}` on the default
+  database, and `COLLECTION_NAME` still defaults to `generate`.
+- `PROMPT_FIELD`, `RESPONSE_FIELD`, `ORDER_FIELD` and `CANDIDATES_FIELD` behave
+  identically, as does history assembly from sibling documents.
+- The `status` state machine is unchanged, including that a document
+  already in `COMPLETED` or `ERROR` is never reprocessed when you edit its
+  prompt.
+- Per-discussion overrides, `examples` and `continue` history are parsed and
+  validated exactly as before.
+- The four `HARM_CATEGORY_*` thresholds, `CONTEXT` handling (still sent as a
+  leading system turn) and the user-facing error messages are unchanged.
+- `MODEL` still defaults to `gemini-2.5-flash`, and the same list of supported
+  Gemini models is accepted.
+- `VERTEX_AI_MODEL_LOCATION` left at `null` still calls Vertex AI in the
+  function's own region, read from `FUNCTION_REGION`. Outside a deployed
+  function, where that is unset (the emulator, or library use), the call goes
+  to `us-central1`, or to `GCLOUD_LOCATION` if your environment sets one; set
+  `VERTEX_AI_MODEL_LOCATION` to pin it either way.
+- The trigger keeps the extension's 540 second timeout.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/firestore-genai-chatbot`): exports
+  `generateMessage`. The main entry reads environment variables when the module
+  loads, so use it from Firebase deploy/emulator/runtime. For your own triggers,
+  import from `./lib` instead.
+- **Library entry** (`./lib`): `handleDocumentWrite` / `createProcessor`,
+  generative client helpers, and config types (`GenaiChatbotConfig`,
+  `resolveConfig`) for owning trigger registration yourself.
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `firestore-genai-chatbot kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/firestore-genai-chatbot` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0

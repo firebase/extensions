@@ -1,0 +1,513 @@
+# @firebase-function-kits/firestore-vector-search
+
+Vector similarity search over a Firestore collection. This is the Vector Search
+with Firestore Firebase Extension as an npm package you add to your own Firebase
+Functions codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-vector-search@next
+> ```
+
+It embeds documents on write (Gemini, OpenAI, Vertex, or a custom endpoint),
+maintains a vector index, and serves similarity queries via callable/write
+triggers plus backfill/update task helpers. The functions run in your own
+Firebase project; there is no hosted version, so you deploy them yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/firestore-vector-search
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles and APIs for the function's service
+account. Firebase CLI 15.23.0 or later creates that account, grants the roles
+below, enables the listed APIs, and attaches the account to every function in
+this kit. Do not set a custom runtime service account for this codebase — it
+conflicts with that automatic setup.
+
+| Role / API | Why |
+|---|---|
+| `roles/datastore.user` | read/write documents and embeddings |
+| `roles/aiplatform.user` | Vertex AI embeddings when configured |
+| `roles/storage.objectAdmin` | read image inputs from Cloud Storage |
+| `roles/datastore.indexAdmin` | manage vector indexes |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc/Tasks to invoke the Gen2 Cloud Run service |
+| `roles/cloudtasks.enqueuer` | enqueue the init, backfill and update tasks |
+| `roles/iam.serviceAccountUser` | enqueue tasks that run as the function's service account |
+| `firestore.googleapis.com` | read documents and write embeddings |
+| `aiplatform.googleapis.com` | Vertex AI embedding/search |
+| `storage-component.googleapis.com` | read image data from Cloud Storage |
+
+## Usage
+
+Export the functions from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export {
+  updateTrigger,
+  updateTask,
+  backfillTrigger,
+  backfillTask,
+  embedOnWrite,
+  queryOnWrite,
+  queryCallable,
+  initVectorSearch,
+} from "@firebase-function-kits/firestore-vector-search";
+```
+
+and configure with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment - earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-vector-search",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the functions above
+deploy as `kit-default-embedOnWrite`, `kit-default-queryCallable`,
+`kit-default-initVectorSearch`, and the related task/trigger helpers.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
+the CLI connects them to the function at deploy time.
+
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
+| `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
+| `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
+| `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
+| `customEmbeddingsDimension` | `CUSTOM_EMBEDDINGS_DIMENSION` | no | (empty) | Custom embedding dimension |
+| `collectionPath` | `COLLECTION_NAME` | no | `products` | Indexed collection |
+| `defaultQueryLimit` | `DEFAULT_QUERY_LIMIT` | no | `3` | Default query limit |
+| `distanceMeasure` | `DISTANCE_MEASURE` | no | `COSINE` | Distance measure |
+| `inputFieldName` | `INPUT_FIELD_NAME` | no | `input` | Input field |
+| `outputFieldName` | `OUTPUT_FIELD_NAME` | no | `embedding` | Embedding field |
+| `statusFieldName` | `STATUS_FIELD_NAME` | no | `status` | Status field |
+| `doBackfill` | `DO_BACKFILL` | yes | — | Run backfill on setup |
+| `updateOnConfigure` | `UPDATE_ON_CONFIGURE` | yes | — | Update index on configure |
+| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `updateTrigger` | Update trigger queue |
+| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `updateTask` | Update task queue |
+| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `backfillTrigger` | Backfill trigger queue |
+| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `backfillTask` | Backfill task queue |
+| `geminiApiKey` | `GEMINI_API_KEY` | secret | — | Gemini API key |
+| `openAiApiKey` | `OPENAI_API_KEY` | secret | — | OpenAI API key |
+
+## Multiple instances
+
+To run several vector-search indexes, add one entry per instance to the
+`instances` map, each pointing at its own config directory with its own `.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-vector-search",
+      "instances": {
+        "products": "instances/products",
+        "docs": "instances/docs"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; there is nothing to keep
+in sync by hand. The id also namespaces the internal Firestore metadata/query
+paths and task queue references.
+
+## Differences from the Vector Search with Firestore extension
+
+This kit is version 0.1.3 of the extension repackaged as an npm package, and it is
+the least literal of the ports. The extension's seven functions, the Firestore
+vector index, the query document collection and the callable all survive with
+their names and settings intact (the kit adds an eighth, `initVectorSearch`), so
+a `.env` copied from your installed instance needs no value changes. Multimodal embedding is gone, and the first kit deploy runs a backfill
+pass over an installed instance's collection, so read this before you point
+the kit at a collection an installed instance has already embedded.
+
+### `EMBEDDING_PROVIDER: multimodal` is not implemented
+
+Selecting `multimodal` deploys, and then every embedding attempt throws
+`Multimodal embeddings are not implemented in this package`. The extension's
+multimodal image embedding, including reading images out of Cloud Storage, has no
+equivalent here. If you use it, stay on the extension.
+
+### Gemini and Vertex AI embeddings are truncated to 768 dimensions
+
+Both the extension and the kit ask for `gemini-embedding-001` with
+`outputDimensionality: 768`, set on the embedder reference. Genkit does not apply
+it there, so the model returns its full 3072-dimension vector. Firestore refuses
+any vector above 2048 dimensions, so on the extension every gemini and vertex
+embed fails with `Vectors must be at most 2048 dimensions` and the document is
+marked `ERROR`.
+
+The kit truncates each returned embedding to 768 before writing it, which is the
+dimension both the extension and the kit declare their vector index with, so the
+default provider works. This is the one place the kit deliberately does not match
+the extension's behaviour, because matching it means writing nothing at all.
+
+### The instance id comes from `firebase.json`, and it names the query collection
+
+The extension derived its instance id at install and used it for the query
+collection (`_<instance id>/index/queries`), the index metadata and backfill
+progress document (`_<instance id>/index`, with its `enqueues` subcollection)
+and its task queues. Here the CLI derives it from this
+instance's key in the `instances` map in `firebase.json` and provides it to the
+functions as `FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to
+configure. To keep serving the query documents your clients already write to,
+use your installed instance's id as the `instances` key. The four task queue
+names can also be overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`,
+`UPDATE_TASK_QUEUE_NAME`, `BACKFILL_TRIGGER_QUEUE_NAME` and
+`BACKFILL_TASK_QUEUE_NAME`, which the extension did not allow. Each names the
+deployed function, without the `kit-<instance id>-` prefix: the Admin SDK adds
+that when it resolves the queue.
+
+### Create the `GEMINI_API_KEY` and `OPENAI_API_KEY` secrets, both of them
+
+The extension stored these as `ext-<instance id>-GEMINI_API_KEY` and
+`ext-<instance id>-OPENAI_API_KEY`, and both were optional. The kit asks for
+secrets named exactly `GEMINI_API_KEY` and `OPENAI_API_KEY`, so your existing
+extension secrets are not picked up, and both are attached to every function
+whatever `EMBEDDING_PROVIDER` is set to. If either does not exist, `firebase
+deploy` prompts you for a value and fails outright when running
+non-interactively (CI). Create the one you do not need with a placeholder value.
+
+### `UPDATE_ON_CONFIGURE` is read, and both settings act on every deploy
+
+This setting was declared by the extension but never read: its update pass was
+gated on `DO_BACKFILL` instead. The kit reads both. `initVectorSearch` runs
+after your first deploy and after every redeploy, so either pass can be enqueued
+on any deploy. The two passes share the index metadata document as their task
+thread, so only one of them runs: with both settings on, the backfill pass runs
+and the update pass never does. The backfill pass covers every document the
+update pass would have, because the update pass is the same eligibility rule
+plus "and already has an embedding".
+
+The extension mapped its passes to install and reconfigure instead: install ran
+the backfill trigger, reconfigure ran the update trigger. Since the update pass
+skips documents that have no embedding yet, changing `INPUT_FIELD_NAME` on an
+installed instance left those documents alone. The same change here with
+`DO_BACKFILL=true` embeds them too, so a redeploy writes to more documents than
+a reconfigure did.
+
+With both settings off nothing is enqueued, so the metadata document is never
+written and turning `DO_BACKFILL` on later runs a full pass. The extension wrote
+that document on install whatever `DO_BACKFILL` was set to, so the same flip
+found a matching document and did nothing. With `UPDATE_ON_CONFIGURE=true` the
+update pass writes the document on your first deploy and the flip is gated out
+exactly as it was on the extension.
+
+### The backfill gate, and the first deploy over an installed instance
+
+Both passes are gated on the index metadata document at `_<instance id>/index`,
+as the extension's were: a pass runs only when the embedding provider, the
+vector dimension or the input/output field names differ from what the last pass
+recorded there. Redeploying without changing any of them enqueues nothing and
+costs nothing.
+
+The extension's gate did not survive its own first pass, because the progress
+counters it wrote to the same document replaced the recorded configuration. The
+kit merges instead, so the comparison fields persist and the gate holds on every
+later deploy. To force a full re-embed without changing any setting, delete the
+`_<instance id>/index` document; its `queries` subcollection is untouched, so
+the query documents your clients write to survive.
+
+Because the fields persist, the kit records them only once the task thread has
+been dispatched. A deploy that fails to enqueue, on a queue that does not exist
+yet or before the task-queue permissions have propagated, leaves the gate open
+and the next deploy runs the pass.
+
+Expect the first kit deploy over an installed instance to run a pass, whatever
+your settings say. Any extension pass that enqueued tasks replaced that document
+with its progress counters, so the comparison fields are gone and the gate
+opens. The pass then applies the extension's own rules to the extension's own
+status field: it skips documents the write trigger marked `COMPLETED` or
+`ERROR`, and re-embeds the ones the extension's backfill marked `BACKFILLED`
+or that carry no status. That is what a reconfigure of the extension cost;
+with `DO_BACKFILL=true` the bill lands on your first deploy instead. From the
+second kit deploy on, redeploying without changing anything enqueues nothing.
+
+### Where the backfill pass deliberately does not match the extension
+
+Matching the extension on each of these would reproduce a bug, so the kit does
+not:
+
+- Every chunk is written before the first task is dispatched, and the final
+  partial batch of chunk documents is always committed. The extension dispatched
+  task 1 before writing that task's own chunk document, and committed only at
+  each 50th chunk, so a run of 51 to 99 chunks lost its tail and the thread
+  stalled on the missing document.
+- A failed embedding stays on the document that failed. When it embedded one
+  document at a time, as its update pass did, the extension dropped rejected
+  results and closed the gap, so a document could receive another document's
+  embedding.
+- When a batch returns fewer embeddings than it was given, the trailing
+  documents are marked `FAILED_BACKFILL`. The extension marked them `BACKFILLED`
+  with no vector written. This follows from the fix above, but it is visible in
+  the status field.
+- A document id that resolves to nothing, such as a subcollection's phantom
+  parent, is skipped. The extension's eligibility check threw on it and the task
+  retried until the queue gave up.
+- The update pass records all four comparison fields on the metadata document.
+  The extension recorded only the embedding provider for that pass, so the other
+  three read back as unset and its gate opened on every reconfigure.
+- Eligible documents are collected inside the transaction that reads them. The
+  extension collected them outside it, so a transaction retry counted the same
+  documents twice.
+
+### There is no install-time progress reporting
+
+The extension reported backfill progress and failures through the extension
+install UI (`setProcessingState`). There is no such surface for a kit, so
+progress is visible in the function logs and in the progress fields on
+`_<instance id>/index` (`backfillJobsTotal`, `backfillJobsProcessed`,
+`backfillJobsSkipped`, `backfillJobsFailed`, `backfillStatus`) instead. One
+document per chunk is written under `_<instance id>/index/enqueues`, as the
+extension did, each carrying its chunk of document ids and its own status.
+
+### The status field on query documents is a different shape
+
+The status the embed path writes onto your collection is unchanged, including
+the nesting under the instance id and the timestamps:
+
+```
+status: { <instance id>: { state, startTime, updateTime, completeTime, createTime } }
+```
+
+Documents an installed instance embedded therefore need no migration, as long as
+the kit instance keeps the extension instance's id (see *The instance id comes
+from `firebase.json`* above). `embedOnWrite` writes `PROCESSING` before the embed
+and `COMPLETED` or `ERROR` after it, the backfill and update passes write
+`BACKFILLED` or `FAILED_BACKFILL` with a `completeTime`, and an `ERROR` records no message: the error
+itself is in the function logs, as before.
+
+Query documents are the exception. They carry a flat status, with no timestamps
+and a `request` record alongside the state, where the extension nested theirs
+under `textQuery`:
+
+```
+status: { state: "COMPLETED", request: { query, limit, prefilters } }
+```
+
+Anything reading `status.textQuery.state` on a query document needs updating. Do
+not treat the presence of `result` alone as completion: while a
+changed query re-runs, the document still holds the previous result, so a
+consumer waiting only on `result` can read the old query's result. A query is
+complete when `status.state` is `COMPLETED` and `status.request` matches the
+document's current `query`, `limit`, and `prefilters`. The `request` record is
+what the kit compares against those inputs to decide whether a write needs a new
+query run, so it must not be edited by hand.
+
+The extension always wrote query-document status to the literal `status` field,
+ignoring `STATUS_FIELD_NAME` there; the kit honors the param on query documents
+too, so a non-default value moves this field. The kit rejects `query`, `limit`,
+`prefilters`, and `result` as values, since a status field with one of those
+names would overwrite the query-document field of the same name.
+
+Unlike the extension, a completed query document re-runs when its `query`,
+`limit`, or `prefilters` change (the extension never re-ran a completed query
+document). The embed path is the opposite: like the extension, it never
+re-embeds a document whose status has reached `PROCESSING`, `COMPLETED`, `ERROR`
+or `BACKFILLED`.
+
+### The lifecycle hooks and the function region
+
+Install and reconfigure hooks are replaced by an `initVectorSearch` task that the
+CLI runs after your first deploy and after every redeploy. It creates the
+Firestore vector index (skipping creation when a matching index exists, as
+before) and then enqueues the backfill or update triggers according to the two
+settings above.
+
+`LOCATION` is gone. `DATABASE_REGION` decides where the functions deploy, as
+described below, and with `EMBEDDING_PROVIDER: vertex` the Vertex AI embedding
+call uses that same region, read from `FUNCTION_REGION`, rather than the
+install-time location. Where the region cannot be read (the emulator, or library
+use outside a deployed function) the Genkit Vertex AI plugin chooses:
+`GCLOUD_LOCATION` if you set it, otherwise `us-central1`. Gemini embedding is
+not served in every region; if you deploy somewhere it is unavailable, the embed
+fails, the document is marked `ERROR` and the error is logged.
+
+### The triggers are 2nd gen
+
+All eight functions are 2nd gen. Their service accounts need
+`roles/eventarc.eventReceiver`, `roles/run.invoker`, `roles/cloudtasks.enqueuer`
+and `roles/iam.serviceAccountUser` on top of the four roles the extension asked
+for; the Firebase CLI grants these for you.
+
+### DATABASE_REGION decides where the functions run
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+functions are deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the functions run in.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
+One interaction to know about if you use the Vertex AI embedding provider. The
+functions call Vertex AI in whatever region they run in, so pinning them to
+your database's location also moves the Vertex AI call there, and there is no
+separate override to send it elsewhere. Vertex AI serves `gemini-embedding-001`
+in most regions but not all: `africa-south1`, `europe-north2`, `europe-west10`
+and `europe-west12` report the publisher model as not found, and
+`northamerica-south1` has no Vertex AI endpoint at all. With a database in
+one of those and `EMBEDDING_PROVIDER=vertex`, embedding fails and the error is
+written to the document's status field. Before this parameter existed the
+embedding functions were unplaced and ran in `us-central1`, so this is new.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `embedOnWrite` and `queryOnWrite` land next to the database and
+the task and callable functions land in `us-central1`, splitting the instance
+across two regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment
+variable when running `firebase deploy` puts all of them in that region
+instead. Careful with that variable: it applies to every no-region function in
+the deploy, not just this kit. Omitting the line is not the same as an empty
+one: a non-interactive deploy fails with `In non-interactive mode but have no
+value for the following environment variables: DATABASE_REGION`. Note that
+changing an existing instance's region deletes and recreates the functions.
+
+### Unchanged
+
+- No Eventarc events are published. The extension declared `onStart`,
+  `onSuccess`, `onError` and `onCompletion` under
+  `firebase.extensions.firestore-vector-search.v1.*` but never published any of
+  them, and the kit publishes none either. `EVENTARC_CHANNEL` is not read.
+- The backfill and update passes still enumerate the collection by document
+  reference, chunk it into 50 document ids per Cloud Task, run one task at a
+  time, and embed each chunk in provider-sized batches with a single API call per
+  batch (16 documents per OpenAI call). A document whose input is not a string is
+  skipped, as is one whose status is already set to anything other than
+  `BACKFILLED`. A failed batch marks its documents `FAILED_BACKFILL` and the task
+  still succeeds.
+- A document is still embedded once. When its status reaches `PROCESSING`,
+  `COMPLETED`, `ERROR` or `BACKFILLED`, editing the input field does not produce
+  a new embedding and a failed embed is not retried. To re-embed a document,
+  delete its `status` field and write a new value to its input field. A document
+  whose input is an empty string is still skipped and gets no status, so it
+  embeds normally once you fill the input in, and a write that leaves the input
+  field untouched is still not embedded.
+- The indexed collection is still `COLLECTION_NAME` (default `products`), the
+  input, output and status fields still default to `input`, `embedding` and
+  `status`, and embeddings are still written as native Firestore vectors.
+- Querying by writing a document to `_<instance id>/index/queries` still works
+  the same way, with `query`, an optional `limit` and optional `prefilters`, and
+  the matching document ids written back to the document under `result`.
+- `queryCallable` still requires an authenticated caller, still validates its
+  argument with the same schema, still rejects a `limit` that is not an integer
+  above zero, and still returns `{ ids: [...] }`.
+- `DEFAULT_QUERY_LIMIT` (default 3) and `DISTANCE_MEASURE` (`COSINE`,
+  `EUCLIDEAN`, `DOT_PRODUCT`, default `COSINE`) behave as before.
+- Gemini and Vertex AI embeddings are still `gemini-embedding-001` at 768
+  dimensions, though the kit has to truncate the model's response to get there.
+  See *Gemini and Vertex AI embeddings are truncated to 768 dimensions* above.
+- OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
+  dimensions, so vectors already written by an installed instance stay
+  comparable with the ones the kit writes. The vector index the kit creates for
+  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, exactly as
+  the extension declared it, so it does not cover those 1536-dimension vectors
+  and `findNearest` fails against it. Create the 1536-dimension index yourself if
+  you query an OpenAI-embedded collection.
+- A custom endpoint still receives `{ batch: [...] }` and must return
+  `{ embeddings: [[...]] }`, and still requires all three of
+  `CUSTOM_EMBEDDINGS_ENDPOINT`, `CUSTOM_EMBEDDINGS_BATCH_SIZE` and
+  `CUSTOM_EMBEDDINGS_DIMENSION`.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/firestore-vector-search`): exports
+  `updateTrigger`, `updateTask`, `backfillTrigger`, `backfillTask`,
+  `embedOnWrite`, `queryOnWrite`, `queryCallable`, and `initVectorSearch`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
+- **Library entry** (`./lib`): handlers, embedding client helpers, vector-store
+  utilities, and config types (`VectorSearchConfig`, `resolveVectorSearchConfig`)
+  for owning trigger registration yourself.
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `firestore-vector-search kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/firestore-vector-search` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0

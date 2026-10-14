@@ -1,0 +1,232 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { getApp, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { onDocumentWritten } from "firebase-functions/firestore";
+import { onCall } from "firebase-functions/https";
+import { onTaskDispatched } from "firebase-functions/tasks";
+import type { Role } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
+import {
+  afterFirstDeploy,
+  afterRedeploy,
+} from "firebase-functions/v2/lifecycle";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  envFunctionRegion,
+  geminiApiKey,
+  instanceIdFromEnv,
+  openAiApiKey,
+} from "./config";
+import {
+  type ResolvedVectorSearchConfig,
+  resolveVectorSearchConfig,
+} from "./export-config";
+import {
+  type HandlerContext,
+  handleBackfillTask,
+  handleBackfillTrigger,
+  handleEmbedOnWrite,
+  handleInit,
+  handleQueryCall,
+  handleQueryOnWrite,
+  handleUpdateTask,
+  handleUpdateTrigger,
+  type VectorTaskData,
+} from "./handlers";
+import * as logs from "./logs";
+
+assertRequiredParams();
+export * from "./lib";
+
+const INIT_VECTOR_SEARCH_FUNCTION = "initVectorSearch";
+const FUNCTION_TIMEOUT_SECONDS = 540;
+const TASK_MAX_ATTEMPTS = 50;
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/datastore.user",
+  "roles/aiplatform.user",
+  "roles/storage.objectAdmin",
+  "roles/datastore.indexAdmin",
+  // Lifecycle setup enqueues the init task, which may enqueue backfill/update tasks.
+  "roles/cloudtasks.enqueuer",
+  "roles/iam.serviceAccountUser",
+  // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
+  "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
+  // No roles/eventarc.publisher here: the extension declares `events:` but never
+  // publishes any of them, so the kit publishes nothing either (see #3094).
+];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason:
+      "Reads document data and writes embeddings back to Cloud Firestore.",
+  },
+  {
+    api: "aiplatform.googleapis.com",
+    reason:
+      "This extension uses Vertex AI for embedding and vector search when configured.",
+  },
+  {
+    api: "storage-component.googleapis.com",
+    reason: "Needed to read image data from Cloud Storage.",
+  },
+] as const;
+const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
+/*
+ * All functions of a kit instance deploy to one region: a task queue is
+ * addressed by the enqueuing function's own region at runtime, so an enqueuer
+ * separated from its queues would target a queue that does not exist.
+ */
+const REGION_OPTION = (() => {
+  const region = envFunctionRegion();
+
+  return region ? ({ region } as const) : ({} as const);
+})();
+
+// Only the task functions reach getSingleEmbedding, but every function here
+// resolves the same config (which reads the provider keys), and the extension
+// bound its secrets to all functions in the instance -- so bind them uniformly.
+const DEFAULT_TASK_OPTIONS = {
+  ...REGION_OPTION,
+  memory: "512MiB",
+  timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
+  secrets: FUNCTION_SECRETS,
+} as const;
+const EMBEDDING_TASK_OPTIONS = {
+  ...REGION_OPTION,
+  memory: "1GiB",
+  timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
+  retryConfig: { maxAttempts: TASK_MAX_ATTEMPTS },
+  secrets: FUNCTION_SECRETS,
+} as const;
+const FIRESTORE_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
+  memory: "512MiB",
+  timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
+  secrets: FUNCTION_SECRETS,
+} as const;
+const CALLABLE_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
+  memory: "512MiB",
+  secrets: FUNCTION_SECRETS,
+} as const;
+
+// Resolved at import so the query trigger path is a concrete document path at
+// discovery. An unsupported CLI fails the discovery pass here, before anything
+// is registered, rather than freezing "_undefined/index/queries/{queryId}"
+// into the manifest.
+const QUERY_COLLECTION_DOCUMENT = `_${instanceIdFromEnv()}/index/queries/{queryId}`;
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
+}
+
+afterFirstDeploy({
+  task: { function: INIT_VECTOR_SEARCH_FUNCTION, body: { data: {} } },
+});
+afterRedeploy({
+  task: { function: INIT_VECTOR_SEARCH_FUNCTION, body: { data: {} } },
+});
+
+let resolvedConfig: ResolvedVectorSearchConfig | undefined;
+let ctx: HandlerContext | undefined;
+
+function ensureDefaultApp(): void {
+  try {
+    getApp();
+  } catch {
+    initializeApp();
+  }
+}
+
+function getConfig(): ResolvedVectorSearchConfig {
+  if (resolvedConfig) {
+    return resolvedConfig;
+  }
+
+  resolvedConfig = resolveVectorSearchConfig(configFromEnv());
+  logs.init(resolvedConfig);
+  return resolvedConfig;
+}
+
+function getContext(): HandlerContext {
+  if (ctx) {
+    return ctx;
+  }
+
+  ensureDefaultApp();
+
+  ctx = {
+    firestore: getFirestore(),
+    config: getConfig(),
+  };
+
+  return ctx;
+}
+
+export const updateTrigger = onTaskDispatched(DEFAULT_TASK_OPTIONS, (request) =>
+  handleUpdateTrigger(request, getContext())
+);
+
+export const updateTask = onTaskDispatched<VectorTaskData>(
+  EMBEDDING_TASK_OPTIONS,
+  (request) => handleUpdateTask(request, getContext())
+);
+
+export const backfillTrigger = onTaskDispatched(
+  DEFAULT_TASK_OPTIONS,
+  (request) => handleBackfillTrigger(request, getContext())
+);
+
+export const backfillTask = onTaskDispatched<VectorTaskData>(
+  EMBEDDING_TASK_OPTIONS,
+  (request) => handleBackfillTask(request, getContext())
+);
+
+export const embedOnWrite = onDocumentWritten(
+  {
+    ...FIRESTORE_FUNCTION_OPTIONS,
+    document: CONFIG_EXPRESSIONS.collectionDocument,
+  },
+  (event) => handleEmbedOnWrite(event, getContext())
+);
+
+export const queryOnWrite = onDocumentWritten(
+  {
+    ...FIRESTORE_FUNCTION_OPTIONS,
+    document: QUERY_COLLECTION_DOCUMENT,
+  },
+  (event) => handleQueryOnWrite(event, getContext())
+);
+
+export const queryCallable = onCall(CALLABLE_FUNCTION_OPTIONS, (request) =>
+  handleQueryCall(request, getContext())
+);
+
+export const initVectorSearch = onTaskDispatched(
+  DEFAULT_TASK_OPTIONS,
+  async () => {
+    await handleInit(getContext());
+  }
+);

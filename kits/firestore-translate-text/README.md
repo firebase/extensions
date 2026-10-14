@@ -1,0 +1,274 @@
+# @firebase-function-kits/firestore-translate-text
+
+Translate text written to a Firestore collection. This is the Translate Text in
+Firestore Firebase Extension as an npm package you add to your own Firebase
+Functions codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-translate-text@next
+> ```
+
+It listens for documents written to a collection, translates a configured input
+field into one or more target languages (Google Translate or Gemini), and writes
+the results to an output map field. The function runs in your own Firebase
+project; there is no hosted version, so you deploy it yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/firestore-translate-text
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles and APIs for the function's service
+account. Firebase CLI 15.23.0 or later creates that account, grants the roles
+below, enables the listed APIs, and attaches the account to every function in
+this kit. Do not set a custom runtime service account for this codebase — it
+conflicts with that automatic setup.
+
+| Role / API | Why |
+|---|---|
+| `roles/datastore.user` | read input docs and write translations |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `firestore.googleapis.com` | read and write documents |
+| `translate.googleapis.com` | Google Translate provider |
+| `eventarcpublishing.googleapis.com` | publish the kit's custom Eventarc events |
+
+## Usage
+
+Export the function from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export { fstranslate } from "@firebase-function-kits/firestore-translate-text";
+```
+
+and configure with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-translate-text",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the function above
+deploys as `kit-default-fstranslate`.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
+the CLI connects them to the function at deploy time.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `collectionPath` | `COLLECTION_PATH` | no | `translations` | Watched collection |
+| `inputFieldName` | `INPUT_FIELD_NAME` | no | `input` | Source text field |
+| `outputFieldName` | `OUTPUT_FIELD_NAME` | no | `translated` | Output map field |
+| `languages` | `LANGUAGES` | no | `en,es,de,fr` | Target language codes |
+| `languagesFieldName` | `LANGUAGES_FIELD_NAME` | no | `languages` | Per-doc languages field |
+| `provider` | `TRANSLATION_PROVIDER` | yes | — | Translation provider |
+| `geminiModel` | `GEMINI_MODEL` | no | `gemini-2.5-flash` | Gemini model when used |
+| `googleAiApiKey` | `GOOGLE_AI_API_KEY` | secret | — | Google AI API key (Gemini) |
+
+## Multiple instances
+
+To translate several collections, add one entry per instance to the `instances`
+map, each pointing at its own config directory with its own `.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-translate-text",
+      "instances": {
+        "posts": "instances/posts",
+        "comments": "instances/comments"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide.
+
+## Events
+
+When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
+such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
+`firebase.extensions.firestore-translate-text.v1.*`.
+
+## Differences from the Translate Text in Firestore extension
+
+This kit is version 0.1.30 of the extension repackaged as an npm package. The
+translation behaviour is ported closely: the same write trigger, the same
+handling of string and map inputs, the same per-document `languages` override,
+the same "delete the translations when the input goes away" rule, and the same
+output shape written back to the document. Every setting keeps its extension
+environment variable name and default, so a `.env` copied from your installed
+instance needs no value changes. What changes is where the Gemini API key comes
+from, which region Vertex AI is called in, and what is no longer checked for you.
+
+### Create a `GOOGLE_AI_API_KEY` secret even if you do not use Google AI
+
+The extension stored this as `ext-<instance id>-GOOGLE_AI_API_KEY` in Secret
+Manager and it was optional. The kit asks for a secret named exactly
+`GOOGLE_AI_API_KEY`, so your existing extension secret is not picked up, and the
+secret is attached to the function whatever `TRANSLATION_PROVIDER` is set to. If
+it does not exist, `firebase deploy` prompts you for a value and fails outright
+when running non-interactively (CI). On the Cloud Translation or Vertex AI
+providers, create it with a placeholder value.
+
+The key is only read when `TRANSLATION_PROVIDER` is `gemini-googleai`, and that
+provider still fails fast with `Google AI API key is required for Genkit Google
+AI translations` when the value is empty.
+
+### Vertex AI is called in the function's region
+
+With `TRANSLATION_PROVIDER: gemini-vertexai`, the Vertex AI call uses the region
+the function is deployed to, read from `FUNCTION_REGION`. The extension used the
+location you picked at install time. Where the region cannot be read (the
+emulator, or library use outside a deployed function) the Genkit Vertex AI
+plugin chooses: `GCLOUD_LOCATION` if you set it, otherwise `us-central1`.
+Gemini is not served in every region, so if you deploy somewhere
+it is unavailable, translation fails and the error is written to your function
+logs. Deploy to a region with Vertex AI support, or use `gemini-googleai` or
+`translate` instead.
+
+The function has no location setting. When it does not exist yet, the Firebase
+CLI places it next to the Firestore database its trigger watches, so that is
+where the Vertex AI call goes; a redeploy keeps whatever region the function is
+already in. Set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase
+deploy` to choose the region yourself, remembering that it applies to every
+function in the deploy that declares no region. The `FUNCTION_DEFAULT_REGION`
+that `firebase ext:migrate` writes to your `.env` is not read, so a migrated
+instance does not keep the region the extension ran in.
+
+### Settings in `.env` are not validated at deploy time
+
+The extension rejected a `LANGUAGES` value that was not a comma-separated list of
+language codes, and a `COLLECTION_PATH` that was not a valid collection path,
+before it would install. The kit declares the same checks, but they apply only to
+a value entered at the `firebase deploy` prompt, not to one read from `.env`, so
+a malformed value in `.env` deploys and then fails per document at translation
+time. `INPUT_FIELD_NAME`, `OUTPUT_FIELD_NAME` and `LANGUAGES` have defaults
+rather than being required. Setting any of them, `COLLECTION_PATH` or
+`TRANSLATION_PROVIDER` to an empty value in `.env` fails the deploy.
+
+The two checks that ran per document still run: the function refuses to translate
+when the input and output field names are the same, or when the input field name
+is itself a path inside the output field.
+
+### Create the Eventarc channel yourself for events
+
+Choosing events at install used to create the channel and set both event
+variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
+to a channel you have created, and the same four
+`firebase.extensions.firestore-translate-text.v1.*` events are published.
+Per-event selection is gone in practice, because the CLI rejects any `.env` key
+beginning with `EXT_`, so `EXT_SELECTED_EVENTS` cannot be set and every event
+type is published. With `EVENTARC_CHANNEL` unset, nothing is published and the
+function is otherwise unaffected.
+
+### No backfill
+
+There is no function to translate documents that already exist in the
+collection. The extension carried the same limitation (its backfill task queue
+was disabled and never deployed), so this is not a regression, but the code is
+gone rather than dormant: only documents written after you deploy are translated.
+
+### The trigger is 2nd gen
+
+`fstranslate` is a 2nd gen Firestore function where the extension was 1st gen.
+Its service account needs `roles/eventarc.eventReceiver` and `roles/run.invoker`
+on top of `roles/datastore.user`; the Firebase CLI grants these for you. The
+Cloud Translation API is still required whichever provider you choose.
+
+### Unchanged
+
+- The watched path is still `COLLECTION_PATH/{messageId}` on your default
+  database, and `COLLECTION_PATH` still defaults to `translations`.
+- Every environment variable keeps its name, type and default, including the
+  three `TRANSLATION_PROVIDER` values and the three `GEMINI_MODEL` values.
+- Duplicate entries in `LANGUAGES` are still collapsed.
+- A string input is translated into every language; a map input has each of its
+  string values translated, with non-string values written as `null`.
+- The per-document `LANGUAGES_FIELD_NAME` override, and the rule that a document
+  is re-translated only when its input or its languages actually change, both
+  behave as before.
+- Translations are still written in a transaction, and each `onSuccess` event
+  still carries the output field name and the translations.
+- The event payloads: `onStart` still carries `{change, context}` and
+  `onCompletion` still carries `{context}`, with `context.eventId`,
+  `context.timestamp`, `context.eventType`, `context.resource`, the
+  `messageId` wildcard under `context.params`, and the empty
+  `context.notSupported` object the 1st gen backend always sent.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/firestore-translate-text`): exports `fstranslate`.
+  The main entry reads environment variables when the module loads, so use it
+  from Firebase deploy/emulator/runtime. For your own triggers, import from
+  `./lib` instead.
+- **Library entry** (`./lib`): `handleDocumentWrite`, translation services
+  (`GoogleTranslator`, `GenkitTranslator`), and config helpers
+  (`TranslateConfig`, `resolveTranslateConfig`) for owning trigger registration
+  yourself.
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `firestore-translate-text kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/firestore-translate-text` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0

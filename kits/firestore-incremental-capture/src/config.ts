@@ -1,0 +1,255 @@
+/*
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { Expression } from "firebase-functions/params";
+import { defineString, projectID, select } from "firebase-functions/params";
+import type { CaptureConfig, LogLevel } from "./capture-config";
+
+const DATASET_LOCATION_OPTIONS = [
+  "us",
+  "eu",
+  "us-central1",
+  "us-east1",
+  "us-east4",
+  "us-west1",
+  "us-west2",
+  "us-west3",
+  "us-west4",
+  "northamerica-northeast1",
+  "southamerica-east1",
+  "europe-central2",
+  "europe-north1",
+  "europe-west1",
+  "europe-west2",
+  "europe-west3",
+  "europe-west4",
+  "europe-west6",
+  "asia-east1",
+  "asia-east2",
+  "asia-northeast1",
+  "asia-northeast2",
+  "asia-northeast3",
+  "asia-south1",
+  "asia-southeast1",
+  "asia-southeast2",
+  "australia-southeast1",
+] as const;
+
+/**
+ * Regions the functions and Dataflow jobs can run in. Restricted to the regions
+ * the extension offered, which are the ones Dataflow flex templates support.
+ */
+const LOCATION_OPTIONS = [
+  "us-central1",
+  "us-east1",
+  "us-east4",
+  "us-west2",
+  "us-west3",
+  "us-west4",
+  "europe-central2",
+  "europe-west1",
+  "europe-west2",
+  "europe-west3",
+  "europe-west6",
+  "asia-east1",
+  "asia-east2",
+  "asia-northeast1",
+  "asia-northeast2",
+  "asia-northeast3",
+  "asia-south1",
+  "asia-southeast1",
+  "asia-southeast2",
+  "northamerica-northeast1",
+  "southamerica-east1",
+  "australia-southeast1",
+] as const;
+
+const LOG_LEVEL_OPTIONS = ["debug", "info", "warn", "error", "silent"] as const;
+
+/** Deploy-time expressions the entry point needs before params can be read. */
+export interface ConfigExpressions {
+  syncCollectionPath: Expression<string>;
+  location: Expression<string>;
+}
+
+/**
+ * Deploy-time parameters. Set these via a `.env` / `.env.<project>` file or the
+ * interactive prompts shown by `firebase deploy`.
+ *
+ * @see https://firebase.google.com/docs/functions/config-env
+ */
+const params = {
+  location: defineString("LOCATION", {
+    label: "Cloud Functions location",
+    description:
+      "Where should the functions in this kit be deployed? Pick the region matching your Firestore database location so the functions sit next to the data, and note that this is also the Dataflow restore job's region unless you set DATAFLOW_REGION. You can check your database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases). Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions: pick a region inside them (`us-central1` for `nam5` and `nam7`, `europe-west1` for `eur3`). If your database is in a region this list does not offer, pick the nearest one it does: the trigger is created in the database's own region and delivers across regions, so a mismatch costs latency, not events.",
+    default: "us-central1",
+    input: select([...LOCATION_OPTIONS]),
+  }),
+  // Every param below is `required: true` in the extension, which refuses an
+  // empty answer, and three carry validation the kit had dropped. Both are
+  // reproduced verbatim.
+  syncCollectionPath: defineString("SYNC_COLLECTION_PATH", {
+    default: "posts",
+    input: {
+      text: {
+        example: "posts",
+        nonEmpty: true,
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
+  }),
+  syncDataset: defineString("SYNC_DATASET", {
+    default: "backup_dataset",
+    input: {
+      text: {
+        example: "backup_dataset",
+        nonEmpty: true,
+        validationRegex: /^[a-zA-Z0-9_]+$/,
+        validationErrorMessage:
+          "BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.",
+      },
+    },
+  }),
+  syncTable: defineString("SYNC_TABLE", {
+    default: "backup_table",
+    input: { text: { example: "backup_table", nonEmpty: true } },
+  }),
+  backupInstanceId: defineString("BACKUP_INSTANCE_ID", {
+    input: {
+      text: {
+        example: "my-backup-instance",
+        nonEmpty: true,
+        validationRegex: /^[a-zA-Z][a-zA-Z0-9-]{2,61}[a-zA-Z0-9]$/,
+        validationErrorMessage: "Enter a valid instance id",
+      },
+    },
+  }),
+  datasetLocation: defineString("DATASET_LOCATION", {
+    default: "us",
+    input: select([...DATASET_LOCATION_OPTIONS]),
+  }),
+  dataflowRegion: defineString("DATAFLOW_REGION", { default: "" }),
+  bucketName: defineString("BUCKET_NAME", { default: "" }),
+  logLevel: defineString("LOG_LEVEL", {
+    default: "info",
+    input: select([...LOG_LEVEL_OPTIONS]),
+  }),
+};
+
+export const CONFIG_EXPRESSIONS: ConfigExpressions = {
+  syncCollectionPath: params.syncCollectionPath,
+  location: params.location,
+};
+
+// firebase-tools injects this for kit instances (set to the instance's key in
+// firebase.json) during discovery, in the emulator, and on deployed functions.
+// The FIREBASE_ prefix is reserved in .env files and the params machinery never
+// sees injected values, so it must be a plain env read, not a defineString.
+function instanceIdFromEnv(): string {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
+  return instanceId;
+}
+
+/** Coerce an empty-string param value to `undefined`. */
+function optional(value: string): string | undefined {
+  return value.length > 0 ? value : undefined;
+}
+
+function normalizeLogLevel(level: string): LogLevel {
+  switch (level.toLowerCase()) {
+    case "debug":
+    case "info":
+    case "warn":
+    case "error":
+    case "silent":
+      return level.toLowerCase() as LogLevel;
+    default:
+      return "info";
+  }
+}
+
+/**
+ * Resolves all deploy-time params into a {@link CaptureConfig}.
+ *
+ * Param values are read when this is called, not at import, so the Firebase
+ * deploy-time discovery pass can analyze the entry point without resolving
+ * params early.
+ *
+ * @param defaultBucketName - The project's default storage bucket, used when
+ *   the `BUCKET_NAME` param is unset. The param is not defaulted to a guessed
+ *   name because the default bucket's domain differs by project age.
+ * @returns The capture configuration assembled from environment params.
+ */
+export function configFromEnv(defaultBucketName?: string): CaptureConfig {
+  return {
+    projectId: projectID.value(),
+    syncCollectionPath: params.syncCollectionPath.value(),
+    backupInstanceId: params.backupInstanceId.value(),
+    datasetId: params.syncDataset.value(),
+    tableId: params.syncTable.value(),
+    datasetLocation: optional(params.datasetLocation.value()),
+    location: optional(params.location.value()),
+    dataflowRegion: optional(params.dataflowRegion.value()),
+    bucketName: optional(params.bucketName.value()) || defaultBucketName || "",
+    instanceId: instanceIdFromEnv(),
+    logLevel: normalizeLogLevel(params.logLevel.value()),
+  };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "LOCATION",
+  "SYNC_COLLECTION_PATH",
+  "SYNC_DATASET",
+  "SYNC_TABLE",
+  "BACKUP_INSTANCE_ID",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
+}
