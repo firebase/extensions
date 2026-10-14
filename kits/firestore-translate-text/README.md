@@ -1,8 +1,16 @@
 # @firebase-function-kits/firestore-translate-text
 
 Translate text written to a Firestore collection. This is the Translate Text in
-Firestorestore Firebase Extension as an npm package you add to your own Firebase
+Firestore Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-translate-text@next
+> ```
 
 It listens for documents written to a collection, translates a configured input
 field into one or more target languages (Google Translate or Gemini), and writes
@@ -29,7 +37,9 @@ conflicts with that automatic setup.
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
 | `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `firestore.googleapis.com` | read and write documents |
 | `translate.googleapis.com` | Google Translate provider |
+| `eventarcpublishing.googleapis.com` | publish the kit's custom Eventarc events |
 
 ## Usage
 
@@ -47,7 +57,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json
@@ -170,15 +180,16 @@ function in the deploy that declares no region. The `FUNCTION_DEFAULT_REGION`
 that `firebase ext:migrate` writes to your `.env` is not read, so a migrated
 instance does not keep the region the extension ran in.
 
-### Nothing checks your settings at deploy time
+### Settings in `.env` are not validated at deploy time
 
 The extension rejected a `LANGUAGES` value that was not a comma-separated list of
 language codes, and a `COLLECTION_PATH` that was not a valid collection path,
-before it would install. Neither is checked now, and `INPUT_FIELD_NAME`,
-`OUTPUT_FIELD_NAME` and `LANGUAGES` all have defaults rather than being required,
-so an incomplete or malformed config deploys and then fails per document at
-translation time. `TRANSLATION_PROVIDER` falls back to `translate` when it is
-empty.
+before it would install. The kit declares the same checks, but they apply only to
+a value entered at the `firebase deploy` prompt, not to one read from `.env`, so
+a malformed value in `.env` deploys and then fails per document at translation
+time. `INPUT_FIELD_NAME`, `OUTPUT_FIELD_NAME` and `LANGUAGES` have defaults
+rather than being required. Setting any of them, `COLLECTION_PATH` or
+`TRANSLATION_PROVIDER` to an empty value in `.env` fails the deploy.
 
 The two checks that ran per document still run: the function refuses to translate
 when the input and output field names are the same, or when the input field name

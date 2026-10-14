@@ -1,8 +1,16 @@
 # @firebase-function-kits/firestore-genai-chatbot
 
-Conversational GenAI chatbot backed by Firestore. This is the Chatbot with
-Generative AI Firebase Extension as an npm package you add to your own Firebase
-Functions codebase and deploy.
+Conversational GenAI chatbot backed by Firestore. This is the Build Chatbot
+with the Gemini API Firebase Extension as an npm package you add to your own
+Firebase Functions codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-genai-chatbot@next
+> ```
 
 It listens for prompt documents written to a discussion collection, calls Google
 AI or Vertex AI, and writes the model response back to Firestore. The function
@@ -50,7 +58,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json
@@ -187,12 +195,13 @@ document therefore decides the field for that message, and a discussion that
 overrides `candidateCount` to 1 gets no `candidates` field even when
 `CANDIDATE_COUNT` is higher.
 
-### Bad numbers are no longer rejected up front
+### Settings already in `.env` are not validated
 
 `TEMPERATURE`, `TOP_P`, `TOP_K`, `CANDIDATE_COUNT`, `MAX_OUTPUT_TOKENS` and
-`COLLECTION_NAME` were validated when you installed the extension. Nothing
-validates them now: a non-numeric value is parsed to `NaN` and passed to the
-model call rather than being caught at deploy time.
+`COLLECTION_NAME` are validated by the CLI prompt, as they were when you
+installed the extension, but a value already in your `.env` is not checked: a
+non-numeric value there is parsed to `NaN` and passed to the model call rather
+than being caught at deploy time.
 
 ### Unchanged
 

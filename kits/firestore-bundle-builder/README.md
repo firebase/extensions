@@ -4,6 +4,14 @@ Build and serve Firestore data bundles. This is the Firestore Bundle Builder
 Firebase Extension as an npm package you add to your own Firebase Functions
 codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-bundle-builder@next
+> ```
+
 It exposes an HTTPS function that reads bundle specs from Firestore, assembles
 query results into a Firestore data bundle, caches the artifact in Cloud
 Storage, and serves it to clients. The function runs in your own Firebase
@@ -55,7 +63,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json
@@ -167,7 +175,7 @@ headers if you need expiry.
 
 Parameter values substituted into a bundle spec's document or collection path
 are now rejected if they contain a `/`, or if they resolve to an empty value.
-Both cases return an invalid-argument error and are logged. The extension
+Both cases are logged and the request fails with a 500 response. The extension
 substituted them as-is, which allowed a caller to reach a path the spec author
 did not intend.
 

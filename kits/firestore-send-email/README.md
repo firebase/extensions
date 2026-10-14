@@ -4,6 +4,14 @@ Send emails based on documents written to Firestore. This is the Trigger Email
 from Firestore Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-send-email@next
+> ```
+
 It listens for documents written to a mail collection, renders optional
 templates, and delivers through SMTP (username/password or OAuth2). The function
 runs in your own Firebase project; there is no hosted version, so you deploy it
@@ -45,7 +53,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment):
 
 ```json
@@ -224,16 +232,18 @@ with `EXT_`, so
 `EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
 unaffected.
 
-### Nothing checks your settings at deploy time
+### Settings in `.env` are not validated at deploy time
 
 The extension rejected a malformed `DEFAULT_FROM`, a `MAIL_COLLECTION` that was
 not a valid collection path, an `SMTP_CONNECTION_URI` that was not
 `smtp(s)://...:port`, and a `TTL_EXPIRE_VALUE` that was not a positive integer,
-before it would install. None of that is checked now. A bad from address or
-connection URI deploys cleanly and every document fails at send time with
-`delivery.state: ERROR` instead. `TTL_EXPIRE_VALUE: 0` is silently treated as
-`1`, and a negative value produces a `delivery.expireAt` in the past, which a TTL
-policy will act on immediately.
+before it would install. The kit declares the same checks, but they apply only to
+a value entered at the `firebase deploy` prompt, not to one read from `.env`. A
+bad from address or connection URI in `.env` deploys cleanly and every document
+fails at send time with `delivery.state: ERROR` instead. `TTL_EXPIRE_VALUE: 0` is
+silently treated as `1`, and a negative value produces a `delivery.expireAt` in
+the past, which a TTL policy will act on immediately. Only a required setting
+left empty in `.env`, such as `DEFAULT_FROM=`, fails the deploy.
 
 ### The setup steps and the OAuth2 helper are not in the README
 

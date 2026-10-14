@@ -41,7 +41,7 @@ can't see: without them the deploy fails with `Couldn't find firebase-functions
 package in your source code`.
 
 ```sh
-npm install @firebase-function-kits/firestore-bigquery-export@0.1.0 firebase-functions@7 firebase-admin@14
+npm install @firebase-function-kits/firestore-bigquery-export@0.1.1 firebase-functions@7 firebase-admin@14
 npm install --save-dev typescript@5
 ```
 

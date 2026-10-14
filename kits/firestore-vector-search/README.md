@@ -4,6 +4,14 @@ Vector similarity search over a Firestore collection. This is the Vector Search
 with Firestore Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.
 
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-vector-search@next
+> ```
+
 It embeds documents on write (Gemini, OpenAI, Vertex, or a custom endpoint),
 maintains a vector index, and serves similarity queries via callable/write
 triggers plus backfill/update task helpers. The functions run in your own
@@ -31,6 +39,9 @@ conflicts with that automatic setup.
 | `roles/datastore.indexAdmin` | manage vector indexes |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc/Tasks to invoke the Gen2 Cloud Run service |
+| `roles/cloudtasks.enqueuer` | enqueue the init, backfill and update tasks |
+| `roles/iam.serviceAccountUser` | enqueue tasks that run as the function's service account |
+| `firestore.googleapis.com` | read documents and write embeddings |
 | `aiplatform.googleapis.com` | Vertex AI embedding/search |
 | `storage-component.googleapis.com` | read image data from Cloud Storage |
 
@@ -59,7 +70,7 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
 later, behind the `kits` experiment - earlier CLIs do not provide the
 `FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
@@ -365,7 +376,7 @@ fails, the document is marked `ERROR` and the error is logged.
 
 ### The triggers are 2nd gen
 
-All seven functions are 2nd gen. Their service accounts need
+All eight functions are 2nd gen. Their service accounts need
 `roles/eventarc.eventReceiver`, `roles/run.invoker`, `roles/cloudtasks.enqueuer`
 and `roles/iam.serviceAccountUser` on top of the four roles the extension asked
 for; the Firebase CLI grants these for you.
