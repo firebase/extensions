@@ -165,10 +165,10 @@ paths and task queue references.
 ## Differences from the Vector Search with Firestore extension
 
 This kit is version 0.1.3 of the extension repackaged as an npm package, and it is
-the least literal of the ports. The seven functions, the Firestore vector index,
-the query document collection and the callable all survive with their names and
-settings intact, so a `.env` copied from your installed instance needs no value
-changes. Multimodal embedding is gone, and the first kit deploy runs a backfill
+the least literal of the ports. The extension's seven functions, the Firestore
+vector index, the query document collection and the callable all survive with
+their names and settings intact (the kit adds an eighth, `initVectorSearch`), so
+a `.env` copied from your installed instance needs no value changes. Multimodal embedding is gone, and the first kit deploy runs a backfill
 pass over an installed instance's collection, so read this before you point
 the kit at a collection an installed instance has already embedded.
 
