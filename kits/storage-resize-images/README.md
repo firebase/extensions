@@ -1,0 +1,300 @@
+# @firebase-function-kits/storage-resize-images
+
+Resize images uploaded to Cloud Storage. This is the Resize Images Firebase
+Extension as an npm package you add to your own Firebase Functions codebase and
+deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/storage-resize-images@next
+> ```
+
+It listens for image objects finalized in a Cloud Storage bucket, optionally
+filters content, generates configured sizes/formats, and writes the resized
+outputs back to Storage. The function runs in your own Firebase project; there
+is no hosted version, so you deploy it yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/storage-resize-images
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles and APIs for the function's service
+account. Firebase CLI 15.23.0 or later creates that account, grants the roles
+below, enables the listed APIs, and attaches the account to every function in
+this kit. Do not set a custom runtime service account for this codebase — it
+conflicts with that automatic setup.
+
+| Role / API                         | Why                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `roles/storage.admin`              | read originals and write resized objects                                                   |
+| `roles/aiplatform.user`            | optional content filtering via Vertex AI                                                   |
+| `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                                                        |
+| `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`         | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled                                                    |
+| `storage-component.googleapis.com` | use Cloud Storage                                                                          |
+| `eventarcpublishing.googleapis.com` | publish the kit's custom Eventarc events                                                  |
+
+## Usage
+
+Export the function from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export { generateResizedImage } from "@firebase-function-kits/storage-resize-images";
+```
+
+and configure with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "storage-resize-images",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the function above
+deploys as `kit-default-generateResizedImage`.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+
+| Field                  | Env var                  | Required | Default                | Description                                                                                |
+| ---------------------- | ------------------------ | -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
+| `bucket`               | `IMG_BUCKET`             | no       | default Storage bucket | Bucket to watch                                                                            |
+| `sizes`                | `IMG_SIZES`              | no       | `200x200`              | Comma-separated resize sizes                                                               |
+| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
+| `makePublic`           | `MAKE_PUBLIC`            | no       | `false`                | Make resized objects public                                                                |
+| `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | no       | (empty)                | Output path prefix                                                                         |
+| `includePathList`      | `INCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
+| `excludePathList`      | `EXCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`)           |
+| `failedImagesPath`     | `FAILED_IMAGES_PATH`     | no       | (empty)                | Failed-image output path                                                                   |
+| `cacheControlHeader`   | `CACHE_CONTROL_HEADER`   | no       | (empty)                | Cache-Control for outputs                                                                  |
+| `imageTypes`           | `IMAGE_TYPE`             | no       | `["false"]`            | Output image types list                                                                    |
+| `outputOptions`        | `OUTPUT_OPTIONS`         | no       | (empty)                | JSON output options                                                                        |
+| `sharpOptions`         | `SHARP_OPTIONS`          | no       | `{}`                   | JSON Sharp options                                                                         |
+| `isAnimated`           | `IS_ANIMATED`            | no       | `true`                 | Preserve animation                                                                         |
+| `memory`               | `FUNCTION_MEMORY`        | no       | `1024`                 | Function memory (MiB)                                                                      |
+| `regenerateToken`      | `REGENERATE_TOKEN`       | no       | `true`                 | Regenerate download tokens                                                                 |
+| `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | no       | `OFF`                  | Content filter level                                                                       |
+| `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
+| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
+
+The `deleteOriginal` default above is what the CLI proposes at the deploy
+prompt and writes to `.env.<projectId>` when the variable is missing (a
+non-interactive deploy fails instead). Omitting `deleteOriginal` in a direct
+call to `resolveResizeImagesConfig` deletes the original on a successful
+resize, as the extension did for an unset `DELETE_ORIGINAL_FILE`; pass
+`"false"` to keep originals.
+
+## Multiple instances
+
+To resize images from several buckets or pipelines, add one entry per instance
+to the `instances` map, each pointing at its own config directory with its own
+`.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "storage-resize-images",
+      "instances": {
+        "avatars": "instances/avatars",
+        "uploads": "instances/uploads"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide.
+
+## Events
+
+When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
+such as `onStart`, `onStartResize`, `onSuccess`, `onError`, and `onCompletion`
+under `firebase.extensions.storage-resize-images.v1.*`.
+
+## Differences from the Resize Images extension
+
+This kit is the extension repackaged as an npm package. It is a close port: every
+setting keeps its name, type, default and meaning, so an existing `.env` is a
+lift-and-shift, and the resizing behaviour, output naming, metadata handling,
+download-token regeneration and Eventarc events are unchanged. The differences
+below are worth knowing before you deploy.
+
+### Content filtering runs in the function's region
+
+When `CONTENT_FILTER_LEVEL` is set (or you supply a `CUSTOM_FILTER_PROMPT`),
+the Vertex AI call now uses the region the function is deployed to, falling
+back to `us-central1` when that region is unknown - for example when calling
+`checkImageContent` from the library or running outside a normal CLI deploy,
+where `FUNCTION_REGION` is not set. The extension behaved the same way with
+the region you picked at install time.
+
+Gemini is not available in every region. If you deploy to a region it does not
+serve, filtering fails and the image is treated as a filter error: it is not
+resized, and the original is written to your `FAILED_IMAGES_PATH`. Deploy to a
+region with Vertex AI support if you use content filtering, or leave
+`CONTENT_FILTER_LEVEL` at `OFF`, in which case no Vertex call is made at all.
+
+### The trigger is 2nd gen
+
+`generateResizedImage` is a 2nd gen Cloud Storage function, where the extension
+was 1st gen. `FUNCTION_MEMORY` still accepts the same values (512 through 8192)
+and maps onto the equivalent 2nd gen memory setting.
+
+The function's service account needs `roles/eventarc.eventReceiver` and
+`roles/run.invoker` on top of the roles the extension asked for. The Firebase
+CLI grants these for you.
+
+### Region
+
+`BUCKET_REGION` decides where the function deploys, as described below, rather
+than the extension's install-time `LOCATION`. See the content filtering note
+above, since the two are linked.
+
+### Path lists are validated at deploy time
+
+`INCLUDE_PATH_LIST` and `EXCLUDE_PATH_LIST` must still be comma-separated
+absolute paths, but the check now runs when the function loads rather than when
+the extension is installed. A malformed value fails the deploy with
+`Invalid includePathList: must be a comma-separated list of absolute path
+values.` rather than being rejected by an install prompt.
+
+### An omitted `isAnimated` keeps animation for library callers
+
+The extension's config parser had a bug: `overrideIsAnimated === "true" ||
+undefined` never evaluated the intended unset check, so an unset `IS_ANIMATED`
+produced first-frame-only output even though the parameter's declared default
+was `true`. The kit fixes this for library callers: omitting `isAnimated` in a
+direct call to `resolveResizeImagesConfig` resolves to `true`, the default the
+extension intended. The deployed function is unchanged: it reads `IS_ANIMATED`
+through `defineBoolean`, which yields `false` when the variable is absent from
+the runtime environment, as the extension did. Deploys are unaffected either
+way, since the CLI prompts with `true` and writes the accepted value to
+`.env.<projectId>`; pass `isAnimated: false` for first-frame-only output.
+
+### No backfill
+
+There is no function to resize images that already exist in the bucket. The
+extension carried the same limitation (its backfill function was disabled), so
+this is not a regression, but it is worth stating: only objects uploaded after
+you deploy are resized.
+
+### BUCKET_REGION decides where the function runs
+
+`BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
+function is deployed to the Cloud Run region derived from it. A 2nd gen storage
+trigger cannot cross regions, so this has to agree with the bucket you set: a
+mismatch fails the deploy with `A function in region <region> cannot listen to
+a bucket in region <region>`. Regional locations (`europe-west4`,
+`us-east1`, ...) are used as-is; the multi-region locations map to a region
+inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
+`asia-east1` - because they are not Cloud Run regions themselves and would fail
+the deploy. The value is matched case-insensitively.
+
+Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
+not mapped. Pick one of the regions the pair is made of instead, all of which
+are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`.
+The function still receives the bucket's events. Deployed against a `nam4`
+bucket with `BUCKET_REGION=us-central1`, Eventarc created the trigger in `nam4`
+pointing at the `us-central1` function, and an upload produced the resized
+image. Naming the dual-region location itself fails the deploy with `Location
+nam4 is not found or access is unauthorized`.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
+values during deploy discovery, so the function silently falls back to the
+no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
+carried `BUCKET_REGION`) can itself move the function on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `BUCKET_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
+region and the Firebase CLI resolves one at deploy time: it keeps the region it
+is already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Omitting the line is not the same as
+an empty one: a non-interactive deploy fails with `In non-interactive mode but
+have no value for the following environment variables: BUCKET_REGION`. Note that
+changing an existing instance's region deletes and recreates the function.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/storage-resize-images`): exports
+  `generateResizedImage`. The main entry reads environment variables when the
+  module loads, so use it from Firebase deploy/emulator/runtime. For your own
+  triggers, import from `./lib` instead.
+- **Library entry** (`./lib`): `handleObjectFinalized` / resize helpers,
+  content-filter utilities, and config types (`ResizeImagesConfig`,
+  `resolveResizeImagesConfig`) for owning trigger registration yourself.
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `storage-resize-images kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/storage-resize-images` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0

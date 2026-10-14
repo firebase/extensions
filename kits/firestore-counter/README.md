@@ -1,0 +1,300 @@
+# @firebase-function-kits/firestore-counter
+
+Distributed, sharded counters for Firestore. This is the Distributed Counter
+Firebase Extension as an npm package you add to your own Firebase Functions
+codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/firestore-counter@next
+> ```
+
+It maintains counter shards under watched documents, flushes them on a schedule
+via a controller, and aggregates totals with workers. The functions run in your
+own Firebase project; there is no hosted version, so you deploy them yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/firestore-counter
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles on the function's service account.
+Firebase CLI 15.23.0 or later creates that account, grants the roles below,
+and attaches it to every function in this kit. Do not set a custom runtime
+service account for this codebase — it conflicts with that automatic setup.
+
+| Role | Why |
+|---|---|
+| `roles/datastore.user` | read/write counter shards and aggregate docs |
+| `roles/cloudscheduler.admin` | schedule the controller that flushes shards |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc/Scheduler to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+
+## Usage
+
+Export the functions from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export { controllerCore, onWrite, worker } from "@firebase-function-kits/firestore-counter";
+```
+
+and configure with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-counter",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the functions above
+deploy as `kit-default-controllerCore`, `kit-default-onWrite`, and
+`kit-default-worker`.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
+| `internalStatePath` | `INTERNAL_STATE_PATH` | no | `_firebase_ext_/sharded_counter` | Firestore path for controller state |
+| `scheduleFrequencyMinutes` | `SCHEDULE_FREQUENCY` | no | `1` | Controller schedule frequency (minutes) |
+
+## Multiple instances
+
+To run several counter deployments, add one entry per instance to the
+`instances` map, each pointing at its own config directory with its own `.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-counter",
+      "instances": {
+        "likes": "instances/likes",
+        "views": "instances/views"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide.
+
+## Events
+
+When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
+such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
+`firebase.extensions.firestore-counter.v1.*`.
+
+## Differences from the Distributed Counter extension
+
+This kit is the extension repackaged as an npm package. It is a very close port:
+`INTERNAL_STATE_PATH` and `SCHEDULE_FREQUENCY` keep their name, type and
+default, so an existing `.env` carries over once you add the new
+`DATABASE_REGION` setting (see below), and the counting itself is untouched. Shards still live in the
+`_counter_shards_` subcollection, are aggregated by the same algorithm on the
+same schedule, and your existing security rules and client code keep working
+without changes. The differences below are worth knowing before you deploy.
+
+### Settings already in `.env` are not validated
+
+`INTERNAL_STATE_PATH` must be a document path, meaning an even number of
+segments such as `_firebase_ext_/sharded_counter`. The CLI prompt rejects
+anything else, as the extension's install did, but a value already in your
+`.env` (copied across, or written by hand) is not checked. A collection path
+such as `_firebase_ext_` there deploys happily and then throws on every
+controller run:
+
+```
+Value for argument "documentPath" must point to a document, but was
+"_firebase_ext_". Your path does not contain an even number of components.
+```
+
+Counters silently stop aggregating, and the only sign is the error in your
+function logs.
+
+`SCHEDULE_FREQUENCY` is still a plain number of minutes, and the kit builds the
+same `every N minutes` schedule from it. The prompt still rejects a value like
+`*/5 * * * *` or `5 minutes`, but the same value in `.env` reaches your deploy
+unchecked.
+
+### The worker function publishes no events
+
+The extension published `onError` from all three of its functions. In the kit,
+the worker function does not: the Eventarc channel is only configured on the
+controller and shard-write functions. Failures that happen while a worker is
+aggregating, which is the path that handles counters big enough to need workers,
+now show up only in the logs. Events from the controller and shard-write
+functions are unaffected.
+
+### Events must be wired up by hand
+
+Enabling events was part of the extension's install flow, which created the
+channel and set the environment for you. The kit reads `EVENTARC_CHANNEL` and
+`EXT_SELECTED_EVENTS` straight from the environment and the CLI never prompts
+for them, so no events are published until you create a channel and put both
+values in your `.env`. If you set `EVENTARC_CHANNEL` and leave
+`EXT_SELECTED_EVENTS` unset, every event type is published.
+
+### Your codebase's global options apply to these functions
+
+The functions are exported from your own functions codebase, so a
+`setGlobalOptions` call there applies to them: memory, instance limits, and
+region when `DATABASE_REGION` is empty. The extension deployed with fixed settings you could not influence, and
+always in `us-central1`.
+
+The controller and shard-write functions keep their own limit of one instance,
+which a global setting does not override, so the single-writer behaviour is
+safe. The worker function has no limit of its own and does pick up a global
+`maxInstances`. The extension left workers unbounded, so a low global cap now
+throttles aggregation exactly when the controller wants to spread the work over
+many workers.
+
+### Client samples and the stress test app are not in the package
+
+The extension repo shipped counter clients for Web, Node, Android, iOS and Dart
+plus a stress test app. The npm package contains only the functions. Nothing
+about the shard layout changed, so the clients you already use keep working;
+carry on getting them from the extension repo.
+
+### DATABASE_REGION decides where the functions run
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+functions are deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the functions run in.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `onWrite` and `worker` land next to the database and
+`controllerCore` lands in `us-central1`, splitting the instance across two
+regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
+when running `firebase deploy` puts all of them in that region instead. Careful
+with that variable: it applies to every no-region function in the deploy, not
+just this kit. Omitting the line is not the same as an empty one: a
+non-interactive deploy fails with `In non-interactive mode but have no value
+for the following environment variables: DATABASE_REGION`. Note that changing
+an existing instance's region deletes and recreates the functions.
+
+### Twelve database locations have no Cloud Scheduler
+
+`controllerCore` runs on a schedule, and the Firebase CLI creates its Cloud
+Scheduler job in the function's own region, so a region without Cloud Scheduler
+fails the deploy. Twelve of the locations `DATABASE_REGION` offers resolve to
+one: `us-east5`, `northamerica-northeast2`, `northamerica-south1`,
+`southamerica-west1`, `europe-north1`, `europe-north2`, `europe-southwest1`,
+`europe-west10`, `europe-west12`, `asia-south2`, `australia-southeast2` and
+`africa-south1`. If your database is in one of those, give `DATABASE_REGION`
+the nearest location that does have Cloud Scheduler instead. The trigger still
+fires for a function outside the database's region, so the kit works; the
+writes just pay a cross-region hop.
+
+This is read from the published Cloud Scheduler region list and `gcloud
+scheduler locations list`, not from a failed deploy.
+
+### Unchanged
+
+- `INTERNAL_STATE_PATH` and `SCHEDULE_FREQUENCY`, with the same names and the
+  same defaults (`_firebase_ext_/sharded_counter`, `1` minute).
+- The `_counter_shards_` subcollection name, the shard document format, and
+  therefore your security rules.
+- The aggregation behaviour: inline aggregation up to 200 shards, workers above
+  that, 45 second self-scheduling worker runs, partial shard cleanup, and
+  deletion of shards once they are summed into the counter field.
+- The three functions, the event types they publish and their payloads:
+  `onStart` still carries `{change, context}` and `onCompletion` still carries
+  `{context}`, with `context.eventId`, `context.timestamp`, `context.eventType`,
+  `context.resource`, the trigger wildcards under `context.params`, and the
+  empty `context.notSupported` object the 1st gen backend always sent. Aside
+  from the worker point above.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/firestore-counter`): exports `controllerCore`,
+  `onWrite`, and `worker`. The main entry reads environment variables when the
+  module loads, so use it from Firebase deploy/emulator/runtime. For your own
+  triggers, import from `./lib` instead.
+- **Library entry** (`./lib`): handlers (`handleSchedule`, `handleShardWrite`,
+  `handleWorker`), controller/worker types, and config helpers (`CounterConfig`,
+  `resolveCounterConfig`) for owning trigger registration yourself.
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `firestore-counter kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/firestore-counter` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0
