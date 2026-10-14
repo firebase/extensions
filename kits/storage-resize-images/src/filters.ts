@@ -1,0 +1,89 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import * as path from "node:path";
+
+import type { ResolvedResizeImagesConfig } from "./export-config";
+import { SUPPORTED_CONTENT_TYPES } from "./global";
+import * as logs from "./logs";
+import {
+  convertPathToPosix,
+  type StorageObjectMetadata,
+  startsWithArray,
+} from "./util";
+
+export function shouldResize(
+  object: StorageObjectMetadata,
+  config: ResolvedResizeImagesConfig
+): boolean {
+  const { contentType } = object;
+  const tmpFilePath = convertPathToPosix(
+    path.resolve("/", path.dirname(object.name)),
+    true
+  );
+
+  if (!contentType) {
+    logs.noContentType();
+    return false;
+  }
+
+  if (!contentType.startsWith("image/")) {
+    logs.contentTypeInvalid(contentType);
+    return false;
+  }
+
+  if (object.contentEncoding === "gzip") {
+    logs.gzipContentEncoding();
+    return false;
+  }
+
+  if (
+    !SUPPORTED_CONTENT_TYPES.includes(
+      contentType as (typeof SUPPORTED_CONTENT_TYPES)[number]
+    )
+  ) {
+    logs.unsupportedType(SUPPORTED_CONTENT_TYPES, contentType);
+    return false;
+  }
+
+  if (
+    config.includePathList &&
+    !startsWithArray(config.includePathList, tmpFilePath)
+  ) {
+    logs.imageOutsideOfPaths(config.includePathList, tmpFilePath);
+    return false;
+  }
+
+  if (
+    config.excludePathList &&
+    startsWithArray(config.excludePathList, tmpFilePath)
+  ) {
+    logs.imageInsideOfExcludedPaths(config.excludePathList, tmpFilePath);
+    return false;
+  }
+
+  if (object.metadata?.resizedImage === "true") {
+    logs.imageAlreadyResized();
+    return false;
+  }
+
+  if (object.metadata?.resizeFailed) {
+    logs.imageFailedAttempt();
+    return false;
+  }
+
+  return true;
+}

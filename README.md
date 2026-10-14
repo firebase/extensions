@@ -8,6 +8,8 @@ Each directory in this repo contains the source code for the extension and a REA
 
 When you find an extension that solves a need for your app or project, all you do is install and configure the extension. With extensions, you don't spend time researching, writing, and debugging the code that implements functionality or automates a task for your app or project.
 
+Several extensions are also available as [Firebase Function Kits](kits) in the [`kits`](kits) directory. A kit is the same functionality packaged as an npm package you add to your own Firebase Functions codebase and deploy yourself, rather than installing it as a managed extension instance.
+
 You can also browse official Firebase extensions from the following sources:
 
 * [Firebase Extensions product page](https://firebase.google.com/products/extensions)

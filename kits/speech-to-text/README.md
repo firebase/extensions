@@ -1,0 +1,334 @@
+# @firebase-function-kits/speech-to-text
+
+Transcribe audio files in Cloud Storage to text. This is the Transcribe Speech to
+Text Firebase Extension as an npm package you add to your own Firebase Functions
+codebase and deploy.
+
+> **Pre-release:** this kit has not been released yet. The `latest` version
+> on npm is a placeholder with no kit code. Pre-release builds are published
+> under the `next` tag and may change between builds:
+>
+> ```sh
+> npm install @firebase-function-kits/speech-to-text@next
+> ```
+
+It listens for audio files finalized in a Cloud Storage bucket, transcodes them
+to LINEAR16, runs a long-running Cloud Speech-to-Text recognition, and writes the
+transcript to Firestore (and/or back to Storage). The function runs in your own
+Firebase project; there is no hosted version, so you deploy it yourself.
+
+## Install
+
+```sh
+npm install @firebase-function-kits/speech-to-text
+```
+
+## Required IAM
+
+Deploy needs these Google Cloud roles and APIs for the function's service
+account. Firebase CLI 15.23.0 or later creates that account, grants the roles
+below, enables the listed APIs, and attaches the account to every function in
+this kit. Do not set a custom runtime service account for this codebase — it
+conflicts with that automatic setup.
+
+| Role / API | Why |
+|---|---|
+| `roles/storage.objectAdmin` | read uploaded audio and write transcoded output |
+| `roles/datastore.user` | write transcript documents to Firestore |
+| `roles/eventarc.eventReceiver` | receive Gen2 Storage trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `firestore.googleapis.com` | write transcript documents to Firestore |
+| `speech.googleapis.com` | transcribe audio |
+| `eventarcpublishing.googleapis.com` | publish the kit's custom Eventarc events |
+
+## Usage
+
+Export the function from your functions codebase entry:
+
+```ts
+// functions/src/index.ts
+export { transcribeAudio } from "@firebase-function-kits/speech-to-text";
+```
+
+and configure it with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
+
+## Deploy
+
+Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "speech-to-text",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the function above
+deploys as `kit-default-transcribeAudio`.
+
+```sh
+firebase experiments:enable kits
+firebase deploy --only functions
+```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
+| `bucket` | `EXTENSION_BUCKET` | no | default Storage bucket | Storage bucket to watch |
+| `languageCode` | `LANGUAGE_CODE` | yes | — | BCP-47 language code |
+| `model` | `MODEL` | no | `default` | Speech model |
+| `outputStoragePath` | `OUTPUT_STORAGE_PATH` | no | bucket root | transcript output prefix |
+| `collectionPath` | `COLLECTION_PATH` | no | (firestore disabled) | transcript collection |
+| `enableAutomaticPunctuation` | `ENABLE_AUTOMATIC_PUNCTUATION` | no | `true` | Speech option |
+
+The function timeout defaults to `540` seconds and memory to `1GiB` so long audio
+does not time out mid-transcription. The main entry has no setting for either;
+to change them, register the trigger yourself from `./lib`.
+
+## Multiple instances
+
+To run several transcription pipelines, add one entry per instance to the
+`instances` map, each pointing at its own config directory with its own `.env`:
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "speech-to-text",
+      "instances": {
+        "uploads": "instances/uploads",
+        "voicemail": "instances/voicemail"
+      }
+    }
+  ]
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide.
+
+## Events
+
+When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
+under the legacy extension id (kept for compatibility with existing consumers):
+
+- `firebase.extensions.storage-transcribe-audio.v1.complete` on success
+- `firebase.extensions.storage-transcribe-audio.v1.fail` on failure
+
+## Differences from the Transcribe Speech to Text extension
+
+This kit is version 0.1.9 of the extension repackaged as an npm package. The
+pipeline is ported closely: the same trigger on finalized objects, the same
+ffmpeg transcode to LINEAR16, the same long-running recognition request, the same
+per-channel transcript map, the same Firestore progress document and the same two
+Eventarc events. Every setting keeps its extension environment variable name and
+default, so a `.env` copied from your installed instance needs no value changes.
+What changes is how long the function may run and when bad values are caught.
+
+### Where the outputs land
+
+Both outputs keep the paths the extension used, so migrated consumers find them
+unchanged, with one deliberate exception noted below. For an input object
+`a.mp3`:
+
+| `OUTPUT_STORAGE_PATH` | Transcoded audio | Transcript |
+| --- | --- | --- |
+| unset | `tmp/a.mp3.wav` | `a.mp3.wav_transcription.txt` |
+| `transcriptions` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+| `transcriptions/` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+
+The `tmp/` segment on the audio is an artefact of the extension naming the copy
+after its local temporary file, and is kept so lifecycle rules, cleanup jobs and
+client code written against the extension keep finding it. The transcript is
+named after the same object with that segment removed, again as the extension
+did, so it sits beside your input rather than under `tmp/`.
+A trailing slash on `OUTPUT_STORAGE_PATH` is stripped. The extension
+concatenated the prefix raw, so `transcriptions/` gave
+`transcriptions//tmp/a.mp3.wav`, but the Speech-to-Text API rejects a `gs://`
+URI containing a double slash, so that configuration uploaded the audio and
+then failed without ever writing a transcript. The kit strips the slash instead,
+which is the only difference from the extension's paths and only affects a
+configuration that never worked.
+
+The transcoded `.wav` carries the
+`isTranscodeOutput` metadata flag that stops the function from processing its
+own output. The transcript `.txt` is written directly by the Speech-to-Text API
+and carries no metadata, so its finalize event runs the function again; that run
+creates a transcript document for the `.txt` object and marks it `FAILED` with
+"Invalid content type.".
+
+### The function may now run for nine minutes
+
+Recognition is polled to completion inside the function, and the extension ran
+with the default 60 second timeout, so long audio failed part way through. The
+kit sets `timeoutSeconds: 540`. Memory is unchanged at 1 GiB (`1024MB` in the
+extension's terms).
+
+Temporary files are also deleted after every invocation now. The extension left
+the downloaded and transcoded files in `/tmp`, which is shared across warm
+invocations of the same instance and counts against the function's memory, so a
+busy instance could run itself out of space.
+
+### Values set in `.env` skip the install prompt's validation
+
+The install prompts reject a `LANGUAGE_CODE` that does not look like a BCP-47
+code and a `COLLECTION_PATH` that is not a valid collection path, the same as the
+extension did. Those checks only run when the CLI prompts you, though: a value
+you write into `.env` is used as-is, and a bad `LANGUAGE_CODE` surfaces as a
+Speech-to-Text error per file, with the failure recorded on the Firestore
+document and in the `fail` event.
+
+### `LOCATION` is replaced by `BUCKET_REGION`
+
+The extension's immutable `LOCATION` is gone. The function is placed by
+`BUCKET_REGION` instead, which describes where your bucket lives rather than
+where you want the function, because a 2nd gen storage trigger only fires for a
+function in a region its bucket accepts. See
+[BUCKET_REGION decides where the function runs](#bucket_region-decides-where-the-function-runs).
+
+### Create the Eventarc channel yourself for events
+
+Choosing events at install used to create the channel and set both event
+variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
+to a channel you have created, and the same
+`firebase.extensions.storage-transcribe-audio.v1.complete` and `.fail` events are
+published. Per-event selection is gone in practice, because the CLI rejects any
+`.env` key beginning with `EXT_`, so `EXT_SELECTED_EVENTS` cannot be set and both
+event types are published. With `EVENTARC_CHANNEL` unset, nothing is published and
+the function is otherwise unaffected.
+
+### The trigger is 2nd gen
+
+`transcribeAudio` is a 2nd gen Cloud Storage function where the extension was 1st
+gen. Its service account needs `roles/eventarc.eventReceiver` and
+`roles/run.invoker` on top of `roles/storage.objectAdmin` and
+`roles/datastore.user`; the Firebase CLI grants these for you.
+
+### BUCKET_REGION decides where the function runs
+
+`BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
+function is deployed to the Cloud Run region derived from it. A 2nd gen storage
+trigger cannot cross regions, so this has to agree with the bucket you set: a
+mismatch fails the deploy with `A function in region <region> cannot listen to
+a bucket in region <region>`. Regional locations (`europe-west4`,
+`us-east1`, ...) are used as-is; the multi-region locations map to a region
+inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
+`asia-east1` - because they are not Cloud Run regions themselves and would fail
+the deploy. The value is matched case-insensitively.
+
+Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
+not mapped. Pick one of the regions the pair is made of instead, all of which
+are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`.
+The function still receives the bucket's events. Deployed against a `nam4`
+bucket with the region set to `us-central1`, Eventarc created the trigger in
+`nam4` pointing at the `us-central1` function and delivered the upload. Naming
+the dual-region location itself fails the deploy with `Location nam4 is not
+found or access is unauthorized`. That was run on `storage-resize-images`, which
+shares this kit's region helper and trigger shape.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
+values during deploy discovery, so the function silently falls back to the
+no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
+carried `BUCKET_REGION`) can itself move the function on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `BUCKET_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
+region and the Firebase CLI resolves one at deploy time: it keeps the region it
+is already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Omitting the line is not the same as
+an empty one: a non-interactive deploy fails with `In non-interactive mode but
+have no value for the following environment variables: BUCKET_REGION`. Note that
+changing an existing instance's region deletes and recreates the function.
+
+### Unchanged
+
+- `EXTENSION_BUCKET` still selects the bucket that is both watched and written
+  to, and still defaults to your project's default bucket.
+- `ENABLE_AUTOMATIC_PUNCTUATION` still reads the same `true` / `false` values, and
+  `MODEL` still defaults to `default`.
+- Firestore output is still opt-in: with `COLLECTION_PATH` unset nothing is
+  written to Firestore, and with it set you still get a document per file created
+  in `PROCESSING`, moved through `PROCESSING`/`FAILED`, and finished with the
+  transcription and status.
+- Objects with no content type, or a content type that is not `audio/*`, are
+  still skipped with the same `No content type provided.` and
+  `Invalid content type.` messages on the Firestore document.
+- Multi-channel audio still produces a transcript per channel tag, and a file
+  with more than one stream still produces a warning rather than a failure.
+- There is no backfill for audio already in the bucket, as before.
+- The `complete` and `fail` payloads. Typed pipeline failures still carry the
+  failure and the object name, and an unexpected error is still published as
+  `{ error }`. The error is serialised as-is, so subscribers receive whatever
+  enumerable fields it has: a plain `Error` gives `{"error":{}}` (`message` and
+  `stack` are not enumerable) and you have to read the function logs, while a
+  Cloud Storage `ApiError` gives `code`, `errors`, `response` and `message`
+  because it assigns those as own properties. A thrown non-error still arrives
+  with its `name` and `message`.
+
+## API surface
+
+- **Main entry** (`@firebase-function-kits/speech-to-text`): exports `transcribeAudio`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
+- **Library entry** (`./lib`): the raw `handleObjectFinalized` handler, config
+  types/helpers, and the framework-agnostic transcription engine
+  (`transcodeToLinear16`, `transcribeAndUpload`, `uploadTranscodedFile`).
+
+## Reporting bugs
+
+File bugs in the
+[firebase/extensions issue tracker](https://github.com/firebase/extensions/issues/new?template=bug.md)
+using the bug template, with `speech-to-text kit` in the title. Include:
+
+- The kit version (run `npm ls @firebase-function-kits/speech-to-text` in the
+  directory where you installed it), your `firebase-tools` version
+  (`firebase --version`) and Node.js version.
+- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+  secrets and project details redacted.
+- Steps to reproduce, the result you expected, and the result you got.
+- Logs from the kit's functions in Cloud Logging (with their
+  `kit-<instance-id>-` prefix if you deploy instances).
+
+If you migrated from the extension, say so and include the extension version
+you migrated from.
+
+## License
+
+Apache-2.0

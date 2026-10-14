@@ -1,0 +1,107 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import * as admin from "firebase-admin";
+import type { Role } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
+import { onObjectFinalized } from "firebase-functions/v2/storage";
+import sharp from "sharp";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  envFunctionRegion,
+  configFromEnv,
+  validatePathListsFromEnv,
+} from "./config";
+import * as events from "./events";
+import { resolveResizeImagesConfig } from "./export-config";
+import { type HandlerContext, handleObjectFinalized } from "./handlers";
+import * as logs from "./logs";
+
+assertRequiredParams();
+export * from "./lib";
+
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/storage.admin",
+  "roles/aiplatform.user",
+  // Gen2 Storage triggers need Eventarc receive and run.invoker on the function SA.
+  "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
+];
+const REQUIRED_APIS = [
+  {
+    api: "aiplatform.googleapis.com",
+    reason:
+      "Needed for Vertex AI content filtering when CONTENT_FILTER_LEVEL is set.",
+  },
+  {
+    api: "storage-component.googleapis.com",
+    reason: "Needed to use Cloud Storage.",
+  },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
+] as const;
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
+}
+
+sharp.cache(false);
+
+validatePathListsFromEnv();
+let ctx: HandlerContext | undefined;
+
+function getContext(): HandlerContext {
+  if (ctx) {
+    return ctx;
+  }
+
+  const resolved = resolveResizeImagesConfig(configFromEnv());
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
+  }
+
+  events.setupEventChannel();
+  logs.init(resolved);
+
+  ctx = {
+    config: resolved,
+    storage: admin.storage(),
+  };
+  return ctx;
+}
+
+const functionRegion = envFunctionRegion();
+
+export const generateResizedImage = onObjectFinalized(
+  {
+    ...(functionRegion ? { region: functionRegion } : {}),
+    bucket: CONFIG_EXPRESSIONS.bucket,
+    memory: CONFIG_EXPRESSIONS.memory,
+  },
+  (event) => handleObjectFinalized(event, getContext())
+);
