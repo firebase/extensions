@@ -280,6 +280,10 @@ a `TypeError` about reading `attachments` into `delivery.error`. It now writes
 - SendGrid is still selected by an `smtp.sendgrid.net` connection URI with the
   API key in `SMTP_PASSWORD`, and Outlook hosts still get their explicit
   transport configuration.
+- The function still runs like the extension's: 0.1666 vCPU
+  (`cpu: "gcf_gen1"`), one event per instance (`concurrency: 1`) and
+  internal-only ingress, rather than the 2nd gen defaults of 1 vCPU,
+  concurrency `80` and `ALLOW_ALL`.
 - The function still runs with a 120 second timeout, and `TLS_OPTIONS`,
   `DATABASE`, `USERS_COLLECTION` and `TEMPLATES_COLLECTION` behave as before.
 
