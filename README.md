@@ -14,7 +14,7 @@ These kits are available:
 | --- | --- |
 | `firestore-bigquery-export` | [`@firebase-function-kits/firestore-bigquery-export`](https://www.npmjs.com/package/@firebase-function-kits/firestore-bigquery-export) |
 
-We're converting the remaining extensions into kits. To check whether a kit replacement exists for an extension you have installed, run `firebase ext:list` in your project, or open the Extensions page of the Firebase console.
+More kits may be added over time, but not every extension will necessarily have one. To check whether a kit replacement exists for an extension you have installed, run `firebase ext:list` in your project, or open the Extensions page of the Firebase console.
 
 If you publish your own extension, see the [publisher migration guide](https://firebase.google.com/docs/extensions/publishers/migrate).
 
