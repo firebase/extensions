@@ -1,3 +1,7 @@
+## Version 0.3.7
+
+fix: fix broken `getDownloadURL` link in docs
+
 ## Version 0.3.6
 
 chore: replace temp file helper dependencies with Node.js built-ins

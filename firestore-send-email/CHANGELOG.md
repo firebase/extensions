@@ -1,3 +1,7 @@
+## Version 0.2.11
+
+fix: fix broken Nodemailer OAuth2 and SendGrid Categories links in docs
+
 ## Version 0.2.10
 
 chore: bump nodemailer to v9 and remove unused rimraf dependency

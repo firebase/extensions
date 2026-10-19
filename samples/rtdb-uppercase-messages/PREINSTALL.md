@@ -22,7 +22,7 @@ text:
 #### Additional setup
 
 Before installing this extension, make sure that you've
-[set up Realtime Database](https://firebase.google.com/docs/databaae/quickstart)
+[set up Realtime Database](https://firebase.google.com/docs/database/web/start)
 in your Firebase project.
 
 #### Billing

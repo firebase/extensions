@@ -104,7 +104,7 @@ fixed - Fixed 406 HTTP error code from Bitly API due to `Content-Type` header no
 
 fixed - Migrated Bitly API to v4 since v3 will be deactivated on March 1, 2020 (Issue #170).
 
-**Important:** Update your extension to at minimum v0.1.2 before March 1, 2020; otherwise, your installed extension will stop working. [Learn more](https://dev.bitly.com/deprecated.html).
+**Important:** Update your extension to at minimum v0.1.2 before March 1, 2020; otherwise, your installed extension will stop working. [Learn more](https://dev.bitly.com/docs/getting-started/authentication).
 
 ## Version 0.1.1
 

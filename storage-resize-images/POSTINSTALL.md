@@ -29,7 +29,7 @@ The extension also copies the following [metadata](https://cloud.google.com/stor
 - `Content-Type`
 - [user-provided metadata](https://cloud.google.com/storage/docs/metadata#custom-metadata)
  - If the original image contains a download token (publicly accessible via a unique download URL), a new download token is generated for the resized image(s). 
- - If the original image does not contain a download token, resized image(s) will not be created with unique tokens. To make a resized image publicly accessible, call the [`getDownloadURL`](https://firebase.google.com/docs/reference/js/firebase.storage.Reference#getdownloadurl) method.
+ - If the original image does not contain a download token, resized image(s) will not be created with unique tokens. To make a resized image publicly accessible, call the [`getDownloadURL`](https://firebase.google.com/docs/reference/js/storage#getdownloadurl) method.
 
 Be aware of the following when using this extension:
 

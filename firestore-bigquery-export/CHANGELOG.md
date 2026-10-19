@@ -6,6 +6,8 @@ fix: failed BigQuery inserts are no longer reported as successful while silently
 
 fix: stop updating the BigQuery table metadata every time the extension is configured or updated when nothing has changed
 
+fix: remove broken contributor link from extension metadata
+
 ## Version 0.3.3
 
 chore: remove unused runtime dependencies and bump change-tracker consumers
