@@ -110,6 +110,6 @@ You can install multiple instances of this extension for the same project to con
 
 Learn about more advanced use of this extension:
 
-[Customize o**utput options**](https://www.notion.so/Customize-output-options-d87cc4d3489b4a89831543601b982c00)
+[Customize o**utput options**](customize-output-options.md)
 
-[Handle Resize Image Extension events](https://www.notion.so/Handle-Resize-Image-Extension-events-6b4a7d75e9ef4812b67f84fbdb4015c0)
+[Handle Resize Image Extension events](handle-resize-image-extension-events.md)

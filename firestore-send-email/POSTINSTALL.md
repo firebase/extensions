@@ -59,7 +59,7 @@ When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can ass
 
 Add this document to the Firestore mail collection to send categorized emails.
 
-For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
+For more details, see the [SendGrid Categories documentation](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/categories).
 
 #### Firestore-Send-Email: SendGrid Dynamic Templates
 

@@ -45,4 +45,4 @@ exports.onimageresized = onCustomEventPublished(
 
 For each particular extension, the payload returned in the event object provides data you can use to perform custom logic for your application flow. In this case, the function uses the Admin SDK to copy metadata about the resized image to a collection in Firestore, obtaining the filename from the `subject` provided by the event, and saving metadata from the `data` provided by the event.
 
-> For more information about handling custom events refer [Create and handle custom event triggers](https://firebase.google.com/docs/functions/beta/custom-events).
+> For more information about handling custom events refer [Create and handle custom event triggers](https://firebase.google.com/docs/functions/custom-events).
