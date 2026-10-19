@@ -1,3 +1,9 @@
+## Version 0.3.7
+
+fixed - bump sharp to ^0.35.5, which carries libvips 8.18.7, libheif 1.23.5 and librsvg 2.63.2 (sharp advisories GHSA-f88m-g3jw-g9cj, GHSA-rgj7-g3m4-5g8c, GHSA-wq5f-xc86-pv6w).
+
+fixed - restrict libvips to the loaders for the supported formats. The contentType gate reads uploader-set metadata while libvips picks the loader from the bytes, so an SVG, PDF or other decodable file uploaded under a supported contentType was still decoded by the loader for its real format.
+
 ## Version 0.3.6
 
 chore: replace temp file helper dependencies with Node.js built-ins

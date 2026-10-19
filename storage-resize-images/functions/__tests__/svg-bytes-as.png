@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect x="20" y="20" width="360" height="260" fill="#3b35ae"/>
+  <text x="40" y="160" font-size="48" fill="#fff">svg bytes, png label</text>
+</svg>
