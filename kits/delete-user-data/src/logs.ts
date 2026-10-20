@@ -126,6 +126,26 @@ export const deletionEventMissingUid = (eventId: string) => {
   );
 };
 
+// Written without a stack in `message`: the functions framework already prints
+// the thrown error's stack to stderr, and Error Reporting groups that entry the
+// same way it groups the extension's errors. A stack here would report every
+// failure twice, under a second group.
+export const unhandledError = (
+  functionName: string,
+  eventId: string,
+  err: unknown
+) => {
+  logger.write({
+    severity: "ERROR",
+    message: `Function ${functionName} failed on event ${eventId}: ${
+      err instanceof Error ? err.message : String(err)
+    }`,
+    functionName,
+    eventId,
+    errorStack: err instanceof Error ? err.stack : undefined,
+  });
+};
+
 export function warnInvalidPaths(invalidPathCount: number, uid: string) {
   logger.warn(
     `Attempted to delete ${invalidPathCount} invalid paths for deleted user ${uid}`
