@@ -27,7 +27,7 @@
  */
 
 import { declaredParams } from "firebase-functions/params";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type {
   ListParam,
@@ -507,5 +507,78 @@ describe("validatePathListsFromEnv", () => {
 
     const { validatePathListsFromEnv } = await import("../src/config");
     expect(() => validatePathListsFromEnv()).toThrow(/Invalid excludePathList/);
+  });
+});
+
+describe("validateParamFormatsFromEnv", () => {
+  const NAMES = ["IMG_SIZES", "SHARP_OPTIONS", "OUTPUT_OPTIONS"] as const;
+
+  beforeEach(() => {
+    for (const name of NAMES) {
+      vi.stubEnv(name, undefined);
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  async function validate(): Promise<void> {
+    const { validateParamFormatsFromEnv } = await import("../src/config");
+    validateParamFormatsFromEnv();
+  }
+
+  test("accepts an unset environment, which falls back to the defaults", async () => {
+    await expect(validate()).resolves.toBeUndefined();
+  });
+
+  test.each(["200x200", "200x200,400x400,1x1"])(
+    "accepts IMG_SIZES %j",
+    async (value) => {
+      vi.stubEnv("IMG_SIZES", value);
+      await expect(validate()).resolves.toBeUndefined();
+    }
+  );
+
+  test.each(["200x", "x200", "abc", "200x200,", "200x200, 400x400", "", "   "])(
+    "rejects IMG_SIZES %j, naming the param and value",
+    async (value) => {
+      vi.stubEnv("IMG_SIZES", value);
+      await expect(validate()).rejects.toThrow(
+        `Invalid IMG_SIZES ${JSON.stringify(value)}`
+      );
+    }
+  );
+
+  describe.each(["SHARP_OPTIONS", "OUTPUT_OPTIONS"] as const)("%s", (name) => {
+    test.each([
+      "",
+      "{}",
+      '{"fit":"contain","background":"#ff0000"}',
+      '{"jpeg":{"quality":5},"png":{"palette":true}}',
+    ])("accepts %j", async (value) => {
+      vi.stubEnv(name, value);
+      await expect(validate()).resolves.toBeUndefined();
+    });
+
+    test.each(['{"fit":"contain","background":"', "   ", "[]", "null", " {}"])(
+      "rejects %j, naming the param and value",
+      async (value) => {
+        vi.stubEnv(name, value);
+        await expect(validate()).rejects.toThrow(
+          `Invalid ${name} ${JSON.stringify(value)}`
+        );
+      }
+    );
+  });
+
+  test("rejects SHARP_OPTIONS that matches the pattern but is not JSON", async () => {
+    vi.stubEnv("SHARP_OPTIONS", "{bad}");
+    await expect(validate()).rejects.toThrow('Invalid SHARP_OPTIONS "{bad}"');
+  });
+
+  test("accepts OUTPUT_OPTIONS that matches the pattern but is not JSON, as the extension did", async () => {
+    vi.stubEnv("OUTPUT_OPTIONS", "{bad}");
+    await expect(validate()).resolves.toBeUndefined();
   });
 });
