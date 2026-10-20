@@ -26,13 +26,20 @@ let eventChannel: eventArc.Channel | undefined;
  * selected, the platform cleared the channel and nothing was published.
  * firebase-admin reads a missing allowlist as "allow every type", so an unset
  * or empty `EXT_SELECTED_EVENTS` has to disable publishing here.
+ *
+ * The list is split and trimmed here because firebase-admin splits a string
+ * on `,` without trimming, so a hand-written `a, b` would only allow `a`. The
+ * platform wrote the extension's value without spaces.
  */
 export const setupEventChannel = (): void => {
   const channel = process.env.EVENTARC_CHANNEL;
-  const selectedEvents = process.env.EXT_SELECTED_EVENTS;
+  const selectedEvents = (process.env.EXT_SELECTED_EVENTS ?? "")
+    .split(",")
+    .map((type) => type.trim())
+    .filter(Boolean);
 
   eventChannel =
-    channel && selectedEvents
+    channel && selectedEvents.length > 0
       ? eventArc.getEventarc().channel(channel, {
           allowedEventTypes: selectedEvents,
         })
