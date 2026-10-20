@@ -96,6 +96,15 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
+The CLI does not check values that are already in `.env`, so the kit checks
+them itself when the deploy loads it, as the extension did at install time. The
+deploy fails with an error naming the setting and the allowed values if
+`FIRESTORE_DELETE_MODE`, `ENABLE_AUTO_DISCOVERY` or
+`SELECTED_DATABASE_LOCATION` is not one of the values listed below, or if
+`SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
+extension accepted (an instance id rather than a URL, and a bucket name without
+`gs://` or capital letters). The values are case sensitive.
+
 The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
 `FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
@@ -214,6 +223,15 @@ The Firebase CLI now sets it to the function that published the event
 (`projects/<project id>/locations/<region>/services/kit-<instance id>-<function>`),
 so it differs between `clearData`, `handleSearch` and `handleDeletion`. If your
 event triggers filter on `source`, filter on the event `type` instead.
+
+### Option labels are not accepted
+
+The extension's installer accepted an option's label (such as `Recursive` or
+`Yes`) as well as its value, but then did not recognize it: `Recursive` deleted
+shallowly and `Yes` left auto-discovery off. The kit accepts only the values
+(`recursive`, `shallow`, `yes`, `no`, and the location ids), and fails the
+deploy on a label. If you copied your `.env` from an extension instance that
+was installed with a label, change it to the value.
 
 ### Unchanged
 
