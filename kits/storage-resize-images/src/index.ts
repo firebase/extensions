@@ -24,6 +24,7 @@ import {
   CONFIG_EXPRESSIONS,
   envFunctionRegion,
   configFromEnv,
+  validateParamFormatsFromEnv,
   validatePathListsFromEnv,
 } from "./config";
 import * as events from "./events";
@@ -73,6 +74,7 @@ for (const { api, reason } of REQUIRED_APIS) {
 sharp.cache(false);
 
 validatePathListsFromEnv();
+validateParamFormatsFromEnv();
 let ctx: HandlerContext | undefined;
 
 function getContext(): HandlerContext {
