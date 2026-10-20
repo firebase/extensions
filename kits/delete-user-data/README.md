@@ -202,6 +202,15 @@ Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
 This mainly matters if you have infrastructure or alerting keyed to function
 generation.
 
+Each function still runs like the extension's: one event per instance
+(`concurrency: 1`), 0.1666 vCPU (`cpu: "gcf_gen1"`) and internal-only ingress,
+rather than the 2nd gen defaults of concurrency `80`, 1 vCPU and `ALLOW_ALL`.
+One difference remains: 2nd gen caps each function at 100 instances by default,
+where the extension's 1st gen functions could scale to 3000. To raise it, call
+`setGlobalOptions({ maxInstances })` from `firebase-functions/v2` in your
+codebase before you load the kit, since the kit's functions read the global
+options when they are defined.
+
 ### Events need an existing channel, and their source has changed
 
 The extension created its Eventarc channel when you installed it with events

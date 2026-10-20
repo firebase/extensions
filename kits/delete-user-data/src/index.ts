@@ -109,7 +109,20 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const clearData = onUserDeleted((event) => {
+/**
+ * The extension's 1st gen functions ran at 0.1666 vCPU, one event per
+ * instance, with internal-only ingress. Without these options the CLI deploys
+ * the 2nd gen defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`. At concurrency
+ * 80, auto-discovery fans many `handleSearch` events onto one 256MiB instance,
+ * which runs out of memory and drops every event in flight on it.
+ */
+const EXTENSION_RUNTIME_OPTIONS = {
+  concurrency: 1,
+  cpu: "gcf_gen1",
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
+export const clearData = onUserDeleted(EXTENSION_RUNTIME_OPTIONS, (event) => {
   // The Auth event delivers no user record when the payload envelope is empty,
   // so bail before getContext() rather than initialising the SDKs for nothing.
   const uid = event.data?.uid;
@@ -122,6 +135,7 @@ export const clearData = onUserDeleted((event) => {
 
 export const handleSearch = onMessagePublished(
   {
+    ...EXTENSION_RUNTIME_OPTIONS,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
   (event) => runSearch(event.data.message.json, getContext())
@@ -129,6 +143,7 @@ export const handleSearch = onMessagePublished(
 
 export const handleDeletion = onMessagePublished(
   {
+    ...EXTENSION_RUNTIME_OPTIONS,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
   (event) => runDeletion(event.data.message.json, getContext())
