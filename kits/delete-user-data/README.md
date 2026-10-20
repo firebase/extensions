@@ -155,9 +155,10 @@ The functions can publish deletion events for each backend under
 | `EVENTARC_CHANNEL` | Full channel name, e.g. `projects/<project id>/locations/us-central1/channels/firebase` |
 | `EXT_SELECTED_EVENTS` | Comma-separated event types to publish, e.g. `firebase.extensions.delete-user-data.v1.firestore,firebase.extensions.delete-user-data.v1.storage` |
 
-Only the listed types are published. If `EXT_SELECTED_EVENTS` is unset or
-empty, nothing is published, which matches an extension instance installed with
-no event types selected.
+Only the listed types are published. Spaces around each type are ignored, so
+`a, b` works the same as `a,b`. If `EXT_SELECTED_EVENTS` is unset, empty or
+only whitespace, nothing is published, which matches an extension instance
+installed with no event types selected.
 
 The channel must already exist. Deploying the kit does not create it, and
 publishing to a missing channel logs a warning without failing the function.

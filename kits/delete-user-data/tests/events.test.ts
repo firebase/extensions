@@ -26,11 +26,12 @@ vi.mock("firebase-admin/eventarc", () => ({
 
 const CHANNEL = "projects/p/locations/l/channels/firebase";
 
-const ALL_EVENTS = [
+const ALL_EVENT_TYPES = [
   "firebase.extensions.delete-user-data.v1.firestore",
   "firebase.extensions.delete-user-data.v1.database",
   "firebase.extensions.delete-user-data.v1.storage",
-].join(",");
+];
+const ALL_EVENTS = ALL_EVENT_TYPES.join(",");
 
 // `null` unsets the variable; `undefined` would trip importEvents' default.
 function setEnv(name: string, value: string | null | undefined) {
@@ -73,7 +74,21 @@ describe("setupEventChannel", () => {
     );
 
     expect(channel).toHaveBeenCalledWith(CHANNEL, {
-      allowedEventTypes: "firebase.extensions.delete-user-data.v1.firestore",
+      allowedEventTypes: ["firebase.extensions.delete-user-data.v1.firestore"],
+    });
+  });
+
+  // firebase-admin splits a string allowlist on "," without trimming, so
+  // "a, b" would allow only "a". The extension's value never had spaces.
+  test.each([
+    ["spaces after commas", ALL_EVENT_TYPES.join(", ")],
+    ["surrounding whitespace", `  ${ALL_EVENT_TYPES.join(" ,  ")}  `],
+    ["empty entries", `,${ALL_EVENT_TYPES.join(",,")},`],
+  ])("trims each selected event type (%s)", async (_label, selectedEvents) => {
+    await importEvents(CHANNEL, selectedEvents);
+
+    expect(channel).toHaveBeenCalledWith(CHANNEL, {
+      allowedEventTypes: ALL_EVENT_TYPES,
     });
   });
 
@@ -83,6 +98,8 @@ describe("setupEventChannel", () => {
   test.each([
     ["unset", null],
     ["empty", ""],
+    ["whitespace only", "   "],
+    ["only commas", " , ,"],
   ])(
     "stays disabled when a channel is set but EXT_SELECTED_EVENTS is %s",
     async (_label, selectedEvents) => {
