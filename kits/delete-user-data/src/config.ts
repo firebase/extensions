@@ -258,3 +258,49 @@ export function assertRequiredParams(
     );
   }
 }
+
+/**
+ * Rejects param values the published extension refuses at install time: a
+ * select value that is not one of its option values, or a text value that
+ * fails its `validationRegex`.
+ *
+ * The CLI applies a param's `input` only when it prompts, so a value already
+ * in `.env` reaches the handlers unchecked, and they compare it with `===`
+ * (`FIRESTORE_DELETE_MODE=RECURSIVE` runs as shallow, for example). Option
+ * labels such as `Recursive` are rejected too, as the handlers only understand
+ * the values. Unset and empty values are skipped: defaults cover the first,
+ * and `assertRequiredParams` decides about the second. Called at module scope
+ * so deploy-time discovery fails before the function ships.
+ */
+export function assertValidParams(): void {
+  const invalid: string[] = [];
+
+  for (const param of Object.values(params)) {
+    const raw = process.env[param.name];
+    const input = param.options?.input;
+    if (raw === undefined || raw === "" || !input) {
+      continue;
+    }
+
+    const setting = `${param.name}=${JSON.stringify(raw)}`;
+    if ("select" in input) {
+      const allowed = input.select.options.map(({ value }) => String(value));
+      if (!allowed.includes(raw)) {
+        invalid.push(`${setting} must be one of: ${allowed.join(", ")}`);
+      }
+    } else if ("text" in input && input.text.validationRegex) {
+      const regex = new RegExp(input.text.validationRegex);
+      if (!regex.test(raw)) {
+        const reason = input.text.validationErrorMessage ?? "Invalid value";
+        invalid.push(`${setting}: ${reason} (must match ${regex})`);
+      }
+    }
+  }
+
+  if (invalid.length > 0) {
+    throw new Error(
+      `Invalid parameter values: ${invalid.join("; ")}. ` +
+        "Fix them in your .env file, or remove the entries to use their defaults."
+    );
+  }
+}
