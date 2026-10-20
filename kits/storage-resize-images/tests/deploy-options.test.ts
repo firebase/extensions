@@ -76,6 +76,22 @@ describe("CONFIG_EXPRESSIONS", () => {
   });
 });
 
+describe("generateResizedImage instance sizing", () => {
+  const endpoint = (
+    generateResizedImage as unknown as {
+      __endpoint: { concurrency?: number; cpu?: number | string };
+    }
+  ).__endpoint;
+
+  test("handles one event per instance, as the extension's 1st gen trigger did", () => {
+    expect(endpoint.concurrency).toBe(1);
+  });
+
+  test("sizes CPU from memory as 1st gen did", () => {
+    expect(endpoint.cpu).toBe("gcf_gen1");
+  });
+});
+
 describe("generateResizedImage deploy region", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
