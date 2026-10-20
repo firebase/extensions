@@ -58,6 +58,9 @@ and configure with a `.env` (or `.env.<projectId>`).
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
 
+The functions deploy to `us-east1` unless you set a region. See
+[Functions deploy to `us-east1` unless you set a region](#functions-deploy-to-us-east1-unless-you-set-a-region).
+
 ## Deploy
 
 Add a `kit` stanza to your project's `firebase.json` (Firebase CLI 15.27.0 or
@@ -187,11 +190,48 @@ You can also override both names with `DISCOVERY_TOPIC_NAME` and
 `DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
 since one function publishes to a topic the other is triggered by.
 
-### Functions deploy to your default region
+### Functions deploy to `us-east1` unless you set a region
 
-The extension deployed to the location you picked at install time. This kit
-sets no region, so its functions deploy to your codebase's default
-(`us-central1` unless you have changed it).
+The extension deployed to the location you picked at install time
+(`us-central1` by default). This kit sets no region, and with no region set
+the Firebase CLI deploys its Auth- and Pub/Sub-triggered functions to
+`us-east1`, not `us-central1`.
+
+Keep the functions in the same region as your Firestore database (for a `nam5`
+database, `us-central1`), so user data is not read and deleted from another
+region.
+
+To choose the region, call `setGlobalOptions({ region })` from
+`firebase-functions/v2` before the kit's functions are defined. Put the call in
+its own file and import that file before the kit:
+
+```ts
+// functions/src/options.ts
+import { setGlobalOptions } from "firebase-functions/v2";
+
+setGlobalOptions({ region: "us-central1" });
+```
+
+```ts
+// functions/src/index.ts
+import "./options.js";
+
+export {
+  clearData,
+  handleSearch,
+  handleDeletion,
+} from "@firebase-function-kits/delete-user-data";
+```
+
+A `setGlobalOptions` call in `index.ts` itself can run too late. In an ES
+module, `import` and `export … from` statements load the kit before any other
+code in the file runs, so the kit's functions are defined before the call. A
+separate file imported first works for both ES modules and CommonJS. The
+options apply to every function in the codebase.
+
+`firebase functions:kits:install` and `firebase ext:migrate` generate an entry
+file that does this for you, setting `region` from a `FUNCTION_DEFAULT_REGION`
+parameter.
 
 ### All functions are 2nd gen
 
