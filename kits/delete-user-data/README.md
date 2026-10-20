@@ -202,6 +202,31 @@ Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
 This mainly matters if you have infrastructure or alerting keyed to function
 generation.
 
+### Failed runs show as HTTP 200
+
+On the extension's 1st gen functions, a thrown error or a timeout was logged as
+`finished with status: 'error'` (or `'timeout'`). On 2nd gen, Cloud Run
+records these event deliveries as HTTP 200 even when the function fails, so
+request status and error-rate charts do not show failures.
+
+Instead, the kit logs every failed run at ERROR severity, as
+`Function <name> failed on event <id>: <error>`, with `functionName` and
+`eventId` fields, and then lets the run fail. Error Reporting still groups the
+error from the stack trace that follows it, as it did for the extension. To be
+told about failures, create a
+[log-based alert](https://cloud.google.com/logging/docs/alerting/log-based-alerts)
+on ERROR severity, for example:
+
+```
+resource.type="cloud_run_revision"
+resource.labels.service_name=~"^kit-<instance id>-"
+(severity>=ERROR OR textPayload:"maximum request timeout")
+```
+
+A function can't log its own timeout. A timeout shows up only as an INFO request
+log that says "The request has been terminated because it has reached the
+maximum request timeout", which the second clause above matches.
+
 ### Events need an existing channel, and their source has changed
 
 The extension created its Eventarc channel when you installed it with events
