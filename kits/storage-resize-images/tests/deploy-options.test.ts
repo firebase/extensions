@@ -79,7 +79,12 @@ describe("CONFIG_EXPRESSIONS", () => {
 describe("generateResizedImage instance sizing", () => {
   const endpoint = (
     generateResizedImage as unknown as {
-      __endpoint: { concurrency?: number; cpu?: number | string };
+      __endpoint: {
+        concurrency?: number;
+        cpu?: number | string;
+        maxInstances?: number;
+        ingressSettings?: string;
+      };
     }
   ).__endpoint;
 
@@ -89,6 +94,14 @@ describe("generateResizedImage instance sizing", () => {
 
   test("sizes CPU from memory as 1st gen did", () => {
     expect(endpoint.cpu).toBe("gcf_gen1");
+  });
+
+  test("scales to the extension's 1st gen limit of 3000 instances", () => {
+    expect(endpoint.maxInstances).toBe(3000);
+  });
+
+  test("accepts only internal traffic, as the extension did", () => {
+    expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
   });
 });
 
