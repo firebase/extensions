@@ -23,7 +23,7 @@ vi.mock("../src/handlers", async (importOriginal) => ({
 }));
 
 import { handleClear } from "../src/handlers";
-import { clearData } from "../src/index";
+import { clearData, handleDeletion, handleSearch } from "../src/index";
 import * as logs from "../src/logs";
 
 function deletionEvent(data: unknown) {
@@ -67,4 +67,23 @@ describe("clearData", () => {
     expect(handleClear).not.toHaveBeenCalled();
     expect(logs.deletionEventMissingUid).toHaveBeenCalledWith("event-id");
   });
+});
+
+describe("runtime options", () => {
+  // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
+  // instance, which ran out of memory and dropped them.
+  test.each([
+    ["clearData", clearData],
+    ["handleSearch", handleSearch],
+    ["handleDeletion", handleDeletion],
+  ])(
+    "%s runs one event per 0.1666 vCPU instance with internal-only ingress",
+    (_name, fn) => {
+      const endpoint = (fn as any).__endpoint;
+
+      expect(endpoint.concurrency).toBe(1);
+      expect(endpoint.cpu).toBe("gcf_gen1");
+      expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    }
+  );
 });
