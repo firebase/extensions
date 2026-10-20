@@ -41,6 +41,8 @@ export const error = (err: unknown): void =>
 export const errorDeleting = (err: unknown): void =>
   logger.warn("Error when deleting files", err);
 export const failed = (): void => logger.error("Failed execution of extension");
+export const unhandledError = (err: unknown): void =>
+  logger.error("Unhandled error in generateResizedImage", err);
 export const imageAlreadyResized = (): void =>
   logger.log("File is already a resized image, no processing is required");
 export const imageFailedAttempt = (): void =>

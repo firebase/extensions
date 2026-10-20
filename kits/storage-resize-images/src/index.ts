@@ -110,5 +110,14 @@ export const generateResizedImage = onObjectFinalized(
     concurrency: 1,
     cpu: "gcf_gen1",
   },
-  (event) => handleObjectFinalized(event, getContext())
+  async (event) => {
+    // 2nd gen request status does not reliably mark a failed event, so this
+    // structured ERROR entry is what log-based alerts can match on.
+    try {
+      await handleObjectFinalized(event, getContext());
+    } catch (err) {
+      logs.unhandledError(err);
+      throw err;
+    }
+  }
 );
