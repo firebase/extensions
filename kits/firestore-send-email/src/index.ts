@@ -108,6 +108,12 @@ function ensureInitialized(): Promise<HandlerContext> {
 export const processQueue = onDocumentWritten(
   {
     ...(deploy.region ? { region: deploy.region } : {}),
+    // The extension ran this function at 0.1666 vCPU, one event per instance,
+    // with internal-only ingress. Without these the CLI deploys the 2nd gen
+    // defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`.
+    concurrency: 1,
+    cpu: "gcf_gen1",
+    ingressSettings: "ALLOW_INTERNAL_ONLY",
     document: deploy.document,
     database: deploy.database,
     timeoutSeconds: 120,
