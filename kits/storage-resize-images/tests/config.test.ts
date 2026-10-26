@@ -556,6 +556,7 @@ describe("validateParamFormatsFromEnv", () => {
       "{}",
       '{"fit":"contain","background":"#ff0000"}',
       '{"jpeg":{"quality":5},"png":{"palette":true}}',
+      '{\n  "fit": "contain",\n  "background": "#ff0000"\n}',
     ])("accepts %j", async (value) => {
       vi.stubEnv(name, value);
       await expect(validate()).resolves.toBeUndefined();

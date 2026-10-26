@@ -46,9 +46,11 @@ const SIZES_VALIDATION = {
     "Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.",
 };
 
-// Extension regex, with an empty branch added: the param is optional.
+// Extension regex, with an empty branch added (the param is optional) and
+// `[\s\S]` so multi-line .env values match. Not the `s` flag: only the
+// regex source reaches the CLI.
 const JSON_OBJECT_VALIDATION = {
-  validationRegex: /^(?:({(.*?)})|)$/,
+  validationRegex: /^(?:({([\s\S]*?)})|)$/,
   validationErrorMessage: "Please provide a valid JSON object.",
 };
 
