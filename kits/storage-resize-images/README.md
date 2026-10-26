@@ -127,31 +127,8 @@ resized to their first frame only.
 
 ## Multiple instances
 
-To resize images from several buckets or pipelines, deploy one instance per
-configuration. `firebase functions:kits:install` writes a kit entry like this
-to `firebase.json`, with the instance's `.env` in its `config-<instance id>`
-directory:
-
-```json
-{
-  "functions": [
-    {
-      "kit": "storage-resize-images",
-      "sourcePackage": {
-        "name": "@firebase-function-kits/storage-resize-images"
-      },
-      "source": "function-kits/storage-resize-images/source",
-      "instances": {
-        "storage-resize-images": "function-kits/storage-resize-images/config-storage-resize-images"
-      },
-      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
-    }
-  ]
-}
-```
-
-To add an instance, add an entry to `instances` and create its config
-directory next to the existing one:
+Add one entry per instance, each with its own config directory and `.env`.
+Instance ids must be unique across the project.
 
 ```json
 "instances": {
@@ -160,26 +137,9 @@ directory next to the existing one:
 }
 ```
 
-Copy the existing instance's `.env` files into the new directory and change
-the values. Each instance needs a complete `.env`, including
-`FUNCTION_DEFAULT_REGION`; it does not inherit values from another instance.
-Running `functions:kits:install` again also adds an instance, but always with
-the id `storage-resize-images` and an empty `.env`, so add instances by hand to
-choose their id.
-
-Instance ids must be unique across all kit stanzas in the project, and every
-instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide.
-
-To remove one instance, run:
-
-```sh
-firebase functions:kits:uninstall --instance avatars
-```
-
-This deletes that instance's function, Cloud Run service, Eventarc trigger and
-service account, and removes its config directory and `firebase.json` entry.
-Other instances keep running.
+Each instance's `.env` must be complete, including `FUNCTION_DEFAULT_REGION`.
+Remove one instance with `firebase functions:kits:uninstall --instance <id>`;
+the others keep running.
 
 ## Events
 
