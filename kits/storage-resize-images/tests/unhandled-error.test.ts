@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { logger } from "firebase-functions/v2";
+import { logger } from "firebase-functions";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 vi.mock("firebase-admin", async () => {
