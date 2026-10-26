@@ -46,11 +46,9 @@ const SIZES_VALIDATION = {
     "Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.",
 };
 
-// Extension regex, with an empty branch added (the param is optional) and
-// `[\s\S]` so multi-line .env values match. Not the `s` flag: only the
-// regex source reaches the CLI.
+// Extension regex, with an empty branch added (the param is optional).
 const JSON_OBJECT_VALIDATION = {
-  validationRegex: /^(?:({([\s\S]*?)})|)$/,
+  validationRegex: /^(?:({(.*?)})|)$/,
   validationErrorMessage: "Please provide a valid JSON object.",
 };
 
@@ -375,8 +373,11 @@ export function validateParamFormatsFromEnv(): void {
     const raw = process.env[name];
     if (raw !== undefined && !isJsonObjectOrEmpty(raw, mustParse)) {
       throw new Error(
-        `Invalid ${name} ${JSON.stringify(raw)}: must be a JSON object. ` +
-          "Quote JSON values in .env, since an unquoted # starts a comment."
+        `Invalid ${name} ${JSON.stringify(raw)}: ` +
+          (mustParse
+            ? "must be a JSON object. "
+            : "must be a single-line value wrapped in {}. ") +
+          "Single-quote JSON values in .env, since an unquoted # starts a comment."
       );
     }
   }

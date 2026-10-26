@@ -114,8 +114,8 @@ loads them at deploy time and prompts for any required values that are missing.
 | `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
 
-Quote JSON values such as `SHARP_OPTIONS` and `OUTPUT_OPTIONS` in `.env`. In
-an unquoted value, `#` starts a comment and cuts the rest of the value off:
+Single-quote JSON values such as `SHARP_OPTIONS` and `OUTPUT_OPTIONS` in
+`.env`. In an unquoted value, `#` starts a comment and cuts the rest of the value off:
 
 ```
 SHARP_OPTIONS='{"fit":"contain","background":"#ff0000"}'

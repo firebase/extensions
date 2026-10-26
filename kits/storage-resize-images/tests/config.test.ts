@@ -556,21 +556,24 @@ describe("validateParamFormatsFromEnv", () => {
       "{}",
       '{"fit":"contain","background":"#ff0000"}',
       '{"jpeg":{"quality":5},"png":{"palette":true}}',
-      '{\n  "fit": "contain",\n  "background": "#ff0000"\n}',
     ])("accepts %j", async (value) => {
       vi.stubEnv(name, value);
       await expect(validate()).resolves.toBeUndefined();
     });
 
-    test.each(['{"fit":"contain","background":"', "   ", "[]", "null", " {}"])(
-      "rejects %j, naming the param and value",
-      async (value) => {
-        vi.stubEnv(name, value);
-        await expect(validate()).rejects.toThrow(
-          `Invalid ${name} ${JSON.stringify(value)}`
-        );
-      }
-    );
+    test.each([
+      '{"fit":"contain","background":"',
+      "   ",
+      "[]",
+      "null",
+      " {}",
+      '{\n  "fit": "contain"\n}',
+    ])("rejects %j, naming the param and value", async (value) => {
+      vi.stubEnv(name, value);
+      await expect(validate()).rejects.toThrow(
+        `Invalid ${name} ${JSON.stringify(value)}`
+      );
+    });
   });
 
   test("rejects SHARP_OPTIONS that matches the pattern but is not JSON", async () => {
