@@ -41,6 +41,14 @@ const STORAGE_FINALIZE_EVENT_TYPE = "google.storage.object.finalize";
 const STORAGE_SERVICE = "storage.googleapis.com";
 
 /**
+ * The extension's timestamps had millisecond precision with trailing zeros
+ * trimmed (`...36.06Z`), while 2nd gen event times carry microseconds.
+ */
+function toLegacyTimestamp(time: string | undefined): string {
+  return new Date(time ?? Date.now()).toISOString().replace(/\.?0+Z$/, "Z");
+}
+
+/**
  * Rebuilds the 1st gen `EventContext` from a 2nd gen `StorageEvent`, so the
  * `onCompletion` payload keeps the shape the extension published and
  * `resource.name` still names the uploaded object.
@@ -51,7 +59,7 @@ const STORAGE_SERVICE = "storage.googleapis.com";
 export function toEventContext(event: StorageEvent): EventContext {
   return {
     eventId: event.id,
-    timestamp: event.time ?? new Date().toISOString(),
+    timestamp: toLegacyTimestamp(event.time),
     eventType: STORAGE_FINALIZE_EVENT_TYPE,
     resource: {
       service: STORAGE_SERVICE,

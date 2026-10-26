@@ -27,7 +27,7 @@ const event = {
   type: "google.cloud.storage.object.v1.finalized",
   source: `//storage.googleapis.com/projects/_/buckets/${BUCKET}`,
   subject: `objects/${OBJECT_NAME}`,
-  time: "2026-01-01T00:00:00.000Z",
+  time: "2026-01-01T00:00:36.898303Z",
   specversion: "1.0",
   bucket: BUCKET,
   data: {
@@ -42,7 +42,7 @@ describe("toEventContext", () => {
   test("rebuilds the 1st gen event context from a 2nd gen event", () => {
     expect(toEventContext(event)).toEqual({
       eventId: "event-1",
-      timestamp: "2026-01-01T00:00:00.000Z",
+      timestamp: "2026-01-01T00:00:36.898Z",
       eventType: "google.storage.object.finalize",
       resource: {
         service: "storage.googleapis.com",
@@ -52,6 +52,17 @@ describe("toEventContext", () => {
       params: {},
     });
   });
+
+  test.each([
+    ["2026-01-01T00:00:36.898303Z", "2026-01-01T00:00:36.898Z"],
+    ["2026-01-01T00:00:36.060999Z", "2026-01-01T00:00:36.06Z"],
+    ["2026-01-01T00:00:36.000400Z", "2026-01-01T00:00:36Z"],
+  ])(
+    "formats event time %s as the extension's timestamp %s",
+    (time, timestamp) => {
+      expect(toEventContext({ ...event, time }).timestamp).toBe(timestamp);
+    }
+  );
 });
 
 /**
@@ -84,7 +95,7 @@ describe("the 1st gen context the extension actually published", () => {
     // @google-cloud/functions-framework).
     await (cloudFunction as any)(event.data, {
       eventId: "event-1",
-      timestamp: "2026-01-01T00:00:00.000Z",
+      timestamp: "2026-01-01T00:00:36.898Z",
       eventType: "google.storage.object.finalize",
       resource: {
         service: "storage.googleapis.com",

@@ -516,7 +516,7 @@ describe("handleObjectFinalized", () => {
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
       context: {
         eventId: "event-1",
-        timestamp: "2026-01-01T00:00:00.000Z",
+        timestamp: "2026-01-01T00:00:00Z",
         eventType: "google.storage.object.finalize",
         resource: {
           service: "storage.googleapis.com",
