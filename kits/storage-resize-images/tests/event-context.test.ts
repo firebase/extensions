@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { afterEach, describe, expect, test, vi } from "vitest";
-import * as storageV1 from "firebase-functions/v1/storage";
+import { describe, expect, test } from "vitest";
 import type { StorageEvent } from "firebase-functions/v2/storage";
 import { toEventContext } from "../src/event-context";
 
@@ -66,44 +65,63 @@ describe("toEventContext", () => {
 });
 
 /**
- * The oracle: run the extension's own 1st gen registration through the real
- * `firebase-functions` v1 code path and compare the `context` its handler
- * received, which the extension published verbatim.
+ * One upload of `in/img-7.jpg` captured from both sides: the 2nd gen finalize
+ * event the kit receives, and the `context` storage-resize-images 0.3.6
+ * published. The extension took `eventId` and `timestamp` from a separate
+ * delivery of the notification, so only their format can match.
  */
-describe("the 1st gen context the extension actually published", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
+const CAPTURED_STORAGE_EVENT = {
+  id: "22480302742407839",
+  type: "google.cloud.storage.object.v1.finalized",
+  source: "//storage.googleapis.com/projects/_/buckets/izaak-testing-pairc-ext",
+  subject: "objects/in/img-7.jpg",
+  time: "2026-10-26T15:20:21.630831Z",
+  specversion: "1.0",
+  bucket: "izaak-testing-pairc-ext",
+  data: {
+    kind: "storage#object",
+    bucket: "izaak-testing-pairc-ext",
+    name: "in/img-7.jpg",
+    contentType: "image/jpeg",
+  },
+} as unknown as StorageEvent;
+
+const CAPTURED_EXTENSION_CONTEXT = {
+  eventId: "22480386067619997",
+  eventType: "google.storage.object.finalize",
+  resource: {
+    name: "projects/_/buckets/izaak-testing-pairc-ext/objects/in/img-7.jpg",
+    service: "storage.googleapis.com",
+    type: "storage#object",
+  },
+  timestamp: "2026-10-26T15:20:21.676Z",
+  params: {},
+};
+
+const LEGACY_TIMESTAMP = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{0,2}[1-9])?Z$/;
+const NUMERIC_EVENT_ID = /^\d+$/;
+
+describe("the context the extension actually published", () => {
+  test("matches the extension's eventType, resource and params exactly", () => {
+    const { eventType, resource, params } = toEventContext(
+      CAPTURED_STORAGE_EVENT
+    );
+
+    expect({ eventType, resource, params }).toEqual({
+      eventType: CAPTURED_EXTENSION_CONTEXT.eventType,
+      resource: CAPTURED_EXTENSION_CONTEXT.resource,
+      params: CAPTURED_EXTENSION_CONTEXT.params,
+    });
   });
 
-  test("matches the context rebuilt from the equivalent 2nd gen event", async () => {
-    vi.stubEnv("GCLOUD_PROJECT", "demo-project");
-    vi.stubEnv(
-      "FIREBASE_CONFIG",
-      JSON.stringify({ projectId: "demo-project", storageBucket: BUCKET })
-    );
-    let published: unknown;
+  test("matches the format of the extension's eventId and timestamp", () => {
+    const { eventId, timestamp } = toEventContext(CAPTURED_STORAGE_EVENT);
 
-    // The extension registered `functions.storage.object().onFinalize(...)`.
-    const cloudFunction = storageV1
-      .object()
-      .onFinalize(async (_object, context) => {
-        published = JSON.parse(JSON.stringify(context));
-      });
-
-    // The legacy event body the functions framework builds for this
-    // CloudEvent (`marshalConvertableCloudEvent` in
-    // @google-cloud/functions-framework).
-    await (cloudFunction as any)(event.data, {
-      eventId: "event-1",
-      timestamp: "2026-01-01T00:00:36.898Z",
-      eventType: "google.storage.object.finalize",
-      resource: {
-        service: "storage.googleapis.com",
-        name: `projects/_/buckets/${BUCKET}/objects/${OBJECT_NAME}`,
-        type: "storage#object",
-      },
-    });
-
-    expect(published).toEqual(toEventContext(event));
+    expect(eventId).toBe("22480302742407839");
+    expect(timestamp).toBe("2026-10-26T15:20:21.63Z");
+    expect(CAPTURED_EXTENSION_CONTEXT.eventId).toMatch(NUMERIC_EVENT_ID);
+    expect(eventId).toMatch(NUMERIC_EVENT_ID);
+    expect(CAPTURED_EXTENSION_CONTEXT.timestamp).toMatch(LEGACY_TIMESTAMP);
+    expect(timestamp).toMatch(LEGACY_TIMESTAMP);
   });
 });
