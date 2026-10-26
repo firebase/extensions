@@ -8,6 +8,7 @@ on:
         required: true
         default: "@firebaseextensions/fs-bq-schema-views"
 permissions:
+  contents: read
   id-token: write
 jobs:
   publish_if_newer_version:
@@ -17,6 +18,12 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/305452601764/locations/global/workloadIdentityPools/builders/providers/github"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
       - name: Setup node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
