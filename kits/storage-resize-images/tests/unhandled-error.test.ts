@@ -50,7 +50,7 @@ async function invoke(event: unknown = cloudEvent): Promise<void> {
 async function expectLoggedAtError(
   invocation: Promise<void>,
   errorType: new (...args: never[]) => Error
-): Promise<void> {
+): Promise<Error> {
   const err = await invocation.then(
     () => expect.fail("expected the trigger to throw"),
     (e: unknown) => e
@@ -60,6 +60,7 @@ async function expectLoggedAtError(
     severity: "ERROR",
     message: (err as Error).stack,
   });
+  return err as Error;
 }
 
 beforeEach(() => {
@@ -76,9 +77,10 @@ afterEach(() => {
 });
 
 test("an error loading config is logged at ERROR as its stack and rethrown", async () => {
-  vi.stubEnv("SHARP_OPTIONS", "{bad}");
+  vi.stubEnv("CONTENT_FILTER_LEVEL", "bogus");
 
-  await expectLoggedAtError(invoke(), SyntaxError);
+  const err = await expectLoggedAtError(invoke(), Error);
+  expect(err.message).toBe("Invalid HarmBlockThreshold: bogus");
 });
 
 test("an error after config loads is logged at ERROR as its stack and rethrown", async () => {
