@@ -313,3 +313,24 @@ export function assertValidParams(): void {
     );
   }
 }
+
+/**
+ * Runs `assertRequiredParams` and `assertValidParams` and throws once with
+ * both messages, so a `.env` with a blank required param and an invalid value
+ * reports both in one deploy rather than one per redeploy.
+ */
+export function assertParams(): void {
+  const errors: string[] = [];
+
+  for (const check of [assertRequiredParams, assertValidParams]) {
+    try {
+      check();
+    } catch (err) {
+      errors.push((err as Error).message);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join("\n"));
+  }
+}

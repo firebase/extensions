@@ -21,12 +21,7 @@ import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import {
-  assertRequiredParams,
-  assertValidParams,
-  CONFIG_EXPRESSIONS,
-  configFromEnv,
-} from "./config";
+import { assertParams, CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { getDatabaseUrl, resolveDeleteUserDataConfig } from "./export-config";
 import {
@@ -37,8 +32,7 @@ import {
 } from "./handlers";
 import * as logs from "./logs";
 
-assertRequiredParams();
-assertValidParams();
+assertParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [

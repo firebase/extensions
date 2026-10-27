@@ -103,7 +103,8 @@ deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
 values listed below (the error lists the allowed values), or if
 `SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
 extension accepted: an instance id rather than a URL, and a bucket name without
-`gs://` or capital letters (the error gives the extension's message). The values
+`gs://` or capital letters (the error gives the extension's message). One error
+lists every bad setting, along with any required setting left blank. The values
 are case sensitive. The emulator runs the same check, so a bad value stops that
 instance's functions from loading there.
 

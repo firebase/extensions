@@ -83,4 +83,15 @@ describe("module load", () => {
       'FIRESTORE_DELETE_MODE="RECURSIVE"'
     );
   });
+
+  test("reports blank required and invalid params in one error", async () => {
+    vi.resetModules();
+    vi.stubEnv("CLOUD_STORAGE_BUCKET", "");
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    const load = import("../src/index");
+
+    await expect(load).rejects.toThrow("CLOUD_STORAGE_BUCKET");
+    await expect(load).rejects.toThrow('FIRESTORE_DELETE_MODE="RECURSIVE"');
+  });
 });
