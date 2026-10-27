@@ -96,8 +96,8 @@ describe("runtime options", () => {
     });
 
     // The README tells users to raise maxInstances and set the region with
-    // setGlobalOptions, and `ext:migrate` carries ingress over the same way,
-    // so the kit's function-level options must not override them.
+    // setGlobalOptions, so the kit's function-level options must not override
+    // them. Ingress stays internal-only, like the extension's.
     test("keeps the global options and the extension's runtime", async () => {
       setGlobalOptions({
         ingressSettings: "ALLOW_ALL",
@@ -110,7 +110,7 @@ describe("runtime options", () => {
       for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
         const endpoint = (fn as any).__endpoint;
 
-        expect(endpoint.ingressSettings).toBe("ALLOW_ALL");
+        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
         expect(endpoint.maxInstances).toBe(3000);
         expect(endpoint.region).toEqual(["europe-west1"]);
         expect(endpoint.concurrency).toBe(1);
