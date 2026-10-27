@@ -287,7 +287,7 @@ export function assertValidParams(): void {
     if ("select" in input) {
       const { options } = input.select;
       const allowed = options.map(({ value }) => String(value));
-      const labels = options.map(({ label }) => label);
+      const labels = options.map((option) => option.label);
       if (!allowed.includes(raw) && !labels.includes(raw)) {
         invalid.push(`${setting} must be one of: ${allowed.join(", ")}`);
       }
