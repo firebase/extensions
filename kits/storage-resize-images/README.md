@@ -114,6 +114,17 @@ loads them at deploy time and prompts for any required values that are missing.
 | `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
 
+Single-quote JSON values such as `SHARP_OPTIONS` and `OUTPUT_OPTIONS` in
+`.env`. In an unquoted value, `#` starts a comment and cuts the rest of the value off:
+
+```
+SHARP_OPTIONS='{"fit":"contain","background":"#ff0000"}'
+```
+
+The deploy fails, naming the variable, if `IMG_SIZES` is not a list of
+`WIDTHxHEIGHT` values, if `SHARP_OPTIONS` is not a JSON object, or if
+`OUTPUT_OPTIONS` is not wrapped in `{}`.
+
 The `deleteOriginal` default above is what the CLI proposes at the deploy
 prompt and writes to `.env.<projectId>` when the variable is missing (a
 non-interactive deploy fails instead). Omitting `deleteOriginal` in a direct
