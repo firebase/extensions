@@ -96,23 +96,17 @@ describe("assertValidParams", () => {
     expect(() => assertValidParams()).not.toThrow();
   });
 
-  // The extension accepts a select label, stores it verbatim, and its runtime
-  // then treats `Recursive` as shallow and `Yes` as off.
+  // The extension's installer accepts a select label and stores it verbatim,
+  // so the kit accepts it too, even though `Recursive` then runs as shallow
+  // and `Yes` as off, as they did in the extension.
   test.each([
     ["FIRESTORE_DELETE_MODE", "Recursive"],
-    ["ENABLE_AUTO_DISCOVERY", "Yes"],
-    ["SELECTED_DATABASE_LOCATION", "Belgium"],
-  ])("rejects the option label %s=%j", (name, value) => {
-    vi.stubEnv(name, value);
-
-    expect(() => assertValidParams()).toThrow(name);
-  });
-
-  // The runtime only checks for `recursive` and `yes`, so these labels already
-  // ran like their values.
-  test.each([
     ["FIRESTORE_DELETE_MODE", "Shallow"],
+    ["ENABLE_AUTO_DISCOVERY", "Yes"],
     ["ENABLE_AUTO_DISCOVERY", "No"],
+    ["SELECTED_DATABASE_LOCATION", "United States"],
+    ["SELECTED_DATABASE_LOCATION", "Belgium"],
+    ["SELECTED_DATABASE_LOCATION", "Singapore"],
   ])("accepts the option label %s=%j", (name, value) => {
     vi.stubEnv(name, value);
 

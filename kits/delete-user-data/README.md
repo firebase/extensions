@@ -100,13 +100,19 @@ The CLI does not check values that are already in `.env`, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
 deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
 `ENABLE_AUTO_DISCOVERY` or `SELECTED_DATABASE_LOCATION` is not one of the
-values listed below (the error lists the allowed values), or if
+values listed below or their labels (the error lists the allowed values), or if
 `SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
 extension accepted: an instance id rather than a URL, and a bucket name without
 `gs://` or capital letters (the error gives the extension's message). One error
 lists every bad setting, along with any required setting left blank. The values
 are case sensitive. The emulator runs the same check, so a bad value stops that
 instance's functions from loading there.
+
+An option's label (such as `Recursive`) is accepted because the extension's
+installer accepted it, but it runs as it did in the extension: `Recursive`
+deletes shallowly, `Yes` leaves auto-discovery off, and a location label
+(`United States`, `Belgium`, `Singapore`) gives a database URL that doesn't
+exist. Use the values instead.
 
 The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
@@ -240,16 +246,6 @@ The Firebase CLI now sets it to the function that published the event
 (`projects/<project id>/locations/<region>/services/kit-<instance id>-<function>`),
 so it differs between `clearData`, `handleSearch` and `handleDeletion`. If your
 event triggers filter on `source`, filter on the event `type` instead.
-
-### Some option labels are not accepted
-
-The extension's installer accepted an option's label as well as its value, but
-then misread `Recursive` (it deleted shallowly), `Yes` (it left auto-discovery
-off) and the location labels (`United States`, `Belgium`, `Singapore`). The kit
-fails the deploy on these labels. If you copied your `.env` from an extension
-instance that was installed with one, change it to the value (`recursive`,
-`yes`, or the location id). `Shallow` and `No` worked in the extension and are
-still accepted.
 
 ### Unchanged
 
