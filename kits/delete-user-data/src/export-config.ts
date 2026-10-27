@@ -40,7 +40,7 @@ export interface ResolvedDeleteUserDataConfig {
   firestoreDatabaseId: string;
   firestoreDeleteMode: FirestoreDeleteMode;
   rtdbInstance?: string;
-  rtdbLocation: string;
+  rtdbLocation?: string;
   rtdbPaths?: string;
   storageBucket?: string;
   storagePaths?: string;
@@ -58,7 +58,6 @@ const DEFAULT_FIRESTORE_DATABASE_ID = "(default)";
 const DEFAULT_FIRESTORE_DELETE_MODE: FirestoreDeleteMode = "shallow";
 const DEFAULT_SEARCH_DEPTH = 3;
 const DEFAULT_SEARCH_FIELDS = "id,uid,userId";
-const DEFAULT_RTDB_LOCATION = "us-central1";
 function topicName(
   name: string | undefined,
   instanceId: string,
@@ -78,7 +77,7 @@ export function resolveDeleteUserDataConfig(
     firestoreDeleteMode:
       config.firestoreDeleteMode ?? DEFAULT_FIRESTORE_DELETE_MODE,
     rtdbInstance: config.rtdbInstance,
-    rtdbLocation: config.rtdbLocation ?? DEFAULT_RTDB_LOCATION,
+    rtdbLocation: config.rtdbLocation,
     rtdbPaths: config.rtdbPaths,
     storageBucket: config.storageBucket,
     storagePaths: config.storagePaths,
