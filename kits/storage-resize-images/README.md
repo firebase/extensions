@@ -234,6 +234,10 @@ inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
 `asia-east1` - because they are not Cloud Run regions themselves and would fail
 the deploy. The value is matched case-insensitively.
 
+Cloud Functions has no location in `europe-north2` or `northamerica-south1`, so
+the kit can't serve a bucket there. The extension can: keep using it, or move to
+a listed region.
+
 Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
 not mapped. Pick one of the regions the pair is made of instead, all of which
 are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
