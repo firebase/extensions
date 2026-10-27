@@ -42,10 +42,14 @@ service account for this codebase — it conflicts with that automatic setup.
 
 ## Usage
 
-Export the functions from your functions codebase entry:
+Export the functions from your functions codebase entry, importing your
+region options file first (see
+[Functions deploy to `us-east1` unless you set a region](#functions-deploy-to-us-east1-unless-you-set-a-region)):
 
 ```ts
 // functions/src/index.ts
+import "./options.js";
+
 export {
   clearData,
   handleSearch,
@@ -57,9 +61,6 @@ and configure with a `.env` (or `.env.<projectId>`).
 
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
-
-The functions deploy to `us-east1` unless you set a region. See
-[Functions deploy to `us-east1` unless you set a region](#functions-deploy-to-us-east1-unless-you-set-a-region).
 
 ## Deploy
 
@@ -202,14 +203,23 @@ database, `us-central1`), so user data is not read and deleted from another
 region.
 
 To choose the region, call `setGlobalOptions({ region })` from
-`firebase-functions/v2` before the kit's functions are defined. Put the call in
-its own file and import that file before the kit:
+`firebase-functions/v2` before the kit's functions are defined, reading the
+region from a `FUNCTION_DEFAULT_REGION` parameter as the generated entry file
+does. Put the call in its own file and import that file before the kit:
 
 ```ts
 // functions/src/options.ts
 import { setGlobalOptions } from "firebase-functions/v2";
+import { defineString } from "firebase-functions/params";
 
-setGlobalOptions({ region: "us-central1" });
+setGlobalOptions({
+  region: defineString("FUNCTION_DEFAULT_REGION", { default: "us-central1" }),
+});
+```
+
+```sh
+# .env (or .env.<projectId>)
+FUNCTION_DEFAULT_REGION=us-central1
 ```
 
 ```ts
@@ -229,9 +239,11 @@ code in the file runs, so the kit's functions are defined before the call. A
 separate file imported first works for both ES modules and CommonJS. The
 options apply to every function in the codebase.
 
-`firebase functions:kits:install` and `firebase ext:migrate` generate an entry
-file that does this for you, setting `region` from a `FUNCTION_DEFAULT_REGION`
-parameter.
+Each instance reads `FUNCTION_DEFAULT_REGION` from its own `.env`, so instances
+can deploy to different regions. `firebase ext:migrate` writes it to `.env`
+with the region the extension ran in, and `firebase functions:kits:install`
+and `firebase ext:migrate` generate an entry file that does all of this for
+you.
 
 ### All functions are 2nd gen
 
