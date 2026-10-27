@@ -203,10 +203,14 @@ This mainly matters if you have infrastructure or alerting keyed to function
 generation.
 
 Each function still runs like the extension's: one event per instance
-(`concurrency: 1`), 0.1666 vCPU (`cpu: "gcf_gen1"`) and internal-only ingress,
-rather than the 2nd gen defaults of concurrency `80`, 1 vCPU and `ALLOW_ALL`.
-If you set `ingressSettings` with `setGlobalOptions` before you load the kit, as
-`ext:migrate` does, the kit uses that instead of internal-only ingress.
+(`concurrency: 1`) with the 1st gen CPU for its memory (`cpu: "gcf_gen1"`,
+0.1666 vCPU at the default 256MiB) and internal-only ingress, rather than the
+2nd gen defaults of concurrency `80`, 1 vCPU and `ALLOW_ALL`. `setGlobalOptions`
+can't change concurrency or CPU. If you set `ingressSettings` with
+`setGlobalOptions` before you load the kit, as `ext:migrate` does, the kit uses
+that instead of internal-only ingress. During a burst, Cloud Run may log
+`no available instance` errors while it scales; Eventarc redelivers those
+events.
 One difference remains: 2nd gen caps each function at 100 instances by default,
 where the extension's 1st gen functions could scale to 3000. To raise it, call
 `setGlobalOptions({ maxInstances })` from `firebase-functions/v2` in your
