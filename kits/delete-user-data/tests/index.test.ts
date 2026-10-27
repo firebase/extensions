@@ -70,6 +70,33 @@ describe("clearData", () => {
   });
 });
 
+describe("module load", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // Deploy-time discovery imports the kit, so this is what fails the deploy.
+  test("throws when a param value is invalid", async () => {
+    vi.resetModules();
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    await expect(import("../src/index")).rejects.toThrow(
+      'FIRESTORE_DELETE_MODE="RECURSIVE"'
+    );
+  });
+
+  test("reports blank required and invalid params in one error", async () => {
+    vi.resetModules();
+    vi.stubEnv("CLOUD_STORAGE_BUCKET", "");
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    const load = import("../src/index");
+
+    await expect(load).rejects.toThrow("CLOUD_STORAGE_BUCKET");
+    await expect(load).rejects.toThrow('FIRESTORE_DELETE_MODE="RECURSIVE"');
+  });
+});
+
 describe("runtime options", () => {
   // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
   // instance, which ran out of memory and dropped them.

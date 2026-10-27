@@ -62,6 +62,14 @@ describe("resolveDeleteUserDataConfig", () => {
     expect(config.searchFields).toBe("id,uid,userId");
   });
 
+  // The extension skips RTDB paths when the location is blank, rather than
+  // assuming us-central1, so a blank location must stay unset.
+  test("leaves a blank RTDB location unset", () => {
+    const config = resolveDeleteUserDataConfig({ instanceId: "my-instance" });
+
+    expect(config.rtdbLocation).toBeUndefined();
+  });
+
   test("derives topic names from the instance id", () => {
     const config = resolveDeleteUserDataConfig({ instanceId: "my-instance" });
 
