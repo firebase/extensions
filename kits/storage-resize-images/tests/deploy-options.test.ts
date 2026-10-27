@@ -26,6 +26,7 @@
  */
 
 import { Expression } from "firebase-functions/params";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-admin", async () => {
@@ -82,7 +83,6 @@ describe("generateResizedImage instance sizing", () => {
       __endpoint: {
         concurrency?: number;
         cpu?: number | string;
-        maxInstances?: number;
         ingressSettings?: string;
       };
     }
@@ -96,11 +96,7 @@ describe("generateResizedImage instance sizing", () => {
     expect(endpoint.cpu).toBe("gcf_gen1");
   });
 
-  test("scales to the extension's 1st gen limit of 3000 instances", () => {
-    expect(endpoint.maxInstances).toBe(3000);
-  });
-
-  test("accepts only internal traffic, as the extension did", () => {
+  test("accepts only internal traffic", () => {
     expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
   });
 });
@@ -132,5 +128,28 @@ describe("generateResizedImage deploy region", () => {
 
   test("no bucket location leaves the function without a region", async () => {
     expect(await importRegion(undefined)).toBeUndefined();
+  });
+});
+
+describe("generateResizedImage global options", () => {
+  // Global options persist for the rest of this file, so this runs last.
+  test("takes maxInstances from setGlobalOptions but keeps internal-only ingress", () => {
+    setGlobalOptions({ maxInstances: 500, ingressSettings: "ALLOW_ALL" });
+
+    const endpoint = (
+      generateResizedImage as unknown as {
+        __endpoint: {
+          maxInstances?: number;
+          ingressSettings?: string;
+          concurrency?: number;
+          cpu?: number | string;
+        };
+      }
+    ).__endpoint;
+
+    expect(endpoint.maxInstances).toBe(500);
+    expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    expect(endpoint.concurrency).toBe(1);
+    expect(endpoint.cpu).toBe("gcf_gen1");
   });
 });

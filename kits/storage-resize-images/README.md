@@ -182,13 +182,32 @@ was 1st gen. `FUNCTION_MEMORY` still accepts the same values (512 through 8192)
 and maps onto the equivalent 2nd gen memory setting. Like the extension, the
 function handles one event per instance (`concurrency: 1`) and gets the CPU
 1st gen gave that memory size (`cpu: "gcf_gen1"`), so a burst of uploads
-scales out across instances instead of sharing one. It also keeps the
-extension's limit of 3000 instances (`maxInstances: 3000`) and accepts only
-internal traffic (`ingressSettings: "ALLOW_INTERNAL_ONLY"`).
+scales out across instances instead of sharing one.
+
+`setGlobalOptions` can't change concurrency, CPU or ingress for this function.
+Ingress is fixed to internal-only (`ALLOW_INTERNAL_ONLY`), since only Eventarc
+calls the function. The extension let you choose ingress at install, and
+`ext:migrate` passes that choice to `setGlobalOptions`, but it does not apply
+here.
 
 The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
 CLI grants these for you.
+
+### At most 100 images resize at once by default
+
+The function deploys with the 2nd gen default of 100 instances, where the
+extension's 1st gen function could scale to 3000. With one event per instance,
+that caps how many images resize at the same time. To raise it, call
+`setGlobalOptions({ maxInstances })` from `firebase-functions/v2` in your
+codebase.
+
+The total CPU and memory of those instances must fit your project's Cloud Run
+quota in the function's region, so the highest value that deploys depends on
+`FUNCTION_MEMORY` and the region. Too high a value fails the deploy with an
+error such as `Max instances must be set to 2500 or fewer to set the requested
+total CPU`. Lower `maxInstances`, or request a quota increase for Cloud Run in
+that region.
 
 ### Region
 
