@@ -39,17 +39,33 @@ const cloudEvent = {
   data: { bucket: "demo-bucket", name: "notes.txt", contentType: "text/plain" },
 };
 
-async function invoke(): Promise<void> {
+async function invoke(event: unknown = cloudEvent): Promise<void> {
   vi.resetModules();
   const { generateResizedImage } = await import("../src/index");
   await (generateResizedImage as unknown as (e: unknown) => Promise<void>)(
-    cloudEvent
+    event
   );
+}
+
+async function expectLoggedAtError(
+  invocation: Promise<void>,
+  errorType: new (...args: never[]) => Error
+): Promise<void> {
+  const err = await invocation.then(
+    () => expect.fail("expected the trigger to throw"),
+    (e: unknown) => e
+  );
+  expect(err).toBeInstanceOf(errorType);
+  expect(logger.write).toHaveBeenCalledWith({
+    severity: "ERROR",
+    message: (err as Error).stack,
+  });
 }
 
 beforeEach(() => {
   vi.stubEnv("IMG_BUCKET", "demo-bucket");
   vi.stubEnv("IMG_SIZES", "200x200");
+  vi.spyOn(logger, "write").mockImplementation(() => {});
   vi.spyOn(logger, "error").mockImplementation(() => {});
   vi.spyOn(logger, "log").mockImplementation(() => {});
 });
@@ -59,15 +75,17 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test("an error thrown outside the resize is logged at ERROR and rethrown", async () => {
+test("an error loading config is logged at ERROR as its stack and rethrown", async () => {
   vi.stubEnv("SHARP_OPTIONS", "{bad}");
 
-  await expect(invoke()).rejects.toThrow(SyntaxError);
+  await expectLoggedAtError(invoke(), SyntaxError);
+});
 
-  expect(logger.error).toHaveBeenCalledWith(
-    "Unhandled error in generateResizedImage",
-    expect.any(SyntaxError)
-  );
+test("an error after config loads is logged at ERROR as its stack and rethrown", async () => {
+  vi.stubEnv("SHARP_OPTIONS", "{}");
+  const { name: _name, ...data } = cloudEvent.data;
+
+  await expectLoggedAtError(invoke({ ...cloudEvent, data }), TypeError);
 });
 
 test("an event that completes logs no error", async () => {
@@ -76,4 +94,5 @@ test("an event that completes logs no error", async () => {
   await expect(invoke()).resolves.toBeUndefined();
 
   expect(logger.error).not.toHaveBeenCalled();
+  expect(logger.write).not.toHaveBeenCalled();
 });

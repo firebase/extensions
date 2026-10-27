@@ -188,12 +188,17 @@ The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
 CLI grants these for you.
 
-A failed event is not reliably marked as a failed request in 2nd gen, and the
-trigger does not retry, so alert on the function's logs rather than its request
-status. Any error the function raises is logged at ERROR severity. A timeout or
-an out-of-memory kill stops the function before it can log anything; Cloud Run
-records those as `The request has been terminated because it has reached the
-maximum request timeout.` and `Memory limit of ... exceeded`.
+In 2nd gen every event is recorded as HTTP 200, including thrown errors,
+timeouts and out-of-memory kills, and the trigger does not retry, so alert on
+the function's logs rather than its request status. Any error the function
+raises is logged at ERROR severity with its stack. A timeout or an
+out-of-memory kill stops the function before it can log an error:
+
+- An out-of-memory kill is logged at ERROR in the `varlog/system` log as
+  `Memory limit of ... exceeded`.
+- A timeout is never logged at ERROR, so an alert on ERROR alone misses it.
+  Cloud Run logs it at INFO in the requests log as
+  `The request has been terminated because it has reached the maximum request timeout.`
 
 ### Region
 
