@@ -57,6 +57,7 @@ describe("resolveDeleteUserDataConfig", () => {
 
     expect(config.firestoreDatabaseId).toBe("(default)");
     expect(config.firestoreDeleteMode).toBe("shallow");
+    expect(config.rtdbLocation).toBe("us-central1");
     expect(config.enableAutoDiscovery).toBe(false);
     expect(config.searchDepth).toBe(3);
     expect(config.searchFields).toBe("id,uid,userId");
