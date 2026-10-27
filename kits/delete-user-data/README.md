@@ -42,14 +42,10 @@ service account for this codebase — it conflicts with that automatic setup.
 
 ## Usage
 
-Export the functions from your functions codebase entry, importing your
-region options file first (see
-[Functions deploy to `us-east1` unless you set a region](#functions-deploy-to-us-east1-unless-you-set-a-region)):
+Export the functions from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-import "./options.js";
-
 export {
   clearData,
   handleSearch,
@@ -119,6 +115,7 @@ overridden there.
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | URL of a custom search function that returns paths to delete |
+| — | `FUNCTION_DEFAULT_REGION` | no | `us-central1` | Region the functions deploy to |
 | `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
 | `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
@@ -191,59 +188,25 @@ You can also override both names with `DISCOVERY_TOPIC_NAME` and
 `DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
 since one function publishes to a topic the other is triggered by.
 
-### Functions deploy to `us-east1` unless you set a region
+### Functions deploy to `FUNCTION_DEFAULT_REGION`
 
 The extension deployed to the location you picked at install time
-(`us-central1` by default). This kit sets no region, and with no region set
-the Firebase CLI deploys its Auth- and Pub/Sub-triggered functions to
-`us-east1`, not `us-central1`.
-
-Keep the functions in the same region as your Firestore database (for a `nam5`
-database, `us-central1`), so user data is not read and deleted from another
-region.
-
-To choose the region, call `setGlobalOptions({ region })` from
-`firebase-functions/v2` before the kit's functions are defined, reading the
-region from a `FUNCTION_DEFAULT_REGION` parameter as the generated entry file
-does. Put the call in its own file and import that file before the kit:
-
-```ts
-// functions/src/options.ts
-import { setGlobalOptions } from "firebase-functions/v2";
-import { defineString } from "firebase-functions/params";
-
-setGlobalOptions({
-  region: defineString("FUNCTION_DEFAULT_REGION", { default: "us-central1" }),
-});
-```
+(`us-central1` by default). The kit reads the region from
+`FUNCTION_DEFAULT_REGION` in each instance's `.env`, also defaulting to
+`us-central1`, so instances can deploy to different regions.
+`firebase ext:migrate` writes it with the region the extension ran in.
 
 ```sh
 # .env (or .env.<projectId>)
 FUNCTION_DEFAULT_REGION=us-central1
 ```
 
-```ts
-// functions/src/index.ts
-import "./options.js";
+Keep the functions in the same region as your Firestore database (for a `nam5`
+database, `us-central1`), so user data is not read and deleted from another
+region.
 
-export {
-  clearData,
-  handleSearch,
-  handleDeletion,
-} from "@firebase-function-kits/delete-user-data";
-```
-
-A `setGlobalOptions` call in `index.ts` itself can run too late. In an ES
-module, `import` and `export … from` statements load the kit before any other
-code in the file runs, so the kit's functions are defined before the call. A
-separate file imported first works for both ES modules and CommonJS. The
-options apply to every function in the codebase.
-
-Each instance reads `FUNCTION_DEFAULT_REGION` from its own `.env`, so instances
-can deploy to different regions. `firebase ext:migrate` writes it to `.env`
-with the region the extension ran in, and `firebase functions:kits:install`
-and `firebase ext:migrate` generate an entry file that does all of this for
-you.
+The kit sets the region on each function, so `setGlobalOptions({ region })`
+does not move them. Set `FUNCTION_DEFAULT_REGION` instead.
 
 ### All functions are 2nd gen
 

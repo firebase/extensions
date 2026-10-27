@@ -15,7 +15,6 @@
  */
 
 import { describe, expect, test, vi } from "vitest";
-import { setGlobalOptions } from "firebase-functions/v2";
 
 const FUNCTIONS = ["clearData", "handleSearch", "handleDeletion"] as const;
 
@@ -24,21 +23,15 @@ async function loadKit() {
   return (await import("../src/index")) as Record<string, any>;
 }
 
-// The README tells users to pick a region with setGlobalOptions({ region })
-// before the kit loads, so the kit must not pin a region of its own.
+// The extension deployed to its install-time location, `us-central1` by
+// default. With no region set the CLI would pick `us-east1` instead.
 describe("function region", () => {
-  test("is not set by the kit, so the CLI default applies", async () => {
+  test("is read from FUNCTION_DEFAULT_REGION, defaulting to us-central1", async () => {
     const kit = await loadKit();
     for (const name of FUNCTIONS) {
-      expect(kit[name].__endpoint.region).toBeUndefined();
-    }
-  });
-
-  test("follows setGlobalOptions called before the kit loads", async () => {
-    setGlobalOptions({ region: "europe-west1" });
-    const kit = await loadKit();
-    for (const name of FUNCTIONS) {
-      expect(kit[name].__endpoint.region).toEqual(["europe-west1"]);
+      const region = kit[name].__endpoint.region;
+      expect(region.name).toBe("FUNCTION_DEFAULT_REGION");
+      expect(region.options.default).toBe("us-central1");
     }
   });
 });
