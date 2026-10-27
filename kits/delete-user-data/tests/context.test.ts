@@ -52,6 +52,7 @@ import * as admin from "firebase-admin";
 import type { HandlerContext } from "../src/handlers";
 import { handleClear } from "../src/handlers";
 import { clearData } from "../src/index";
+import * as logs from "../src/logs";
 
 function deletionEvent(uid: string) {
   return {
@@ -117,5 +118,22 @@ describe("handler context", () => {
     expect(contextFrom("uid-6").pubsub).toEqual({
       options: { projectId: PROJECT_ID },
     });
+  });
+
+  test("logs a failed deletion at ERROR severity and rethrows", async () => {
+    const err = new Error("boom");
+    vi.mocked(handleClear).mockRejectedValueOnce(err);
+
+    await expect(clearData(deletionEvent("uid-7"))).rejects.toBe(err);
+
+    expect(logs.unhandledError).toHaveBeenCalledWith(err);
+  });
+
+  test("does not log an error when the deletion succeeds", async () => {
+    vi.mocked(handleClear).mockResolvedValueOnce(undefined);
+
+    await clearData(deletionEvent("uid-8"));
+
+    expect(logs.unhandledError).not.toHaveBeenCalled();
   });
 });

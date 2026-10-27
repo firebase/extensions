@@ -17,10 +17,13 @@
 import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import type { Role } from "firebase-functions/v2";
+import type { CloudEvent, Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
-import { onMessagePublished } from "firebase-functions/v2/pubsub";
+import {
+  type MessagePublishedData,
+  onMessagePublished,
+} from "firebase-functions/v2/pubsub";
 import {
   assertRequiredParams,
   CONFIG_EXPRESSIONS,
@@ -29,10 +32,12 @@ import {
 import * as events from "./events";
 import { getDatabaseUrl, resolveDeleteUserDataConfig } from "./export-config";
 import {
+  type DeleteMessageData,
   type HandlerContext,
   handleClear,
   handleDeletion as runDeletion,
   handleSearch as runSearch,
+  type SearchMessageData,
 } from "./handlers";
 import * as logs from "./logs";
 
@@ -109,27 +114,50 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const clearData = onUserDeleted((event) => {
-  // The Auth event delivers no user record when the payload envelope is empty,
-  // so bail before getContext() rather than initialising the SDKs for nothing.
-  const uid = event.data?.uid;
-  if (!uid) {
-    logs.deletionEventMissingUid(event.id);
-    return;
-  }
-  return handleClear(uid, getContext());
-});
+// On 2nd gen, a handler that throws is still recorded as HTTP 200 in the
+// request log, and the functions framework prints the stack to stderr with no
+// severity. Log the error at ERROR severity so log-based alerts and Error
+// Reporting see it, then rethrow so the invocation still counts as failed.
+function logFailures<E>(
+  handler: (event: E) => unknown
+): (event: E) => Promise<unknown> {
+  return async (event) => {
+    try {
+      return await handler(event);
+    } catch (err) {
+      logs.unhandledError(err);
+      throw err;
+    }
+  };
+}
+
+export const clearData = onUserDeleted(
+  logFailures((event) => {
+    // The Auth event delivers no user record when the payload envelope is empty,
+    // so bail before getContext() rather than initialising the SDKs for nothing.
+    const uid = event.data?.uid;
+    if (!uid) {
+      logs.deletionEventMissingUid(event.id);
+      return;
+    }
+    return handleClear(uid, getContext());
+  })
+);
 
 export const handleSearch = onMessagePublished(
   {
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
-  (event) => runSearch(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
+    runSearch(event.data.message.json, getContext())
+  )
 );
 
 export const handleDeletion = onMessagePublished(
   {
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
-  (event) => runDeletion(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>
+    runDeletion(event.data.message.json, getContext())
+  )
 );

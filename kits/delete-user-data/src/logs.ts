@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { format } from "node:util";
 import { logger } from "firebase-functions";
 import type { ResolvedDeleteUserDataConfig } from "./export-config";
 
@@ -125,6 +126,14 @@ export const deletionEventMissingUid = (eventId: string) => {
     `Auth deletion event ${eventId} carried no user id, so no data was deleted`
   );
 };
+
+// Logged as the bare stack, like the extension's 1st gen ERROR entry. Error
+// Reporting groups it with the framework's own stderr copy of the stack.
+export const unhandledError = (err: unknown) =>
+  logger.write({
+    severity: "ERROR",
+    message: (err instanceof Error && err.stack) || format(err),
+  });
 
 export function warnInvalidPaths(invalidPathCount: number, uid: string) {
   logger.warn(
