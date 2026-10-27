@@ -115,6 +115,7 @@ overridden there.
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | URL of a custom search function that returns paths to delete |
+| — | `FUNCTION_DEFAULT_REGION` | no | `us-central1` | Region the functions deploy to |
 | `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
 | `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
@@ -187,11 +188,25 @@ You can also override both names with `DISCOVERY_TOPIC_NAME` and
 `DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
 since one function publishes to a topic the other is triggered by.
 
-### Functions deploy to your default region
+### Functions deploy to `FUNCTION_DEFAULT_REGION`
 
-The extension deployed to the location you picked at install time. This kit
-sets no region, so its functions deploy to your codebase's default
-(`us-central1` unless you have changed it).
+The extension deployed to the location you picked at install time
+(`us-central1` by default). The kit reads the region from
+`FUNCTION_DEFAULT_REGION` in each instance's `.env`, also defaulting to
+`us-central1`, so instances can deploy to different regions.
+`firebase ext:migrate` writes it with the region the extension ran in.
+
+```sh
+# .env (or .env.<projectId>)
+FUNCTION_DEFAULT_REGION=us-central1
+```
+
+Keep the functions in the same region as your Firestore database (for a `nam5`
+database, `us-central1`), so user data is not read and deleted from another
+region.
+
+The kit sets the region on each function, so `setGlobalOptions({ region })`
+does not move them. Set `FUNCTION_DEFAULT_REGION` instead.
 
 ### All functions are 2nd gen
 

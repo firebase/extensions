@@ -109,19 +109,24 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const clearData = onUserDeleted((event) => {
-  // The Auth event delivers no user record when the payload envelope is empty,
-  // so bail before getContext() rather than initialising the SDKs for nothing.
-  const uid = event.data?.uid;
-  if (!uid) {
-    logs.deletionEventMissingUid(event.id);
-    return;
+export const clearData = onUserDeleted(
+  { region: CONFIG_EXPRESSIONS.functionRegion },
+  (event) => {
+    // The Auth event delivers no user record when the payload envelope is
+    // empty, so bail before getContext() rather than initialising the SDKs for
+    // nothing.
+    const uid = event.data?.uid;
+    if (!uid) {
+      logs.deletionEventMissingUid(event.id);
+      return;
+    }
+    return handleClear(uid, getContext());
   }
-  return handleClear(uid, getContext());
-});
+);
 
 export const handleSearch = onMessagePublished(
   {
+    region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
   (event) => runSearch(event.data.message.json, getContext())
@@ -129,6 +134,7 @@ export const handleSearch = onMessagePublished(
 
 export const handleDeletion = onMessagePublished(
   {
+    region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
   (event) => runDeletion(event.data.message.json, getContext())
