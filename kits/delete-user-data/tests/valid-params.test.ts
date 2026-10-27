@@ -88,7 +88,7 @@ describe("assertValidParams", () => {
   });
 
   // The extension accepts a select label, stores it verbatim, and its runtime
-  // then treats `Recursive` as shallow and `Yes` as off. Only values are safe.
+  // then treats `Recursive` as shallow and `Yes` as off.
   test.each([
     ["FIRESTORE_DELETE_MODE", "Recursive"],
     ["ENABLE_AUTO_DISCOVERY", "Yes"],
@@ -97,6 +97,17 @@ describe("assertValidParams", () => {
     vi.stubEnv(name, value);
 
     expect(() => assertValidParams()).toThrow(name);
+  });
+
+  // The runtime only checks for `recursive` and `yes`, so these labels already
+  // ran like their values.
+  test.each([
+    ["FIRESTORE_DELETE_MODE", "Shallow"],
+    ["ENABLE_AUTO_DISCOVERY", "No"],
+  ])("accepts the option label %s=%j", (name, value) => {
+    vi.stubEnv(name, value);
+
+    expect(() => assertValidParams()).not.toThrow();
   });
 
   // Blank values belong to assertRequiredParams; optional ones may be blank,

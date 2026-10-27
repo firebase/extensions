@@ -224,14 +224,15 @@ The Firebase CLI now sets it to the function that published the event
 so it differs between `clearData`, `handleSearch` and `handleDeletion`. If your
 event triggers filter on `source`, filter on the event `type` instead.
 
-### Option labels are not accepted
+### Some option labels are not accepted
 
-The extension's installer accepted an option's label (such as `Recursive` or
-`Yes`) as well as its value, but then did not recognize it: `Recursive` deleted
-shallowly and `Yes` left auto-discovery off. The kit accepts only the values
-(`recursive`, `shallow`, `yes`, `no`, and the location ids), and fails the
-deploy on a label. If you copied your `.env` from an extension instance that
-was installed with a label, change it to the value.
+The extension's installer accepted an option's label as well as its value, but
+then misread `Recursive` (it deleted shallowly), `Yes` (it left auto-discovery
+off) and the location labels (`United States`, `Belgium`, `Singapore`). The kit
+fails the deploy on these labels. If you copied your `.env` from an extension
+instance that was installed with one, change it to the value (`recursive`,
+`yes`, or the location id). `Shallow` and `No` worked in the extension and are
+still accepted.
 
 ### Unchanged
 

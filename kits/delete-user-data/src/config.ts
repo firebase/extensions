@@ -259,6 +259,12 @@ export function assertRequiredParams(
   }
 }
 
+// The extension stored these labels as-is and ran them like their value.
+const SAFE_LABELS: Readonly<Record<string, readonly string[]>> = {
+  FIRESTORE_DELETE_MODE: ["Shallow"],
+  ENABLE_AUTO_DISCOVERY: ["No"],
+};
+
 /**
  * Rejects param values the published extension refuses at install time: a
  * select value that is not one of its option values, or a text value that
@@ -268,9 +274,10 @@ export function assertRequiredParams(
  * in `.env` reaches the handlers unchecked, and they compare it with `===`
  * (`FIRESTORE_DELETE_MODE=RECURSIVE` runs as shallow, for example). Option
  * labels such as `Recursive` are rejected too, as the handlers only understand
- * the values. Unset and empty values are skipped: defaults cover the first,
- * and `assertRequiredParams` decides about the second. Called at module scope
- * so deploy-time discovery fails before the function ships.
+ * the values, except those in `SAFE_LABELS`. Unset and empty values are
+ * skipped: defaults cover the first, and `assertRequiredParams` decides about
+ * the second. Called at module scope so deploy-time discovery fails before the
+ * function ships.
  */
 export function assertValidParams(): void {
   const invalid: string[] = [];
@@ -285,7 +292,7 @@ export function assertValidParams(): void {
     const setting = `${param.name}=${JSON.stringify(raw)}`;
     if ("select" in input) {
       const allowed = input.select.options.map(({ value }) => String(value));
-      if (!allowed.includes(raw)) {
+      if (!allowed.includes(raw) && !SAFE_LABELS[param.name]?.includes(raw)) {
         invalid.push(`${setting} must be one of: ${allowed.join(", ")}`);
       }
     } else if ("text" in input && input.text.validationRegex) {
