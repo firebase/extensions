@@ -98,12 +98,14 @@ loads them at deploy time and prompts for any required values that are missing.
 
 The CLI does not check values that are already in `.env`, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
-deploy fails with an error naming the setting and the allowed values if
-`FIRESTORE_DELETE_MODE`, `ENABLE_AUTO_DISCOVERY` or
-`SELECTED_DATABASE_LOCATION` is not one of the values listed below, or if
+deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
+`ENABLE_AUTO_DISCOVERY` or `SELECTED_DATABASE_LOCATION` is not one of the
+values listed below (the error lists the allowed values), or if
 `SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
-extension accepted (an instance id rather than a URL, and a bucket name without
-`gs://` or capital letters). The values are case sensitive.
+extension accepted: an instance id rather than a URL, and a bucket name without
+`gs://` or capital letters (the error gives the extension's message). The values
+are case sensitive. The emulator runs the same check, so a bad value stops that
+instance's functions from loading there.
 
 The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.

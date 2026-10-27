@@ -298,8 +298,9 @@ export function assertValidParams(): void {
     } else if ("text" in input && input.text.validationRegex) {
       const regex = new RegExp(input.text.validationRegex);
       if (!regex.test(raw)) {
-        const reason = input.text.validationErrorMessage ?? "Invalid value";
-        invalid.push(`${setting}: ${reason} (must match ${regex})`);
+        const reason =
+          input.text.validationErrorMessage ?? `must match ${regex}`;
+        invalid.push(`${setting}: ${reason}`);
       }
     }
   }
@@ -307,7 +308,8 @@ export function assertValidParams(): void {
   if (invalid.length > 0) {
     throw new Error(
       `Invalid parameter values: ${invalid.join("; ")}. ` +
-        "Fix them in your .env file, or remove the entries to use their defaults."
+        "Fix them in this instance's .env or .env.<projectId> file, or remove " +
+        "the entries to use their defaults."
     );
   }
 }

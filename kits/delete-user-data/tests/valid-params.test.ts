@@ -52,6 +52,13 @@ const REJECTED: Array<[string, string, string]> = [
   ],
   ["CLOUD_STORAGE_BUCKET", "gs://x", "Invalid storage bucket"],
   ["CLOUD_STORAGE_BUCKET", "Upper_Case", "Invalid storage bucket"],
+  ["CLOUD_STORAGE_BUCKET", "abc\n", "Invalid storage bucket"],
+  ["SELECTED_DATABASE_INSTANCE", "abc\n", "Invalid database instance"],
+  [
+    "SELECTED_DATABASE_LOCATION",
+    " ",
+    "us-central1, europe-west1, asia-southeast1",
+  ],
 ];
 
 const ACCEPTED: Array<[string, string]> = [
@@ -63,6 +70,8 @@ const ACCEPTED: Array<[string, string]> = [
   ["SELECTED_DATABASE_LOCATION", "europe-west1"],
   ["SELECTED_DATABASE_LOCATION", "asia-southeast1"],
   ["SELECTED_DATABASE_INSTANCE", "my-instance"],
+  ["SELECTED_DATABASE_INSTANCE", " my-instance"],
+  ["SELECTED_DATABASE_INSTANCE", "a b"],
   ["CLOUD_STORAGE_BUCKET", "my-project-12345.appspot.com"],
   ["CLOUD_STORAGE_BUCKET", "my_bucket-1.example"],
 ];

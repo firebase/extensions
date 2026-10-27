@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("../src/logs");
 vi.mock("../src/handlers", async (importOriginal) => ({
@@ -66,5 +66,21 @@ describe("clearData", () => {
 
     expect(handleClear).not.toHaveBeenCalled();
     expect(logs.deletionEventMissingUid).toHaveBeenCalledWith("event-id");
+  });
+});
+
+describe("module load", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // Deploy-time discovery imports the kit, so this is what fails the deploy.
+  test("throws when a param value is invalid", async () => {
+    vi.resetModules();
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    await expect(import("../src/index")).rejects.toThrow(
+      'FIRESTORE_DELETE_MODE="RECURSIVE"'
+    );
   });
 });
