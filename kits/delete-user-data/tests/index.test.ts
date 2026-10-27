@@ -101,10 +101,6 @@ describe.each([
       /Unable to parse Pub\/Sub message data as JSON/
     );
 
-    expect(logs.unhandledError).toHaveBeenCalledWith(
-      name,
-      "message-event-id",
-      expect.any(Error)
-    );
+    expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(Error));
   });
 });

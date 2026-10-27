@@ -209,11 +209,11 @@ On the extension's 1st gen functions, a thrown error or a timeout was logged as
 records these event deliveries as HTTP 200 even when the function fails, so
 request status and error-rate charts do not show failures.
 
-Instead, the kit logs every failed run at ERROR severity, as
-`Function <name> failed on event <id>: <error>`, with `functionName` and
-`eventId` fields, and then lets the run fail. Error Reporting still groups the
-error from the stack trace that follows it, as it did for the extension. To be
-told about failures, create a
+Instead, the kit logs the error's stack trace for every failed run at ERROR
+severity, as the extension did, and then lets the run fail. Error Reporting
+groups it with the copy of the stack that the functions framework writes to
+stderr, so each failure shows up twice in the same group. To be told about
+failures, create a
 [log-based alert](https://cloud.google.com/logging/docs/alerting/log-based-alerts)
 on ERROR severity, for example:
 

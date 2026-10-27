@@ -126,11 +126,7 @@ describe("handler context", () => {
 
     await expect(clearData(deletionEvent("uid-7"))).rejects.toBe(err);
 
-    expect(logs.unhandledError).toHaveBeenCalledWith(
-      "clearData",
-      "event-id",
-      err
-    );
+    expect(logs.unhandledError).toHaveBeenCalledWith(err);
   });
 
   test("does not log an error when the deletion succeeds", async () => {

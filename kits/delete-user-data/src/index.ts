@@ -118,22 +118,21 @@ function getContext(): HandlerContext {
 // request log, and the functions framework prints the stack to stderr with no
 // severity. Log the error at ERROR severity so log-based alerts and Error
 // Reporting see it, then rethrow so the invocation still counts as failed.
-function logFailures<E extends { id: string }>(
-  functionName: string,
+function logFailures<E>(
   handler: (event: E) => unknown
 ): (event: E) => Promise<unknown> {
   return async (event) => {
     try {
       return await handler(event);
     } catch (err) {
-      logs.unhandledError(functionName, event.id, err);
+      logs.unhandledError(err);
       throw err;
     }
   };
 }
 
 export const clearData = onUserDeleted(
-  logFailures("clearData", (event) => {
+  logFailures((event) => {
     // The Auth event delivers no user record when the payload envelope is empty,
     // so bail before getContext() rather than initialising the SDKs for nothing.
     const uid = event.data?.uid;
@@ -149,10 +148,8 @@ export const handleSearch = onMessagePublished(
   {
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
-  logFailures(
-    "handleSearch",
-    (event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
-      runSearch(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
+    runSearch(event.data.message.json, getContext())
   )
 );
 
@@ -160,9 +157,7 @@ export const handleDeletion = onMessagePublished(
   {
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
-  logFailures(
-    "handleDeletion",
-    (event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>
-      runDeletion(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>
+    runDeletion(event.data.message.json, getContext())
   )
 );

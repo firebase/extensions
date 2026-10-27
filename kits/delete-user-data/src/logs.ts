@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { format } from "node:util";
 import { logger } from "firebase-functions";
 import type { ResolvedDeleteUserDataConfig } from "./export-config";
 
@@ -126,25 +127,13 @@ export const deletionEventMissingUid = (eventId: string) => {
   );
 };
 
-// Written without a stack in `message`: the functions framework already prints
-// the thrown error's stack to stderr, and Error Reporting groups that entry the
-// same way it groups the extension's errors. A stack here would report every
-// failure twice, under a second group.
-export const unhandledError = (
-  functionName: string,
-  eventId: string,
-  err: unknown
-) => {
+// Logged as the bare stack, like the extension's 1st gen ERROR entry. Error
+// Reporting groups it with the framework's own stderr copy of the stack.
+export const unhandledError = (err: unknown) =>
   logger.write({
     severity: "ERROR",
-    message: `Function ${functionName} failed on event ${eventId}: ${
-      err instanceof Error ? err.message : String(err)
-    }`,
-    functionName,
-    eventId,
-    errorStack: err instanceof Error ? err.stack : undefined,
+    message: (err instanceof Error && err.stack) || format(err),
   });
-};
 
 export function warnInvalidPaths(invalidPathCount: number, uid: string) {
   logger.warn(

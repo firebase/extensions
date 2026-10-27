@@ -23,42 +23,26 @@ afterEach(() => {
 });
 
 describe("unhandledError", () => {
-  test("writes an ERROR entry naming the function, event and error", () => {
+  test("writes the error's stack as an ERROR entry", () => {
     const write = vi.spyOn(logger, "write").mockImplementation(() => {});
     const err = new Error("boom");
 
-    logs.unhandledError("handleDeletion", "event-1", err);
+    logs.unhandledError(err);
 
     expect(write).toHaveBeenCalledWith({
       severity: "ERROR",
-      message: "Function handleDeletion failed on event event-1: boom",
-      functionName: "handleDeletion",
-      eventId: "event-1",
-      errorStack: err.stack,
+      message: err.stack,
     });
-  });
-
-  // Error Reporting reads stacks from `message`. The framework already logs
-  // the stack it reports on, so a stack here would report the failure twice.
-  test("keeps the stack out of the message", () => {
-    const write = vi.spyOn(logger, "write").mockImplementation(() => {});
-
-    logs.unhandledError("clearData", "event-2", new Error("boom"));
-
-    expect(write.mock.calls[0][0].message).not.toMatch(/\n\s+at /);
   });
 
   test("handles a thrown value that is not an Error", () => {
     const write = vi.spyOn(logger, "write").mockImplementation(() => {});
 
-    logs.unhandledError("handleSearch", "event-3", "plain string");
+    logs.unhandledError("plain string");
 
-    expect(write).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severity: "ERROR",
-        message: "Function handleSearch failed on event event-3: plain string",
-        errorStack: undefined,
-      })
-    );
+    expect(write).toHaveBeenCalledWith({
+      severity: "ERROR",
+      message: "plain string",
+    });
   });
 });
