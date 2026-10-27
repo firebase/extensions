@@ -96,6 +96,24 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
+The CLI does not check values that are already in `.env`, so the kit checks
+them itself when the deploy loads it, as the extension did at install time. The
+deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
+`ENABLE_AUTO_DISCOVERY` or `SELECTED_DATABASE_LOCATION` is not one of the
+values listed below or their labels (the error lists the allowed values), or if
+`SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
+extension accepted: an instance id rather than a URL, and a bucket name without
+`gs://` or capital letters (the error gives the extension's message). One error
+lists every bad setting, along with any required setting left blank. The values
+are case sensitive. The emulator runs the same check, so a bad value stops that
+instance's functions from loading there.
+
+An option's label (such as `Recursive`) is accepted because the extension's
+installer accepted it, but it runs as it did in the extension: `Recursive`
+deletes shallowly, `Yes` leaves auto-discovery off, and a location label
+(`United States`, `Belgium`, `Singapore`) gives a database URL that doesn't
+exist. Use the values instead.
+
 The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
 `FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
