@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("../src/logs");
 vi.mock("../src/handlers", async (importOriginal) => ({
@@ -86,4 +87,24 @@ describe("runtime options", () => {
       expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
     }
   );
+
+  describe("with ingress set globally", () => {
+    afterEach(() => {
+      delete (globalThis as any)[
+        Symbol.for("firebase-functions:v2:globalOptions")
+      ].value;
+    });
+
+    // `ext:migrate` carries the extension's ingress over with
+    // setGlobalOptions, which a function-level option would override.
+    test("keeps the global ingress", async () => {
+      setGlobalOptions({ ingressSettings: "ALLOW_ALL" });
+      vi.resetModules();
+      const kit = await import("../src/index");
+
+      for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
+        expect((fn as any).__endpoint.ingressSettings).toBe("ALLOW_ALL");
+      }
+    });
+  });
 });

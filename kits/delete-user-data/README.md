@@ -205,6 +205,8 @@ generation.
 Each function still runs like the extension's: one event per instance
 (`concurrency: 1`), 0.1666 vCPU (`cpu: "gcf_gen1"`) and internal-only ingress,
 rather than the 2nd gen defaults of concurrency `80`, 1 vCPU and `ALLOW_ALL`.
+If you set `ingressSettings` with `setGlobalOptions` before you load the kit, as
+`ext:migrate` does, the kit uses that instead of internal-only ingress.
 One difference remains: 2nd gen caps each function at 100 instances by default,
 where the extension's 1st gen functions could scale to 3000. To raise it, call
 `setGlobalOptions({ maxInstances })` from `firebase-functions/v2` in your

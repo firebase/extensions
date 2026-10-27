@@ -20,6 +20,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
+import { __getSpec } from "firebase-functions/v2/options";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import {
   assertRequiredParams,
@@ -115,11 +116,16 @@ function getContext(): HandlerContext {
  * the 2nd gen defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`. At concurrency
  * 80, auto-discovery fans many `handleSearch` events onto one 256MiB instance,
  * which runs out of memory and drops every event in flight on it.
+ *
+ * Ingress was an install-time setting on the extension, which `ext:migrate`
+ * carries over with `setGlobalOptions`. A function-level option always beats a
+ * global one, so only default ingress when no global value is set.
  */
 const EXTENSION_RUNTIME_OPTIONS = {
   concurrency: 1,
   cpu: "gcf_gen1",
-  ingressSettings: "ALLOW_INTERNAL_ONLY",
+  ingressSettings:
+    __getSpec().globalOptions.ingressSettings ?? "ALLOW_INTERNAL_ONLY",
 } as const;
 
 export const clearData = onUserDeleted(EXTENSION_RUNTIME_OPTIONS, (event) => {
