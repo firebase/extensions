@@ -18,6 +18,7 @@ elif [ "$mode" != "fix" ]; then
   exit 1
 fi
 
-git ls-files -z -- '*.ts' '*.js' \
-  | grep -zvE '(^|/)(node_modules|lib|dist|coverage)/' \
-  | xargs -0 addlicense "${flags[@]}"
+files=$(git ls-files -- '*.ts' '*.js' | grep -vE '(^|/)(node_modules|lib|dist|coverage)/' || true)
+if [ -n "$files" ]; then
+  echo "$files" | tr '\n' '\0' | xargs -0 addlicense "${flags[@]}"
+fi
