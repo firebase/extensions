@@ -65,4 +65,29 @@ fi
 echo "Attempting to publish $NPM_PACKAGE_NAME version $NPM_PACKAGE_VERSION..."
 npm --version
 node --version
-npm publish --provenance
+
+EXIT_GATE_REGISTRY="https://us-npm.pkg.dev/oss-exit-gate-prod/firebase-extensions--npm/"
+cat << EOF > .npmrc
+registry=${EXIT_GATE_REGISTRY}
+//us-npm.pkg.dev/oss-exit-gate-prod/firebase-extensions--npm/:always-auth=true
+EOF
+npx --yes google-artifactregistry-auth --repo-config=.npmrc --credential-config="$HOME/.npmrc"
+npm publish --registry="${EXIT_GATE_REGISTRY}"
+
+cat << EOF > manifest.json
+{
+  "publish_all": false,
+  "publishing_groups": [
+    {
+      "packages": [
+        {
+          "name": "${NPM_PACKAGE_NAME}",
+          "version": "${NPM_PACKAGE_VERSION}"
+        }
+      ]
+    }
+  ]
+}
+EOF
+gcloud storage cp manifest.json \
+  "gs://oss-exit-gate-prod-projects-bucket/firebase-extensions/npm/manifests/manifest-${NPM_PACKAGE_VERSION}-$(date +%s).json"
