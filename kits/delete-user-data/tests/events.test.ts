@@ -127,12 +127,31 @@ describe("setupEventChannel", () => {
     }
   );
 
-  test("stays disabled when no channel is configured", async () => {
-    const events = await importEvents();
+  test("stays disabled when neither is configured", async () => {
+    const events = await importEvents(undefined, null);
 
     expect(channel).not.toHaveBeenCalled();
     await events.publishDeletionEvent("firestore", { uid: "u1" });
     expect(publish).not.toHaveBeenCalled();
+  });
+
+  // The extension's install rejected selected events without a channel.
+  test("rejects selected event types without EVENTARC_CHANNEL", async () => {
+    await expect(importEvents(undefined, ALL_EVENTS)).rejects.toThrow(
+      "Must specify eventarc channel"
+    );
+    expect(channel).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a bare channel id", "firebase"],
+    ["a missing location", "projects/p/channels/firebase"],
+    ["a trailing slash", `${CHANNEL}/`],
+  ])("rejects an EVENTARC_CHANNEL with %s", async (_label, channelName) => {
+    await expect(importEvents(channelName, ALL_EVENTS)).rejects.toThrow(
+      "EVENTARC_CHANNEL"
+    );
+    expect(channel).not.toHaveBeenCalled();
   });
 });
 
