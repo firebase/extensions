@@ -122,9 +122,10 @@ describe("runtime options", () => {
       ].value;
     });
 
-    // The README tells users to raise maxInstances and set the region with
-    // setGlobalOptions, so the kit's function-level options must not override
-    // them. Ingress stays internal-only, like the extension's.
+    // The README tells users to raise maxInstances with setGlobalOptions, so
+    // the kit's function-level options must not override it. Ingress stays
+    // internal-only, like the extension's, and the region comes from
+    // FUNCTION_DEFAULT_REGION.
     test("keeps the global options and the extension's runtime", async () => {
       setGlobalOptions({
         ingressSettings: "ALLOW_ALL",
@@ -139,7 +140,7 @@ describe("runtime options", () => {
 
         expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
         expect(endpoint.maxInstances).toBe(3000);
-        expect(endpoint.region).toEqual(["europe-west1"]);
+        expect(endpoint.region.name).toBe("FUNCTION_DEFAULT_REGION");
         expect(endpoint.concurrency).toBe(1);
         expect(endpoint.cpu).toBe("gcf_gen1");
       }

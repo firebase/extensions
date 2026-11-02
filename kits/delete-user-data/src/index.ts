@@ -121,20 +121,25 @@ const EXTENSION_RUNTIME_OPTIONS = {
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 
-export const clearData = onUserDeleted(EXTENSION_RUNTIME_OPTIONS, (event) => {
-  // The Auth event delivers no user record when the payload envelope is empty,
-  // so bail before getContext() rather than initialising the SDKs for nothing.
-  const uid = event.data?.uid;
-  if (!uid) {
-    logs.deletionEventMissingUid(event.id);
-    return;
+export const clearData = onUserDeleted(
+  { ...EXTENSION_RUNTIME_OPTIONS, region: CONFIG_EXPRESSIONS.functionRegion },
+  (event) => {
+    // The Auth event delivers no user record when the payload envelope is
+    // empty, so bail before getContext() rather than initialising the SDKs for
+    // nothing.
+    const uid = event.data?.uid;
+    if (!uid) {
+      logs.deletionEventMissingUid(event.id);
+      return;
+    }
+    return handleClear(uid, getContext());
   }
-  return handleClear(uid, getContext());
-});
+);
 
 export const handleSearch = onMessagePublished(
   {
     ...EXTENSION_RUNTIME_OPTIONS,
+    region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
   (event) => runSearch(event.data.message.json, getContext())
@@ -143,6 +148,7 @@ export const handleSearch = onMessagePublished(
 export const handleDeletion = onMessagePublished(
   {
     ...EXTENSION_RUNTIME_OPTIONS,
+    region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
   (event) => runDeletion(event.data.message.json, getContext())
