@@ -190,6 +190,9 @@ you uninstall. If you already uninstalled with a plain `.env`, put the instance
 (or, if it was the only one, the whole kit entry) back in `firebase.json`,
 rename the file, and run the command again.
 
+A `.env.local` file (the emulator override) next to a plain `.env` makes the
+command fail with "contains no .env file for current project".
+
 Uninstalling the extension removed the same resources and kept its two Pub/Sub
 topics. The kit also keeps two things:
 
