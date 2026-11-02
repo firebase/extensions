@@ -144,12 +144,21 @@ export const clearData = onUserDeleted(
   })
 );
 
+// Parse the message data the way the extension did. `message.json` wraps a parse
+// error as "Unable to parse Pub/Sub message data as JSON", which Error
+// Reporting groups apart from the extension's plain SyntaxError.
+function parseMessage<T>(event: CloudEvent<MessagePublishedData<T>>): T {
+  return JSON.parse(
+    Buffer.from(event.data.message.data, "base64").toString("utf8")
+  );
+}
+
 export const handleSearch = onMessagePublished(
   {
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
   logFailures((event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
-    runSearch(event.data.message.json, getContext())
+    runSearch(parseMessage(event), getContext())
   )
 );
 
@@ -158,6 +167,6 @@ export const handleDeletion = onMessagePublished(
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
   logFailures((event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>
-    runDeletion(event.data.message.json, getContext())
+    runDeletion(parseMessage(event), getContext())
   )
 );

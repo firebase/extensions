@@ -97,10 +97,9 @@ describe.each([
   });
 
   test("logs a malformed message at ERROR severity and rethrows", async () => {
-    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(
-      /Unable to parse Pub\/Sub message data as JSON/
-    );
+    // The plain SyntaxError, as the extension threw, not `message.json`'s wrapper.
+    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
 
-    expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(Error));
+    expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
   });
 });
