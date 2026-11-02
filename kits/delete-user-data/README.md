@@ -204,9 +204,17 @@ topics. The kit also keeps two things:
 - The topics `kit-<instance id>-discovery` and `kit-<instance id>-deletion` (or
   the names in `DISCOVERY_TOPIC_NAME` and `DELETION_TOPIC_NAME`). Delete them
   with `gcloud pubsub topics delete <topic>`.
-- The deleted service account's project roles, which the extension removed.
-  They show in your project's IAM policy as `deleted:serviceAccount:firebase-fn-…`
-  members, no longer grant access, and can be removed with
+- The deleted service account's seven project roles, which the extension
+  removed. They no longer grant access, and show in your project's IAM policy
+  as members like
+  `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
+  List them with:
+
+  ```sh
+  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-" --format="value(bindings.role,bindings.members)"
+  ```
+
+  and remove each one, one command per role, with
   `gcloud projects remove-iam-policy-binding <project id> --member=<member> --role=<role>`.
 
 ## Differences from the Delete User Data extension
