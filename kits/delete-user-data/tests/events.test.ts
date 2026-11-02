@@ -78,13 +78,29 @@ describe("setupEventChannel", () => {
     });
   });
 
-  // The extension's install rejected a list with spaces, so the deploy fails
-  // instead of trimming.
+  // The CLI dropped empty entries before the platform checked the list.
+  test("skips empty entries", async () => {
+    await importEvents(CHANNEL, `,${ALL_EVENT_TYPES.join(",,")},`);
+
+    expect(channel).toHaveBeenCalledWith(CHANNEL, {
+      allowedEventTypes: ALL_EVENT_TYPES,
+    });
+  });
+
+  // The extension's install rejected each of these, so the deploy fails
+  // instead of trimming or dropping entries.
   test.each([
     ["spaces after commas", ALL_EVENT_TYPES.join(", ")],
     ["surrounding whitespace", `  ${ALL_EVENT_TYPES.join(" ,  ")}  `],
     ["whitespace only", "   "],
     ["only commas and spaces", " , ,"],
+    ["different case", "firebase.extensions.delete-user-data.v1.Firestore"],
+    [
+      "an unknown type",
+      "firebase.extensions.delete-user-data.v1.bogus,firebase.extensions.delete-user-data.v1.database",
+    ],
+    ["a duplicate type", `${ALL_EVENT_TYPES[0]},${ALL_EVENT_TYPES[0]}`],
+    ["a ';' separator", ALL_EVENT_TYPES.join(";")],
   ])("rejects EXT_SELECTED_EVENTS with %s", async (_label, selectedEvents) => {
     await expect(importEvents(CHANNEL, selectedEvents)).rejects.toThrow(
       "EXT_SELECTED_EVENTS is invalid"

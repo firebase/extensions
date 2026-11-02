@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("../src/logs");
 vi.mock("../src/handlers", async (importOriginal) => ({
@@ -66,5 +66,25 @@ describe("clearData", () => {
 
     expect(handleClear).not.toHaveBeenCalled();
     expect(logs.deletionEventMissingUid).toHaveBeenCalledWith("event-id");
+  });
+});
+
+// The CLI loads the kit to read its manifest, so a throw at import fails the
+// deploy, as the extension's install failed on the same value.
+describe("module load", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("fails on an invalid EXT_SELECTED_EVENTS", async () => {
+    vi.resetModules();
+    vi.stubEnv(
+      "EXT_SELECTED_EVENTS",
+      "firebase.extensions.delete-user-data.v1.firestore, firebase.extensions.delete-user-data.v1.storage"
+    );
+
+    await expect(import("../src/index")).rejects.toThrow(
+      "EXT_SELECTED_EVENTS is invalid"
+    );
   });
 });
