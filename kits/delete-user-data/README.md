@@ -175,6 +175,10 @@ This deletes the instance's functions, their triggers and Pub/Sub subscriptions,
 and the service account the CLI created for them. It then removes the instance
 from `firebase.json` and deletes its `.env.<projectId>` file.
 
+The command asks you to confirm, twice if this is the kit's only instance. In a
+non-interactive shell (CI, a script, or any shell without a TTY), add
+`--force`: without it the command exits 0 and deletes nothing.
+
 It only deletes what is deployed to a project with a `.env.<projectId>` file in
 the instance's config directory. With only a plain `.env`, it still removes the
 instance from `firebase.json` and exits without an error, but the functions keep
