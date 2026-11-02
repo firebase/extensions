@@ -190,6 +190,11 @@ you uninstall. If you already uninstalled with a plain `.env`, put the instance
 (or, if it was the only one, the whole kit entry) back in `firebase.json`,
 rename the file, and run the command again.
 
+If the instance is deployed to more than one project, give each project its own
+`.env.<projectId>` (copy a shared `.env`, don't rename it) and run the command
+once per project with `--project <projectId>`. The instance stays in
+`firebase.json` until the last project's file is gone.
+
 A `.env.local` file (the emulator override) next to a plain `.env` makes the
 command fail with "contains no .env file for current project".
 
