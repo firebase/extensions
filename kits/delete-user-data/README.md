@@ -234,6 +234,12 @@ A function can't log its own timeout. A timeout shows up only as an INFO request
 log that says "The request has been terminated because it has reached the
 maximum request timeout", which the second clause above matches.
 
+An out-of-memory crash logs one ERROR per crashed instance (`Memory limit of
+256 MiB exceeded…`), which the filter above catches. Each event that was running
+on that instance gets only an INFO, HTTP 200 request log that says "The request
+failed because…", so the log-based alert fires once per crash, not once per
+lost event.
+
 ### Events need an existing channel, and their source has changed
 
 The extension created its Eventarc channel when you installed it with events
