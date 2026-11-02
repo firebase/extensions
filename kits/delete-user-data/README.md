@@ -173,7 +173,10 @@ firebase functions:kits:uninstall --instance <instance id>
 
 This deletes the instance's functions, their triggers and Pub/Sub subscriptions,
 and the service account the CLI created for them. It then removes the instance
-from `firebase.json` and deletes its `.env.<projectId>` file.
+from `firebase.json` and deletes its `.env.<projectId>` file. If it is the kit's
+only instance, it removes the whole kit entry, leaving `"functions": []`.
+Despite what the prompt says, it doesn't delete your functions source when the
+kit is exported from your own codebase, as in [Usage](#usage).
 
 The command asks you to confirm, twice if this is the kit's only instance. In a
 non-interactive shell (CI, a script, or any shell without a TTY), add
@@ -184,7 +187,8 @@ the instance's config directory. With only a plain `.env`, it still removes the
 instance from `firebase.json` and exits without an error, but the functions keep
 running and keep deleting user data. Rename `.env` to `.env.<projectId>` before
 you uninstall. If you already uninstalled with a plain `.env`, put the instance
-back in `firebase.json`, rename the file, and run the command again.
+(or, if it was the only one, the whole kit entry) back in `firebase.json`,
+rename the file, and run the command again.
 
 Uninstalling the extension removed the same resources and kept its two Pub/Sub
 topics. The kit also keeps two things:
