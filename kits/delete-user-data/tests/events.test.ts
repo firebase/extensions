@@ -78,18 +78,18 @@ describe("setupEventChannel", () => {
     });
   });
 
-  // firebase-admin splits a string allowlist on "," without trimming, so
-  // "a, b" would allow only "a". The extension's value never had spaces.
+  // The extension's install rejected a list with spaces, so the deploy fails
+  // instead of trimming.
   test.each([
     ["spaces after commas", ALL_EVENT_TYPES.join(", ")],
     ["surrounding whitespace", `  ${ALL_EVENT_TYPES.join(" ,  ")}  `],
-    ["empty entries", `,${ALL_EVENT_TYPES.join(",,")},`],
-  ])("trims each selected event type (%s)", async (_label, selectedEvents) => {
-    await importEvents(CHANNEL, selectedEvents);
-
-    expect(channel).toHaveBeenCalledWith(CHANNEL, {
-      allowedEventTypes: ALL_EVENT_TYPES,
-    });
+    ["whitespace only", "   "],
+    ["only commas and spaces", " , ,"],
+  ])("rejects EXT_SELECTED_EVENTS with %s", async (_label, selectedEvents) => {
+    await expect(importEvents(CHANNEL, selectedEvents)).rejects.toThrow(
+      "EXT_SELECTED_EVENTS is invalid"
+    );
+    expect(channel).not.toHaveBeenCalled();
   });
 
   // The extension cleared its channel when no event types were selected, so
@@ -98,8 +98,6 @@ describe("setupEventChannel", () => {
   test.each([
     ["unset", null],
     ["empty", ""],
-    ["whitespace only", "   "],
-    ["only commas", " , ,"],
   ])(
     "stays disabled when a channel is set but EXT_SELECTED_EVENTS is %s",
     async (_label, selectedEvents) => {
