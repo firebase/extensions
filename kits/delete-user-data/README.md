@@ -205,15 +205,22 @@ generation.
 ### Failed runs show as HTTP 200
 
 On the extension's 1st gen functions, a thrown error or a timeout was logged as
-`finished with status: 'error'` (or `'timeout'`). On 2nd gen, Cloud Run
-records these event deliveries as HTTP 200 even when the function fails, so
-request status and error-rate charts do not show failures.
+`finished with status: 'error'` (or `'timeout'`). On 2nd gen, Cloud Run's
+request log and its `request_count` metric record these event deliveries as
+HTTP 200 even when the function fails. The
+`cloudfunctions.googleapis.com/function/execution_count` metric still reports
+them with a `status` of `error`, `timeout` or `out of memory`, as it did for
+the extension.
 
-Instead, the kit logs the error's stack trace for every failed run at ERROR
+The kit also logs the error's stack trace for every failed run at ERROR
 severity, as the extension did, and then lets the run fail. Error Reporting
 groups it with the copy of the stack that the functions framework writes to
-stderr, so each failure shows up twice in the same group. To be told about
-failures, create a
+stderr, so each failure shows up twice in the same group.
+
+To be told about failures, create a
+[metric alert](https://cloud.google.com/monitoring/alerts/using-alerting-ui)
+on `execution_count` with `metric.labels.status!="ok"`. It also counts each
+event lost to an out-of-memory crash. Alternatively, create a
 [log-based alert](https://cloud.google.com/logging/docs/alerting/log-based-alerts)
 on ERROR severity, for example:
 
