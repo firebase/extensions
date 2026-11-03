@@ -46,6 +46,7 @@ import { logger, LogLevel } from "../logger";
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import type { ChangeTrackerConfig } from "./types";
 import { PartitioningConfig } from "./partitioning/config";
+import { resolveProjectId } from "./projectId";
 export type { ChangeTrackerConfig } from "./types";
 
 interface InsertAllError {
@@ -141,9 +142,11 @@ export class FirestoreBigQueryEventHistoryTracker
   partitioningConfig: PartitioningConfig;
 
   constructor(public config: ChangeTrackerConfig) {
-    this.bq = new bigquery.BigQuery();
-
-    this.bq.projectId = config.bqProjectId || process.env.PROJECT_ID;
+    const projectId = resolveProjectId(config.bqProjectId);
+    // Without a project ID the client detects one from Application Default Credentials.
+    this.bq = projectId
+      ? new bigquery.BigQuery({ projectId })
+      : new bigquery.BigQuery();
 
     this.partitioningConfig = new PartitioningConfig(this.config.partitioning);
 
@@ -410,6 +413,10 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this._initialized) {
         return;
       }
+      // Generated view SQL embeds bq.projectId, which stays a placeholder
+      // until getProjectId() detects the project.
+      await this.bq.getProjectId();
+
       try {
         await this.initializeDataset();
       } catch (error) {
