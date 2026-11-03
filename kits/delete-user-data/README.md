@@ -53,7 +53,8 @@ export {
 } from "@firebase-function-kits/delete-user-data";
 ```
 
-and configure with a `.env` (or `.env.<projectId>`).
+and configure it in a `.env.<projectId>` file (see [Uninstall](#uninstall) for
+why not a plain `.env`).
 
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
@@ -79,7 +80,7 @@ later, behind the `kits` experiment — earlier CLIs do not provide the
 ```
 
 `instances` maps each instance id to the directory (relative to
-`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+`firebase.json`) holding that instance's `.env.<projectId>`. The CLI prefixes every
 function and task queue name with `kit-<instance id>-`, so the functions above
 deploy as `kit-default-clearData`, `kit-default-handleSearch`, and
 `kit-default-handleDeletion`.
@@ -93,8 +94,10 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
-loads them at deploy time and prompts for any required values that are missing.
+Set these values in a `.env.<projectId>` file, such as `.env.my-project`. The
+Firebase CLI loads them at deploy time and prompts for any required values that
+are missing. A plain `.env` deploys the same way, but
+`functions:kits:uninstall` ignores it (see [Uninstall](#uninstall)).
 
 The CLI does not check values that are already in `.env`, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
@@ -140,7 +143,7 @@ overridden there.
 ## Multiple instances
 
 To run several deletion pipelines, add one entry per instance to the `instances`
-map, each pointing at its own config directory with its own `.env`:
+map, each pointing at its own config directory with its own `.env.<projectId>`:
 
 ```json
 {
@@ -167,7 +170,7 @@ in sync by hand.
 
 The functions can publish deletion events for each backend under
 `firebase.extensions.delete-user-data.v1.*` (`firestore`, `database`, and
-`storage`). Set both of these in `.env` to turn them on:
+`storage`). Set both of these in `.env.<projectId>` to turn them on:
 
 | Env var | Description |
 |---|---|
@@ -180,6 +183,58 @@ no event types selected.
 
 The channel must already exist. Deploying the kit does not create it, and
 publishing to a missing channel logs a warning without failing the function.
+
+## Uninstall
+
+```sh
+firebase functions:kits:uninstall --instance <instance id>
+```
+
+This deletes the instance's functions, their triggers and Pub/Sub subscriptions,
+and the service account the CLI created for them. It then removes the instance
+from `firebase.json` and deletes its `.env.<projectId>` file. If it is the kit's
+only instance, it removes the whole kit entry, leaving `"functions": []`.
+Despite what the prompt says, it doesn't delete your functions source when the
+kit is exported from your own codebase, as in [Usage](#usage).
+
+The command asks you to confirm, twice if this is the kit's only instance. In a
+non-interactive shell (CI, a script, or any shell without a TTY), add
+`--force`: without it the command exits 0 and deletes nothing.
+
+It only deletes what is deployed to a project with a `.env.<projectId>` file in
+the instance's config directory. With only a plain `.env`, it still removes the
+instance from `firebase.json` and exits without an error, but the functions keep
+running and keep deleting user data. Rename `.env` to `.env.<projectId>` before
+you uninstall. If you already uninstalled with a plain `.env`, put the instance
+(or, if it was the only one, the whole kit entry) back in `firebase.json`,
+rename the file, and run the command again.
+
+If the instance is deployed to more than one project, give each project its own
+`.env.<projectId>` (copy a shared `.env`, don't rename it) and run the command
+once per project with `--project <projectId>`. The instance stays in
+`firebase.json` until the last project's file is gone.
+
+A `.env.local` file (the emulator override) next to a plain `.env` makes the
+command fail with "contains no .env file for current project".
+
+Uninstalling the extension removed the same resources and kept its two Pub/Sub
+topics. The kit also keeps two things:
+
+- The topics `kit-<instance id>-discovery` and `kit-<instance id>-deletion` (or
+  the names in `DISCOVERY_TOPIC_NAME` and `DELETION_TOPIC_NAME`). Delete them
+  with `gcloud pubsub topics delete <topic>`.
+- The deleted service account's seven project roles, which the extension
+  removed. They no longer grant access, and show in your project's IAM policy
+  as members like
+  `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
+  List them with:
+
+  ```sh
+  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-" --format="value(bindings.role,bindings.members)"
+  ```
+
+  and remove each one, one command per role, with
+  `gcloud projects remove-iam-policy-binding <project id> --member=<member> --role=<role>`.
 
 ## Differences from the Delete User Data extension
 
@@ -299,7 +354,7 @@ using the bug template, with `delete-user-data kit` in the title. Include:
 - The kit version (run `npm ls @firebase-function-kits/delete-user-data` in the
   directory where you installed it), your `firebase-tools` version
   (`firebase --version`) and Node.js version.
-- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+- Your configuration from your `.env.<projectId>` (or `.env`) file, with
   secrets and project details redacted.
 - Steps to reproduce, the result you expected, and the result you got.
 - Logs from the kit's functions in Cloud Logging (with their
