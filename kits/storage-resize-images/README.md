@@ -211,6 +211,18 @@ out-of-memory kill stops the function before it can log an error:
   Cloud Run logs it at INFO in the requests log as
   `The request has been terminated because it has reached the maximum request timeout.`
 
+### Event source
+
+The extension's events had the `source`
+`//firebaseextensions.googleapis.com/extensions/projects/<project>/instances/<instance>`.
+The kit's events have the function's service as their `source`:
+`projects/<project>/locations/<region>/services/kit-<instance id>-generateResizedImage`.
+
+A trigger that filters on the extension's `source` receives no events from the
+kit, and nothing reports an error. Change the filter to the new value. To keep
+instances apart on a shared channel, you can instead give each instance its
+own `EVENTARC_CHANNEL`.
+
 ### Region
 
 `BUCKET_REGION` decides where the function deploys, as described below, rather
