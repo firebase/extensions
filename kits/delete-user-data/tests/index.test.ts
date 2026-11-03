@@ -101,6 +101,7 @@ describe("runtime options", () => {
   // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
   // instance, which ran out of memory and dropped them. The 2nd gen default of
   // 100 instances held each function to 100 events at once, against 3000.
+  // Without global options, the kit uses the extension's runtime.
   test.each([
     ["clearData", clearData],
     ["handleSearch", handleSearch],
@@ -124,11 +125,13 @@ describe("runtime options", () => {
       ].value;
     });
 
-    // Global options don't change the extension's runtime: ingress stays
-    // internal-only, max instances stay at 3000, and the region comes from
-    // FUNCTION_DEFAULT_REGION.
-    test("keeps the extension's runtime over the global options", async () => {
+    // ext:migrate carries the extension's max instances and ingress over
+    // with setGlobalOptions, and users can change any runtime option that way.
+    // The region still comes from FUNCTION_DEFAULT_REGION.
+    test("uses the global runtime options over the kit's", async () => {
       setGlobalOptions({
+        concurrency: 5,
+        cpu: 1,
         ingressSettings: "ALLOW_ALL",
         maxInstances: 10,
         region: "europe-west1",
@@ -139,11 +142,28 @@ describe("runtime options", () => {
       for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
         const endpoint = (fn as any).__endpoint;
 
-        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
-        expect(endpoint.maxInstances).toBe(3000);
+        expect(endpoint.concurrency).toBe(5);
+        expect(endpoint.cpu).toBe(1);
+        expect(endpoint.ingressSettings).toBe("ALLOW_ALL");
+        expect(endpoint.maxInstances).toBe(10);
         expect(endpoint.region.name).toBe("FUNCTION_DEFAULT_REGION");
+      }
+    });
+
+    // The ext:migrate template passes undefined for settings the extension
+    // instance didn't have.
+    test("keeps the kit's defaults for options not set globally", async () => {
+      setGlobalOptions({ ingressSettings: undefined, maxInstances: 10 });
+      vi.resetModules();
+      const kit = await import("../src/index");
+
+      for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
+        const endpoint = (fn as any).__endpoint;
+
+        expect(endpoint.maxInstances).toBe(10);
         expect(endpoint.concurrency).toBe(1);
         expect(endpoint.cpu).toBe("gcf_gen1");
+        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
       }
     });
   });

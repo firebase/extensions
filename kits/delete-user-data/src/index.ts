@@ -112,9 +112,6 @@ function getContext(): HandlerContext {
  * instances and `ALLOW_ALL`. At concurrency 80, auto-discovery fans many
  * `handleSearch` events onto one 256MiB instance, which runs out of memory and
  * drops every event in flight on it.
- *
- * Ingress is always internal-only, so `setGlobalOptions({ ingressSettings })`
- * doesn't change it, as in the firestore-bigquery-export kit.
  */
 const EXTENSION_RUNTIME_OPTIONS = {
   concurrency: 1,
@@ -123,8 +120,28 @@ const EXTENSION_RUNTIME_OPTIONS = {
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 
+/**
+ * Function-level options win over `setGlobalOptions`, so drop each default the
+ * user has set globally. This lets the max instances and ingress that the
+ * `ext:migrate` template sets apply. `firebase-functions` doesn't export
+ * `getGlobalOptions`, so read them from the global the SDK keeps them on. Like
+ * the SDK, this reads them when the kit loads.
+ */
+function runtimeOptions(): Partial<typeof EXTENSION_RUNTIME_OPTIONS> {
+  const globalOptions: Record<string, unknown> =
+    (globalThis as any)[Symbol.for("firebase-functions:v2:globalOptions")]
+      ?.value ?? {};
+  return Object.fromEntries(
+    Object.entries(EXTENSION_RUNTIME_OPTIONS).filter(
+      ([key]) => globalOptions[key] === undefined
+    )
+  );
+}
+
+const RUNTIME_OPTIONS = runtimeOptions();
+
 export const clearData = onUserDeleted(
-  { ...EXTENSION_RUNTIME_OPTIONS, region: CONFIG_EXPRESSIONS.functionRegion },
+  { ...RUNTIME_OPTIONS, region: CONFIG_EXPRESSIONS.functionRegion },
   (event) => {
     // The Auth event delivers no user record when the payload envelope is
     // empty, so bail before getContext() rather than initialising the SDKs for
@@ -140,7 +157,7 @@ export const clearData = onUserDeleted(
 
 export const handleSearch = onMessagePublished(
   {
-    ...EXTENSION_RUNTIME_OPTIONS,
+    ...RUNTIME_OPTIONS,
     region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
@@ -149,7 +166,7 @@ export const handleSearch = onMessagePublished(
 
 export const handleDeletion = onMessagePublished(
   {
-    ...EXTENSION_RUNTIME_OPTIONS,
+    ...RUNTIME_OPTIONS,
     region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
