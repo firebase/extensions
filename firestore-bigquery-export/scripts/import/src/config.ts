@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as program from "commander";
+import { program } from "commander";
 import filenamify from "filenamify";
 import inquirer from "inquirer";
 
-import { CliConfig, CliConfigError } from "./types";
+import { CliConfig, CliConfigError, ViewType } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 // regex of ^[^/]+(/[^/]+/[^/]+)*$
@@ -29,6 +29,12 @@ const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
 const PROJECT_ID_MAX_CHARS = 6144;
 export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
+
+const VALID_VIEW_TYPES: ViewType[] = [
+  "view",
+  "materialized_incremental",
+  "materialized_non_incremental",
+];
 
 const validateBatchSize = (value: string) => {
   return parseInt(value, 10) > 0;
@@ -68,6 +74,15 @@ const validateLocation = (value: string) => {
 
   return index !== -1;
 };
+
+function parseClustering(value?: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (value.trim() === "") return [];
+  return value
+    .split(",")
+    .map((field) => field.trim())
+    .filter(Boolean);
+}
 
 export const validateInput = (
   value: string,
@@ -264,6 +279,15 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       errors.push("Invalid batch size.");
     }
 
+    if (
+      program.viewType !== undefined &&
+      !VALID_VIEW_TYPES.includes(program.viewType)
+    ) {
+      errors.push(
+        "ViewType must be one of: view, materialized_incremental, materialized_non_incremental."
+      );
+    }
+
     if (errors.length !== 0) {
       program.outputHelp();
       return { kind: "ERROR", errors };
@@ -295,6 +319,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       failedBatchOutput: program.failedBatchOutput,
       transformFunctionUrl: program.transformFunctionUrl,
       firestoreInstanceId: program.firestoreInstanceId || "(default)",
+      clustering: parseClustering(program.clustering),
+      viewType: program.viewType,
     };
   }
   const {
