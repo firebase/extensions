@@ -38,6 +38,20 @@ const ABSOLUTE_PATH_LIST_VALIDATION = {
     "Invalid paths, must be a comma-separated list of absolute path values.",
 };
 
+// Spread these into each param: firebase-functions rewrites `validationRegex`
+// to a string in place when it builds the param spec.
+const SIZES_VALIDATION = {
+  validationRegex: /^\d+x(\d+,\d+x)*\d+$/,
+  validationErrorMessage:
+    "Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.",
+};
+
+// Extension regex, with an empty branch added (the param is optional).
+const JSON_OBJECT_VALIDATION = {
+  validationRegex: /^(?:({(.*?)})|)$/,
+  validationErrorMessage: "Please provide a valid JSON object.",
+};
+
 function absolutePathListInput(example: string) {
   return {
     text: {
@@ -68,7 +82,6 @@ const params = {
       "Dallas (us-south1)": "us-south1",
       "Montreal (northamerica-northeast1)": "northamerica-northeast1",
       "Toronto (northamerica-northeast2)": "northamerica-northeast2",
-      "Queretaro (northamerica-south1)": "northamerica-south1",
       "Sao Paulo (southamerica-east1)": "southamerica-east1",
       "Santiago (southamerica-west1)": "southamerica-west1",
       "Belgium (europe-west1)": "europe-west1",
@@ -82,7 +95,6 @@ const params = {
       "Turin (europe-west12)": "europe-west12",
       "Madrid (europe-southwest1)": "europe-southwest1",
       "Finland (europe-north1)": "europe-north1",
-      "Stockholm (europe-north2)": "europe-north2",
       "Warsaw (europe-central2)": "europe-central2",
       "Doha (me-central1)": "me-central1",
       "Dammam (me-central2)": "me-central2",
@@ -118,10 +130,7 @@ const params = {
     input: {
       text: {
         example: "200x200",
-
-        validationRegex: /^\d+x(\d+,\d+x)*\d+$/,
-        validationErrorMessage:
-          "Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.",
+        ...SIZES_VALIDATION,
       },
     },
   }),
@@ -223,13 +232,7 @@ const params = {
       'Provide an optional output option as a stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "palette": true }}` and `{"png":{"compressionLevel":9}}`. The `"compressionLevel": 9` specifies the level of compression for PNG images. Higher numbers here indicate greater compression, leading to smaller file sizes at the cost of potentially increased processing time and possible loss of image quality.',
 
     default: "",
-    input: {
-      text: {
-        // Extension regex, with an empty branch added: the param is optional.
-        validationRegex: /^(?:({(.*?)})|)$/,
-        validationErrorMessage: "Please provide a valid JSON object.",
-      },
-    },
+    input: { text: { ...JSON_OBJECT_VALIDATION } },
   }),
   sharpOptions: defineString("SHARP_OPTIONS", {
     label: "Sharp constructor options for resizing images",
@@ -237,13 +240,7 @@ const params = {
       'Provide an optional stringified Sharp ResizeOptions object to customize resizing behavior, eg. `{ "fastShrinkOnLoad": false, "position": "centre", "fit": "inside" }` The `"fit": "inside"` option ensures the image fits within given dimensions, maintaining aspect ratio, scaling down as needed without cropping or distortion. Learn more about [`Sharp constructor options`](https://sharp.pixelplumbing.com/api-resize#resize).',
 
     default: "{}",
-    input: {
-      text: {
-        // Extension regex, with an empty branch added: the param is optional.
-        validationRegex: /^(?:({(.*?)})|)$/,
-        validationErrorMessage: "Please provide a valid JSON object.",
-      },
-    },
+    input: { text: { ...JSON_OBJECT_VALIDATION } },
   }),
   isAnimated: defineBoolean("IS_ANIMATED", {
     label: "GIF and WEBP animated option",
@@ -349,6 +346,54 @@ export function envFunctionRegion(): string | undefined {
 export function validatePathListsFromEnv(): void {
   validateAbsolutePathList(process.env.INCLUDE_PATH_LIST, "includePathList");
   validateAbsolutePathList(process.env.EXCLUDE_PATH_LIST, "excludePathList");
+}
+
+/**
+ * Applies the prompt-time patterns to values already in `.env`, which the CLI
+ * does not check. An absent value falls back to the param default.
+ */
+export function validateParamFormatsFromEnv(): void {
+  const sizes = process.env.IMG_SIZES;
+  if (sizes !== undefined && !SIZES_VALIDATION.validationRegex.test(sizes)) {
+    throw new Error(
+      `Invalid IMG_SIZES ${JSON.stringify(sizes)}: ` +
+        "must be a comma-separated list of WIDTHxHEIGHT values."
+    );
+  }
+
+  // The extension failed at load on unparseable SHARP_OPTIONS, but only logged
+  // and fell back to defaults on unparseable OUTPUT_OPTIONS.
+  const checks = [
+    ["SHARP_OPTIONS", true],
+    ["OUTPUT_OPTIONS", false],
+  ] as const;
+  for (const [name, mustParse] of checks) {
+    const raw = process.env[name];
+    if (raw !== undefined && !isJsonObjectOrEmpty(raw, mustParse)) {
+      throw new Error(
+        `Invalid ${name} ${JSON.stringify(raw)}: ` +
+          (mustParse
+            ? "must be a JSON object. "
+            : "must be a single-line value wrapped in {}. ") +
+          "Single-quote JSON values in .env, since an unquoted # starts a comment."
+      );
+    }
+  }
+}
+
+function isJsonObjectOrEmpty(raw: string, mustParse: boolean): boolean {
+  if (!JSON_OBJECT_VALIDATION.validationRegex.test(raw)) {
+    return false;
+  }
+  if (raw === "" || !mustParse) {
+    return true;
+  }
+  try {
+    JSON.parse(raw);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function optional(value: string): string | undefined {

@@ -24,11 +24,7 @@ import {
   type MessagePublishedData,
   onMessagePublished,
 } from "firebase-functions/v2/pubsub";
-import {
-  assertRequiredParams,
-  CONFIG_EXPRESSIONS,
-  configFromEnv,
-} from "./config";
+import { assertParams, CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { getDatabaseUrl, resolveDeleteUserDataConfig } from "./export-config";
 import {
@@ -41,7 +37,7 @@ import {
 } from "./handlers";
 import * as logs from "./logs";
 
-assertRequiredParams();
+assertParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
@@ -131,10 +127,28 @@ function logFailures<E>(
   };
 }
 
+/**
+ * The extension's 1st gen functions ran at 0.1666 vCPU, one event per
+ * instance, with internal-only ingress. Without these options the CLI deploys
+ * the 2nd gen defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`. At concurrency
+ * 80, auto-discovery fans many `handleSearch` events onto one 256MiB instance,
+ * which runs out of memory and drops every event in flight on it.
+ *
+ * Ingress is always internal-only, so `setGlobalOptions({ ingressSettings })`
+ * doesn't change it, as in the firestore-bigquery-export kit.
+ */
+const EXTENSION_RUNTIME_OPTIONS = {
+  concurrency: 1,
+  cpu: "gcf_gen1",
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
 export const clearData = onUserDeleted(
+  { ...EXTENSION_RUNTIME_OPTIONS, region: CONFIG_EXPRESSIONS.functionRegion },
   logFailures((event) => {
-    // The Auth event delivers no user record when the payload envelope is empty,
-    // so bail before getContext() rather than initialising the SDKs for nothing.
+    // The Auth event delivers no user record when the payload envelope is
+    // empty, so bail before getContext() rather than initialising the SDKs for
+    // nothing.
     const uid = event.data?.uid;
     if (!uid) {
       logs.deletionEventMissingUid(event.id);
@@ -155,6 +169,8 @@ function parseMessage<T>(event: CloudEvent<MessagePublishedData<T>>): T {
 
 export const handleSearch = onMessagePublished(
   {
+    ...EXTENSION_RUNTIME_OPTIONS,
+    region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
   logFailures((event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
@@ -164,6 +180,8 @@ export const handleSearch = onMessagePublished(
 
 export const handleDeletion = onMessagePublished(
   {
+    ...EXTENSION_RUNTIME_OPTIONS,
+    region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
   logFailures((event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>

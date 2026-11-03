@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("../src/logs");
 vi.mock("../src/handlers", async (importOriginal) => ({
@@ -101,5 +102,83 @@ describe.each([
     await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
 
     expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
+  });
+});
+
+describe("module load", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // Deploy-time discovery imports the kit, so this is what fails the deploy.
+  test("throws when a param value is invalid", async () => {
+    vi.resetModules();
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    await expect(import("../src/index")).rejects.toThrow(
+      'FIRESTORE_DELETE_MODE="RECURSIVE"'
+    );
+  });
+
+  test("reports blank required and invalid params in one error", async () => {
+    vi.resetModules();
+    vi.stubEnv("CLOUD_STORAGE_BUCKET", "");
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    const load = import("../src/index");
+
+    await expect(load).rejects.toThrow("CLOUD_STORAGE_BUCKET");
+    await expect(load).rejects.toThrow('FIRESTORE_DELETE_MODE="RECURSIVE"');
+  });
+});
+
+describe("runtime options", () => {
+  // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
+  // instance, which ran out of memory and dropped them.
+  test.each([
+    ["clearData", clearData],
+    ["handleSearch", handleSearch],
+    ["handleDeletion", handleDeletion],
+  ])(
+    "%s runs one event per gen1 CPU instance with internal-only ingress",
+    (_name, fn) => {
+      const endpoint = (fn as any).__endpoint;
+
+      expect(endpoint.concurrency).toBe(1);
+      expect(endpoint.cpu).toBe("gcf_gen1");
+      expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    }
+  );
+
+  describe("with global options set", () => {
+    afterEach(() => {
+      delete (globalThis as any)[
+        Symbol.for("firebase-functions:v2:globalOptions")
+      ].value;
+    });
+
+    // The README tells users to raise maxInstances with setGlobalOptions, so
+    // the kit's function-level options must not override it. Ingress stays
+    // internal-only, like the extension's, and the region comes from
+    // FUNCTION_DEFAULT_REGION.
+    test("keeps the global options and the extension's runtime", async () => {
+      setGlobalOptions({
+        ingressSettings: "ALLOW_ALL",
+        maxInstances: 3000,
+        region: "europe-west1",
+      });
+      vi.resetModules();
+      const kit = await import("../src/index");
+
+      for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
+        const endpoint = (fn as any).__endpoint;
+
+        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+        expect(endpoint.maxInstances).toBe(3000);
+        expect(endpoint.region.name).toBe("FUNCTION_DEFAULT_REGION");
+        expect(endpoint.concurrency).toBe(1);
+        expect(endpoint.cpu).toBe("gcf_gen1");
+      }
+    });
   });
 });
