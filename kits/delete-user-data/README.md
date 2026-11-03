@@ -235,19 +235,15 @@ Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
 This mainly matters if you have infrastructure or alerting keyed to function
 generation.
 
-Each function still runs like the extension's by default: one event per
-instance (`concurrency: 1`) with the 1st gen CPU for its memory
-(`cpu: "gcf_gen1"`, 0.1666 vCPU at the default 256MiB), up to 3000 instances
-(`maxInstances: 3000`) and internal-only ingress, rather than the 2nd gen
-defaults of concurrency `80`, 1 vCPU, 100 instances and `ALLOW_ALL`. During a
-burst, Cloud Run may log `no available instance` errors while it scales;
-Eventarc redelivers those events.
-
-To change any of these, call `setGlobalOptions` from `firebase-functions/v2` in
-your codebase before you load the kit, since the kit reads the global options
-when its functions are defined. The `ext:migrate` template does this for the
-max instances and ingress of the extension instance you migrate. A
-`concurrency` above `1` needs a `cpu` of at least `1`.
+Each function still runs like the extension's: one event per instance
+(`concurrency: 1`) with the 1st gen CPU for its memory (`cpu: "gcf_gen1"`,
+0.1666 vCPU at the default 256MiB), up to 3000 instances (`maxInstances: 3000`)
+and internal-only ingress, rather than the 2nd gen defaults of concurrency
+`80`, 1 vCPU, 100 instances and `ALLOW_ALL`. `setGlobalOptions` can't change
+concurrency, CPU, max instances or ingress, so an ingress setting carried over
+by `ext:migrate` doesn't apply to the kit. During a burst, Cloud Run may log
+`no available instance` errors while it scales; Eventarc redelivers those
+events.
 
 ### Events need an existing channel, and their source has changed
 
