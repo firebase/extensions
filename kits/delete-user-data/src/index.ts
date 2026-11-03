@@ -107,17 +107,30 @@ function getContext(): HandlerContext {
 
 /**
  * The extension's 1st gen functions ran at 0.1666 vCPU, one event per
- * instance, with internal-only ingress. Without these options the CLI deploys
- * the 2nd gen defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`. At concurrency
- * 80, auto-discovery fans many `handleSearch` events onto one 256MiB instance,
- * which runs out of memory and drops every event in flight on it.
+ * instance, up to 3000 instances, with internal-only ingress. Without these
+ * options the CLI deploys the 2nd gen defaults: 1 vCPU, concurrency 80, 100
+ * instances and `ALLOW_ALL`. At concurrency 80, auto-discovery fans many
+ * `handleSearch` events onto one 256MiB instance, which runs out of memory and
+ * drops every event in flight on it.
  *
- * Ingress is always internal-only, so `setGlobalOptions({ ingressSettings })`
- * doesn't change it, as in the firestore-bigquery-export kit.
+ * Only max instances can be changed with `setGlobalOptions`, which the
+ * `ext:migrate` template also uses. Function-level options win over global
+ * ones, so the kit sets `maxInstances` only when no global value is set. The
+ * SDK reads global options when a function is defined, so this does too.
+ * Concurrency, CPU and ingress are always the extension's, as in the
+ * firestore-bigquery-export kit.
  */
+const globalMaxInstances = (
+  globalThis as unknown as Record<
+    symbol,
+    { value?: { maxInstances?: unknown } } | undefined
+  >
+)[Symbol.for("firebase-functions:v2:globalOptions")]?.value?.maxInstances;
+
 const EXTENSION_RUNTIME_OPTIONS = {
   concurrency: 1,
   cpu: "gcf_gen1",
+  ...(globalMaxInstances === undefined && { maxInstances: 3000 }),
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 
