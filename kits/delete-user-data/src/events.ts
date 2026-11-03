@@ -19,6 +19,57 @@ import { logger } from "firebase-functions";
 
 let eventChannel: eventArc.Channel | undefined;
 
+const EVENT_TYPES: ReadonlyArray<string> = [
+  "firestore",
+  "database",
+  "storage",
+].map((t) => `firebase.extensions.delete-user-data.v1.${t}`);
+
+const CHANNEL_NAME = /^projects\/[^/]+\/locations\/[^/]+\/channels\/[^/]+$/;
+
+/**
+ * Reads `EXT_SELECTED_EVENTS`, failing on a value the extension's install
+ * rejected.
+ *
+ * Splits on "," and skips "" (as the CLI did); rejects anything that isn't an
+ * exact declared type, or is listed twice (as the platform did). Also rejects
+ * event types without `EVENTARC_CHANNEL`, and a malformed channel name, as the
+ * install did. Called at module load so a bad value fails the deploy.
+ */
+export function selectedEventTypes(): string[] {
+  const types = (process.env.EXT_SELECTED_EVENTS ?? "")
+    .split(",")
+    .filter((t) => t !== "");
+  const errors = types.flatMap((t, i) =>
+    !EVENT_TYPES.includes(t)
+      ? [`'${t}' is not one of ${EVENT_TYPES.join(", ")}`]
+      : types.indexOf(t) !== i
+      ? [`'${t}' is listed more than once`]
+      : []
+  );
+  if (errors.length) {
+    throw new Error(
+      `EXT_SELECTED_EVENTS is invalid: ${errors.join("; ")}. ` +
+        "List event types separated by commas, without spaces."
+    );
+  }
+
+  const channel = process.env.EVENTARC_CHANNEL;
+  if (types.length > 0 && !channel) {
+    throw new Error(
+      "EXT_SELECTED_EVENTS is set but EVENTARC_CHANNEL is not. " +
+        "Must specify eventarc channel if allowing some events to be emitted."
+    );
+  }
+  if (channel && !CHANNEL_NAME.test(channel)) {
+    throw new Error(
+      `EVENTARC_CHANNEL '${channel}' is invalid. Use the full channel name, ` +
+        "e.g. projects/<project id>/locations/<location>/channels/<channel id>."
+    );
+  }
+  return types;
+}
+
 /**
  * Opens the Eventarc channel only when event types are selected.
  *
@@ -29,10 +80,10 @@ let eventChannel: eventArc.Channel | undefined;
  */
 export const setupEventChannel = (): void => {
   const channel = process.env.EVENTARC_CHANNEL;
-  const selectedEvents = process.env.EXT_SELECTED_EVENTS;
+  const selectedEvents = selectedEventTypes();
 
   eventChannel =
-    channel && selectedEvents
+    channel && selectedEvents.length > 0
       ? eventArc.getEventarc().channel(channel, {
           allowedEventTypes: selectedEvents,
         })

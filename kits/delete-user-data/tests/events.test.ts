@@ -26,11 +26,12 @@ vi.mock("firebase-admin/eventarc", () => ({
 
 const CHANNEL = "projects/p/locations/l/channels/firebase";
 
-const ALL_EVENTS = [
+const ALL_EVENT_TYPES = [
   "firebase.extensions.delete-user-data.v1.firestore",
   "firebase.extensions.delete-user-data.v1.database",
   "firebase.extensions.delete-user-data.v1.storage",
-].join(",");
+];
+const ALL_EVENTS = ALL_EVENT_TYPES.join(",");
 
 // `null` unsets the variable; `undefined` would trip importEvents' default.
 function setEnv(name: string, value: string | null | undefined) {
@@ -73,8 +74,38 @@ describe("setupEventChannel", () => {
     );
 
     expect(channel).toHaveBeenCalledWith(CHANNEL, {
-      allowedEventTypes: "firebase.extensions.delete-user-data.v1.firestore",
+      allowedEventTypes: ["firebase.extensions.delete-user-data.v1.firestore"],
     });
+  });
+
+  // The CLI dropped empty entries before the platform checked the list.
+  test("skips empty entries", async () => {
+    await importEvents(CHANNEL, `,${ALL_EVENT_TYPES.join(",,")},`);
+
+    expect(channel).toHaveBeenCalledWith(CHANNEL, {
+      allowedEventTypes: ALL_EVENT_TYPES,
+    });
+  });
+
+  // The extension's install rejected each of these, so the deploy fails
+  // instead of trimming or dropping entries.
+  test.each([
+    ["spaces after commas", ALL_EVENT_TYPES.join(", ")],
+    ["surrounding whitespace", `  ${ALL_EVENT_TYPES.join(" ,  ")}  `],
+    ["whitespace only", "   "],
+    ["only commas and spaces", " , ,"],
+    ["different case", "firebase.extensions.delete-user-data.v1.Firestore"],
+    [
+      "an unknown type",
+      "firebase.extensions.delete-user-data.v1.bogus,firebase.extensions.delete-user-data.v1.database",
+    ],
+    ["a duplicate type", `${ALL_EVENT_TYPES[0]},${ALL_EVENT_TYPES[0]}`],
+    ["a ';' separator", ALL_EVENT_TYPES.join(";")],
+  ])("rejects EXT_SELECTED_EVENTS with %s", async (_label, selectedEvents) => {
+    await expect(importEvents(CHANNEL, selectedEvents)).rejects.toThrow(
+      "EXT_SELECTED_EVENTS is invalid"
+    );
+    expect(channel).not.toHaveBeenCalled();
   });
 
   // The extension cleared its channel when no event types were selected, so
@@ -96,12 +127,31 @@ describe("setupEventChannel", () => {
     }
   );
 
-  test("stays disabled when no channel is configured", async () => {
-    const events = await importEvents();
+  test("stays disabled when neither is configured", async () => {
+    const events = await importEvents(undefined, null);
 
     expect(channel).not.toHaveBeenCalled();
     await events.publishDeletionEvent("firestore", { uid: "u1" });
     expect(publish).not.toHaveBeenCalled();
+  });
+
+  // The extension's install rejected selected events without a channel.
+  test("rejects selected event types without EVENTARC_CHANNEL", async () => {
+    await expect(importEvents(undefined, ALL_EVENTS)).rejects.toThrow(
+      "Must specify eventarc channel"
+    );
+    expect(channel).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a bare channel id", "firebase"],
+    ["a missing location", "projects/p/channels/firebase"],
+    ["a trailing slash", `${CHANNEL}/`],
+  ])("rejects an EVENTARC_CHANNEL with %s", async (_label, channelName) => {
+    await expect(importEvents(channelName, ALL_EVENTS)).rejects.toThrow(
+      "EVENTARC_CHANNEL"
+    );
+    expect(channel).not.toHaveBeenCalled();
   });
 });
 
