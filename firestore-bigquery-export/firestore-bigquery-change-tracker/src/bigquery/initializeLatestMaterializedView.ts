@@ -74,6 +74,8 @@ export async function initializeLatestMaterializedView({
           projectId: bq.projectId,
           datasetId: config.datasetId,
           tableName: rawChangeLogTableName,
+          maxStaleness: config.maxStaleness,
+          refreshIntervalMinutes: config.refreshIntervalMinutes,
           rawLatestViewName,
           schema,
         })

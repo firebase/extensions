@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.2
+
+- Incremental materialized views (`useIncrementalMaterializedView`) are now created with the configured `refreshIntervalMinutes` and `maxStaleness`. Both were dropped on that path, so BigQuery applied its defaults (a 30 minute refresh and no max staleness). An existing view is not recreated or altered: the recreate check compares only the view query, which these options are not part of. To apply new values to an existing view, run `ALTER MATERIALIZED VIEW ... SET OPTIONS (...)`, which does not rebuild it.
+
 ## 2.2.1
 
 - Updating an existing `_raw_latest` view now builds the snapshot query with the configured BigQuery project. That path dropped `bqProjectId`, so the query fell back to `process.env.PROJECT_ID`, which is only set for extensions. On a kit, or any caller that passes `bqProjectId` but does not set `PROJECT_ID`, the query referenced `undefined.<dataset>.<table>` and BigQuery rejected the update. For an extension whose `BIGQUERY_PROJECT_ID` differs from `PROJECT_ID`, the update previously built the view against the functions project instead of the BigQuery project.
