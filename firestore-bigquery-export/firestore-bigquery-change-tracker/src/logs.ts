@@ -305,3 +305,10 @@ export const updatingMetadata = (tableName, resources) => {
     `Updated Metadata on ${tableName}, ${JSON.stringify(resources)})`
   );
 };
+
+export const transformFunctionAuthFailed = (err) => {
+  logger.warn(
+    `Failed to mint an ID token for the transform function; falling back to an unauthenticated call.`,
+    err
+  );
+};

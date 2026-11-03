@@ -16,6 +16,8 @@
 import * as bigquery from "@google-cloud/bigquery";
 import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
+import fetch from "node-fetch";
+import { GoogleAuth, IdTokenClient } from "google-auth-library";
 import {
   RawChangelogSchema,
   documentIdField,
@@ -139,6 +141,7 @@ export class FirestoreBigQueryEventHistoryTracker
   bq: bigquery.BigQuery;
   _initialized: boolean = false;
   partitioningConfig: PartitioningConfig;
+  private transformAuthClient?: IdTokenClient;
 
   constructor(public config: ChangeTrackerConfig) {
     this.bq = new bigquery.BigQuery();
@@ -195,11 +198,35 @@ export class FirestoreBigQueryEventHistoryTracker
 
   private async transformRows(rows: any[]) {
     if (this.config.transformFunction && this.config.transformFunction !== "") {
+      let authHeaders: Record<string, string> = {};
+      try {
+        if (!this.transformAuthClient) {
+          this.transformAuthClient = await new GoogleAuth().getIdTokenClient(
+            this.config.transformFunction
+          );
+        }
+        const authorization = new Headers(
+          await this.transformAuthClient.getRequestHeaders()
+        ).get("authorization");
+        // Callable functions reject a Google ID token in Authorization, while
+        // Cloud Run's IAM check also accepts it in X-Serverless-Authorization.
+        if (authorization) {
+          authHeaders = { "X-Serverless-Authorization": authorization };
+        }
+      } catch (err) {
+        logs.transformFunctionAuthFailed(err);
+      }
+
       const response = await fetch(this.config.transformFunction, {
         method: "post",
         body: JSON.stringify({ data: rows }),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
       });
+      if (!response.ok) {
+        throw new Error(
+          `Transform function failed with status ${response.status}: ${response.statusText}`
+        );
+      }
       const responseJson: any = await response.json();
       // To support callable functions, first check result.data
       return responseJson?.result?.data ?? responseJson.data;
