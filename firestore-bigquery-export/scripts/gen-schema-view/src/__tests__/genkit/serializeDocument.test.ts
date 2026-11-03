@@ -32,16 +32,12 @@ class MockDocumentReference {
   }
 }
 
-// Mock firebase-admin to use our mock classes - this must be done before importing firebase
-jest.mock("firebase-admin", () => ({
-  firestore: {
-    GeoPoint: MockGeoPoint,
-    DocumentReference: MockDocumentReference,
-  },
+jest.mock("firebase-admin/firestore", () => ({
+  getFirestore: jest.fn(),
+  GeoPoint: MockGeoPoint,
+  DocumentReference: MockDocumentReference,
 }));
 
-// Now import the dependencies after the mocks are set up
-import firebase = require("firebase-admin");
 import { serializeDocument } from "../../schema/genkit";
 
 describe("serializeDocument", () => {

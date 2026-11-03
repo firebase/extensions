@@ -40,7 +40,7 @@ describe("Interactive Prompts", () => {
 
   describe("questions array", () => {
     it("should have the correct number of questions", () => {
-      expect(questions).toHaveLength(11);
+      expect(questions).toHaveLength(12);
     });
 
     it("should have properly formatted questions with required properties", () => {
@@ -167,6 +167,21 @@ describe("Interactive Prompts", () => {
       const validate = apiKeyQuestion.validate;
       expect(validate("")).toBe("Google AI API Key is required");
       expect(validate("valid-api-key")).toBe(true);
+    });
+
+    it("should only ask for the database ID when using Gemini", () => {
+      const databaseIdQuestion = questions.find((q) => q.name === "databaseId");
+      expect(databaseIdQuestion).toBeDefined();
+      expect(databaseIdQuestion.when({ useGemini: true })).toBe(true);
+      expect(databaseIdQuestion.when({ useGemini: false })).toBe(false);
+      expect(databaseIdQuestion.default).toBe("(default)");
+    });
+
+    it("should ask for the database ID after the useGemini question", () => {
+      const names = questions.map((q) => q.name);
+      expect(names.indexOf("databaseId")).toBeGreaterThan(
+        names.indexOf("useGemini")
+      );
     });
 
     it("should conditionally show collection path question when using Gemini", () => {

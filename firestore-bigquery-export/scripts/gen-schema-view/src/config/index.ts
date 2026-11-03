@@ -26,6 +26,7 @@ export interface CliConfig {
   bigQueryProjectId: string;
   datasetId: string;
   tableNamePrefix: string;
+  databaseId?: string;
   schemas: { [schemaName: string]: FirestoreSchema };
   useGemini?: boolean;
   geminiAnalyzeCollectionPath?: string;
@@ -49,6 +50,7 @@ export async function parseConfig(): Promise<CliConfig> {
       bigQueryProjectId: program.bigQueryProject || program.project,
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
+      databaseId: program.databaseId || "(default)",
       useGemini: !!program.useGemini,
       schemas: !program.useGemini ? readSchemas(program.schemaFiles) : {},
       geminiAnalyzeCollectionPath: program.useGemini,
@@ -64,6 +66,7 @@ export async function parseConfig(): Promise<CliConfig> {
     bigQueryProjectId,
     datasetId,
     tableNamePrefix,
+    databaseId,
     schemaFiles,
     useGemini,
     geminiAnalyzeCollectionPath,
@@ -78,6 +81,7 @@ export async function parseConfig(): Promise<CliConfig> {
     bigQueryProjectId,
     datasetId,
     tableNamePrefix,
+    databaseId,
     schemas: !useGemini ? readSchemas([schemaFiles]) : {},
     useGemini,
     geminiAnalyzeCollectionPath,
