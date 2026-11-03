@@ -25,12 +25,18 @@ const MULTI_REGION_TO_FUNCTION_REGION: Record<string, string> = {
   asia: "asia-east1",
 };
 
+// Cloud Functions has no location in these, and a 2nd gen storage trigger
+// cannot cross regions. The CLI does not check `.env` values against the
+// BUCKET_REGION options, so a hand-written one must be rejected here.
+const UNSUPPORTED_LOCATIONS = ["europe-north2", "northamerica-south1"];
+
 /**
  * Maps a Cloud Storage bucket location to the Cloud Run region the functions
  * should deploy to. The lookup is case-insensitive and ignores surrounding
  * whitespace, as the CLI's own region handling is. Regional locations pass
  * through lowercased; an unset or blank location returns `undefined`, meaning
- * the functions declare no region.
+ * the functions declare no region. Throws for a location Cloud Functions
+ * cannot serve.
  *
  * Dual-region locations (`nam4`, `eur4`, `asia1`, ...) are not mapped and pass
  * through, which fails the deploy. firebase-tools has the same gap, so a
@@ -44,6 +50,11 @@ export function bucketLocationToFunctionRegion(
   const normalized = location?.trim().toLowerCase();
   if (!normalized) {
     return undefined;
+  }
+  if (UNSUPPORTED_LOCATIONS.includes(normalized)) {
+    throw new Error(
+      `BUCKET_REGION ${normalized} is not supported: Cloud Functions has no location there, so the kit cannot serve a bucket in it.`
+    );
   }
   return MULTI_REGION_TO_FUNCTION_REGION[normalized] ?? normalized;
 }
