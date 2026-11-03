@@ -110,6 +110,6 @@ You can install multiple instances of this extension for the same project to con
 
 Learn about more advanced use of this extension:
 
-[Customize o**utput options**](customize-output-options.md)
+[Customize **output options**](customize-output-options.md)
 
 [Handle Resize Image Extension events](handle-resize-image-extension-events.md)
