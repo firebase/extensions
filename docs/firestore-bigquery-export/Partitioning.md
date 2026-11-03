@@ -34,4 +34,4 @@ LIMIT 1000
 
 ## Reconfiguring
 
-Unlike [Clustering](https://www.notion.so/Clustering-998244364c6a46b5951133af87fd17fd), an already partitioned table `cannot` be updated with new partition related configuration. The table must be deleted for the extension to create a new table with the updated specification.
+Unlike [Clustering](Clustering.md), an already partitioned table `cannot` be updated with new partition related configuration. The table must be deleted for the extension to create a new table with the updated specification.
