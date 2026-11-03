@@ -168,7 +168,7 @@ under `firebase.extensions.storage-resize-images.v1.*`.
 This kit is the extension repackaged as an npm package. It is a close port: every
 setting keeps its name, type, default and meaning, so an existing `.env` is a
 lift-and-shift, and the resizing behaviour, output naming, metadata handling,
-download-token regeneration and Eventarc events are unchanged. The differences
+download-token regeneration and Eventarc event types and payloads are unchanged. The differences
 below are worth knowing before you deploy.
 
 ### Content filtering runs in the function's region
@@ -296,6 +296,15 @@ function in the deploy, not just this kit. Omitting the line is not the same as
 an empty one: a non-interactive deploy fails with `In non-interactive mode but
 have no value for the following environment variables: BUCKET_REGION`. Note that
 changing an existing instance's region deletes and recreates the function.
+
+### Events have a different source
+
+Each event's CloudEvent `source` used to identify the extension instance
+(`//firebaseextensions.googleapis.com/extensions/projects/<project id>/instances/<instance id>`).
+The Firebase CLI now sets it to the function that published the event
+(`projects/<project id>/locations/<region>/services/kit-<instance id>-generateResizedImage`).
+Only `generateResizedImage` publishes, so each instance still has one `source`.
+If your event triggers filter on `source`, change the filter to the new value.
 
 ## API surface
 
