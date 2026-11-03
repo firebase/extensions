@@ -132,30 +132,25 @@ call to `resolveResizeImagesConfig` deletes the original on a successful
 resize, as the extension did for an unset `DELETE_ORIGINAL_FILE`; pass
 `"false"` to keep originals.
 
+An empty `IS_ANIMATED=` line is treated as `false`, not as the `true` default:
+the deploy accepts it without a prompt, and animated GIF and WebP images are
+resized to their first frame only.
+
 ## Multiple instances
 
-To resize images from several buckets or pipelines, add one entry per instance
-to the `instances` map, each pointing at its own config directory with its own
-`.env`:
+Add one entry per instance, each with its own config directory and `.env`.
+Instance ids must be unique across the project.
 
 ```json
-{
-  "functions": [
-    {
-      "source": ".",
-      "kit": "storage-resize-images",
-      "instances": {
-        "avatars": "instances/avatars",
-        "uploads": "instances/uploads"
-      }
-    }
-  ]
+"instances": {
+  "storage-resize-images": "function-kits/storage-resize-images/config-storage-resize-images",
+  "avatars": "function-kits/storage-resize-images/config-avatars"
 }
 ```
 
-Instance ids must be unique across all kit stanzas in the project, and every
-instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide.
+Each instance's `.env` must be complete, including `FUNCTION_DEFAULT_REGION`.
+Remove one instance with `firebase functions:kits:uninstall --instance <id>`;
+the others keep running.
 
 ## Events
 
