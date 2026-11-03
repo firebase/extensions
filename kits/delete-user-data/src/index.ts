@@ -107,10 +107,11 @@ function getContext(): HandlerContext {
 
 /**
  * The extension's 1st gen functions ran at 0.1666 vCPU, one event per
- * instance, with internal-only ingress. Without these options the CLI deploys
- * the 2nd gen defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`. At concurrency
- * 80, auto-discovery fans many `handleSearch` events onto one 256MiB instance,
- * which runs out of memory and drops every event in flight on it.
+ * instance, up to 3000 instances, with internal-only ingress. Without these
+ * options the CLI deploys the 2nd gen defaults: 1 vCPU, concurrency 80, 100
+ * instances and `ALLOW_ALL`. At concurrency 80, auto-discovery fans many
+ * `handleSearch` events onto one 256MiB instance, which runs out of memory and
+ * drops every event in flight on it.
  *
  * Ingress is always internal-only, so `setGlobalOptions({ ingressSettings })`
  * doesn't change it, as in the firestore-bigquery-export kit.
@@ -118,6 +119,7 @@ function getContext(): HandlerContext {
 const EXTENSION_RUNTIME_OPTIONS = {
   concurrency: 1,
   cpu: "gcf_gen1",
+  maxInstances: 3000,
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 

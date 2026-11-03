@@ -99,18 +99,20 @@ describe("module load", () => {
 
 describe("runtime options", () => {
   // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
-  // instance, which ran out of memory and dropped them.
+  // instance, which ran out of memory and dropped them. The 2nd gen default of
+  // 100 instances held each function to 100 events at once, against 3000.
   test.each([
     ["clearData", clearData],
     ["handleSearch", handleSearch],
     ["handleDeletion", handleDeletion],
   ])(
-    "%s runs one event per gen1 CPU instance with internal-only ingress",
+    "%s runs one event per gen1 CPU instance, up to 3000 instances, with internal-only ingress",
     (_name, fn) => {
       const endpoint = (fn as any).__endpoint;
 
       expect(endpoint.concurrency).toBe(1);
       expect(endpoint.cpu).toBe("gcf_gen1");
+      expect(endpoint.maxInstances).toBe(3000);
       expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
     }
   );
@@ -122,14 +124,13 @@ describe("runtime options", () => {
       ].value;
     });
 
-    // The README tells users to raise maxInstances with setGlobalOptions, so
-    // the kit's function-level options must not override it. Ingress stays
-    // internal-only, like the extension's, and the region comes from
+    // Global options don't change the extension's runtime: ingress stays
+    // internal-only, max instances stay at 3000, and the region comes from
     // FUNCTION_DEFAULT_REGION.
-    test("keeps the global options and the extension's runtime", async () => {
+    test("keeps the extension's runtime over the global options", async () => {
       setGlobalOptions({
         ingressSettings: "ALLOW_ALL",
-        maxInstances: 3000,
+        maxInstances: 10,
         region: "europe-west1",
       });
       vi.resetModules();
