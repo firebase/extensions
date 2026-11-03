@@ -17,6 +17,7 @@
 import { initializeLatestView } from "../../../bigquery/initializeLatestView";
 import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
 import { ChangeTrackerConfig } from "../../../bigquery/types";
+import { RawChangelogViewSchema } from "../../../bigquery/schema";
 
 jest.mock("../../../bigquery/initializeLatestMaterializedView");
 
@@ -118,6 +119,48 @@ describe("initializeLatestView", () => {
           process.env.PROJECT_ID = originalProjectId;
         }
       }
+    });
+
+    it("does not add path_params to the shared view schema across repeated inits", async () => {
+      const originalFields = [...RawChangelogViewSchema.fields];
+      const options = {
+        bq: { projectId: "bigquery-project" } as any,
+        dataset: { id: "test_dataset" } as any,
+        view: mockView as any,
+        rawChangeLogTableName: "test_raw_table",
+        rawLatestViewName: "test_raw_view",
+        changeTrackerConfig: {
+          ...mockConfig,
+          wildcardIds: true,
+          useNewSnapshotQuerySyntax: true,
+        },
+      };
+      const existingViewMetadata = () => ({
+        schema: { fields: [{ name: "document_id" }, { name: "old_data" }] },
+        view: { query: "SELECT FIRST_VALUE(data)" },
+      });
+      const first = existingViewMetadata();
+      const second = existingViewMetadata();
+      mockView.getMetadata
+        .mockResolvedValueOnce([first])
+        .mockResolvedValueOnce([second]);
+
+      await initializeLatestView({ ...options, viewExists: true });
+      await initializeLatestView({ ...options, viewExists: true });
+      await initializeLatestView({ ...options, viewExists: false });
+
+      expect(RawChangelogViewSchema.fields).toEqual(originalFields);
+      for (const metadata of [first, second]) {
+        expect(
+          metadata.view.query.match(/path_params AS path_params/g)
+        ).toHaveLength(1);
+      }
+      const createdSchema = mockView.setMetadata.mock.calls[2][0].schema;
+      expect(
+        createdSchema.fields.filter(
+          (field: { name: string }) => field.name === "path_params"
+        )
+      ).toHaveLength(1);
     });
   });
 });

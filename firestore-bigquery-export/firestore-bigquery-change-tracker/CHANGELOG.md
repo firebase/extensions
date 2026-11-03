@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.2
+
+- With `wildcardIds` set, initializing an existing `_raw_latest` view no longer appends `path_params` to the shared view schema. A process that initialized more than once got a duplicate `path_params` column in later view queries, so updating a view failed with `Column name path_params is ambiguous` and creating a view for another table failed with only a logged warning. Creating a view with `wildcardIds` set also now sets a schema that includes `path_params`, instead of one that BigQuery rejected with `Field path_params is missing in new schema`.
+
 ## 2.2.1
 
 - Updating an existing `_raw_latest` view now builds the snapshot query with the configured BigQuery project. That path dropped `bqProjectId`, so the query fell back to `process.env.PROJECT_ID`, which is only set for extensions. On a kit, or any caller that passes `bqProjectId` but does not set `PROJECT_ID`, the query referenced `undefined.<dataset>.<table>` and BigQuery rejected the update. For an extension whose `BIGQUERY_PROJECT_ID` differs from `PROJECT_ID`, the update previously built the view against the functions project instead of the BigQuery project.

@@ -57,12 +57,12 @@ export async function initializeLatestView({
   rawLatestViewName,
   bq,
 }: InitializeLatestViewOptions): Promise<Table> {
-  if (config.useMaterializedView) {
-    const schema = { fields: [...RawChangelogViewSchema.fields] };
+  const schema = { fields: [...RawChangelogViewSchema.fields] };
+  if (config.wildcardIds) {
+    schema.fields.push(documentPathParams);
+  }
 
-    if (config.wildcardIds) {
-      schema.fields.push(documentPathParams);
-    }
+  if (config.useMaterializedView) {
     return initializeLatestMaterializedView({
       bq,
       changeTrackerConfig: config,
@@ -74,17 +74,12 @@ export async function initializeLatestView({
     });
   }
 
-  const schema = RawChangelogViewSchema;
-
   if (viewExists) {
     logs.bigQueryViewAlreadyExists(view.id, dataset.id);
     const [metadata] = await view.getMetadata();
     const fields = (metadata.schema ? metadata.schema.fields : []) as {
       name: string;
     }[];
-    if (config.wildcardIds) {
-      schema.fields.push(documentPathParams);
-    }
 
     const columnNames = fields.map((field) => field.name);
     const documentIdColExists = columnNames.includes("document_id");
@@ -121,11 +116,6 @@ export async function initializeLatestView({
       });
     }
   } else {
-    const schema = { fields: [...RawChangelogViewSchema.fields] };
-
-    if (config.wildcardIds) {
-      schema.fields.push(documentPathParams);
-    }
     const latestSnapshot = latestConsistentSnapshotView({
       datasetId: config.datasetId,
       tableName: rawChangeLogTableName,
@@ -141,7 +131,7 @@ export async function initializeLatestView({
 
     try {
       await view.create(options);
-      await view.setMetadata({ schema: RawChangelogViewSchema });
+      await view.setMetadata({ schema });
       logs.bigQueryViewCreated(rawLatestViewName);
     } catch (error) {
       logs.tableCreationError(rawLatestViewName, error.message);
