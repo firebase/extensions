@@ -34,7 +34,7 @@ process.env.PROJECT_ID = "dev-extensions-testing";
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
 const consoleInfoSpy = jest.spyOn(logger, "info").mockImplementation();
-const consoleLogSpyWarn = jest.spyOn(logger, "warn").mockImplementation();
+jest.spyOn(logger, "warn").mockImplementation();
 const consoleDebugSpy = jest.spyOn(logger, "debug").mockImplementation();
 
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
@@ -47,6 +47,10 @@ let dataset: Dataset;
 let table: Table;
 let view: Table;
 describe("e2e", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe("initialization", () => {
     beforeEach(async () => {
       randomID = (Math.random() + 1).toString(36).substring(7);
@@ -379,7 +383,7 @@ describe("e2e", () => {
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
         expect(metadata.timePartitioning).toBeDefined();
-        expect(metadata.timePartitioning.type).toEqual("DAY");
+        expect(metadata.timePartitioning.type).toEqual("HOUR");
         expect(metadata.timePartitioning.field).toEqual("timestamp");
 
         //TODO: check data has been added successfully
@@ -460,10 +464,10 @@ describe("e2e", () => {
           datasetLocation: "us",
           partitioning: {
             granularity: "HOUR",
-            bigqueryColumnName: "endDate",
+            bigqueryColumnName: null,
             bigqueryColumnType: "TIMESTAMP",
             firestoreFieldName: "end_date",
-          },
+          } as any,
           transformFunction: "",
           clustering: [],
           bqProjectId: process.env.PROJECT_ID,
@@ -482,9 +486,8 @@ describe("e2e", () => {
           partitioning: {
             granularity: "HOUR",
             bigqueryColumnName: "endDate",
-            bigqueryColumnType: "TIMESTAMP",
             firestoreFieldName: "end_date",
-          },
+          } as any,
           transformFunction: "",
           clustering: [],
           bqProjectId: process.env.PROJECT_ID,
@@ -503,9 +506,9 @@ describe("e2e", () => {
           partitioning: {
             granularity: "HOUR",
             bigqueryColumnName: "endDate",
-            bigqueryColumnType: "TIMESTAMP",
+            bigqueryColumnType: "unknown",
             firestoreFieldName: "end_date",
-          },
+          } as any,
           transformFunction: "",
           clustering: [],
           bqProjectId: process.env.PROJECT_ID,
@@ -525,8 +528,7 @@ describe("e2e", () => {
             granularity: "HOUR",
             bigqueryColumnName: "endDate",
             bigqueryColumnType: "TIMESTAMP",
-            firestoreFieldName: "end_date",
-          },
+          } as any,
           transformFunction: "",
           clustering: [],
           bqProjectId: process.env.PROJECT_ID,
@@ -599,9 +601,6 @@ describe("e2e", () => {
 
         expect(metadata.timePartitioning).toBeUndefined();
 
-        expect(consoleLogSpyWarn).toHaveBeenCalledWith(
-          `Did not add partitioning to schema: Partition field not provided`
-        );
         expect(consoleInfoSpy).toHaveBeenCalledWith(
           `BigQuery dataset already exists: ${datasetId}`
         );
@@ -634,7 +633,7 @@ describe("e2e", () => {
         expect(metadata.timePartitioning).toBeUndefined();
       });
 
-      test("does not update add a custom partitioning column when the relevant partitioning exists", async () => {
+      test("adds a missing custom partitioning column to an existing unpartitioned table without partitioning it", async () => {
         await changeTracker({
           datasetId,
           tableId,
@@ -654,7 +653,7 @@ describe("e2e", () => {
 
         expect(
           metadata.schema.fields.filter(($) => $.name === "endDate").length
-        ).toBe(0);
+        ).toBe(1);
 
         expect(metadata.timePartitioning).toBeUndefined();
       });

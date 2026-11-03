@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
+import * as logs from "../../logs";
+
 /** Granularity for BigQuery time-based partitioning. */
 export type TimePartitioningGranularity = "HOUR" | "DAY" | "MONTH" | "YEAR";
 
+const GRANULARITIES: readonly string[] = ["HOUR", "DAY", "MONTH", "YEAR"];
+
 /** BigQuery column type for a custom partitioning field. */
 export type PartitioningFieldType = "TIMESTAMP" | "DATE" | "DATETIME";
+
+const FIELD_TYPES: readonly string[] = ["TIMESTAMP", "DATE", "DATETIME"];
 
 /** Disables partitioning. */
 export interface NoPartitioning {
@@ -91,6 +97,11 @@ export class PartitioningConfig {
       return PartitioningType.NONE;
     }
 
+    if (!GRANULARITIES.includes(strategy.granularity)) {
+      logs.invalidPartitioningGranularity(strategy.granularity);
+      return PartitioningType.NONE;
+    }
+
     if (!strategy.bigqueryColumnName && !strategy.firestoreFieldName) {
       return PartitioningType.INGESTION_TIME;
     }
@@ -107,6 +118,10 @@ export class PartitioningConfig {
       strategy.bigqueryColumnType &&
       strategy.firestoreFieldName
     ) {
+      if (!FIELD_TYPES.includes(strategy.bigqueryColumnType)) {
+        logs.invalidPartitioningFieldType(strategy.bigqueryColumnType);
+        return PartitioningType.NONE;
+      }
       return PartitioningType.FIRESTORE_FIELD;
     }
 
