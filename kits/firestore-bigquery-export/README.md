@@ -73,7 +73,10 @@ firebase deploy --only functions:<instance-id> --force
 Setting `EVENTARC_CHANNEL` also adds `roles/eventarc.publisher` and
 `eventarcpublishing.googleapis.com`. For a dataset in another project, grant
 the kit's service account the `bigquery.*` roles there. For a CMEK dataset,
-grant the BigQuery service account access to your KMS key.
+grant the BigQuery service account access to your KMS key. For a private
+`TRANSFORM_FUNCTION`, grant the kit's service account `roles/run.invoker` on
+that function; the kit sends its ID token in the `X-Serverless-Authorization`
+header, so callable transform functions keep working.
 
 ## Usage
 
