@@ -249,6 +249,44 @@ where the extension's 1st gen functions could scale to 3000. To raise it, call
 codebase before you load the kit, since the kit's functions read the global
 options when they are defined.
 
+### Failed runs show as HTTP 200
+
+On the extension's 1st gen functions, a thrown error or a timeout was logged as
+`finished with status: 'error'` (or `'timeout'`). On 2nd gen, Cloud Run's
+request log and its `request_count` metric record these event deliveries as
+HTTP 200 even when the function fails. The
+`cloudfunctions.googleapis.com/function/execution_count` metric still reports
+them with a `status` of `error`, `timeout` or `out of memory`, as it did for
+the extension.
+
+The kit also logs the error's stack trace for every failed run at ERROR
+severity, as the extension did, and then lets the run fail. Error Reporting
+groups it with the copy of the stack that the functions framework writes to
+stderr, so each failure shows up twice in the same group.
+
+To be told about failures, create a
+[metric alert](https://cloud.google.com/monitoring/alerts/using-alerting-ui)
+on `execution_count` with `metric.labels.status!="ok"`. It also counts each
+event lost to an out-of-memory crash. Alternatively, create a
+[log-based alert](https://cloud.google.com/logging/docs/alerting/log-based-alerts)
+on ERROR severity, for example:
+
+```
+resource.type="cloud_run_revision"
+resource.labels.service_name=~"^kit-<instance id>-"
+(severity>=ERROR OR textPayload:"maximum request timeout")
+```
+
+A function can't log its own timeout. A timeout shows up only as an INFO request
+log that says "The request has been terminated because it has reached the
+maximum request timeout", which the second clause above matches.
+
+An out-of-memory crash logs one ERROR per crashed instance (`Memory limit of
+256 MiB exceeded…`), which the filter above catches. Each event that was running
+on that instance gets only an INFO, HTTP 200 request log that says "The request
+failed because…", so the log-based alert fires once per crash, not once per
+lost event.
+
 ### Events need an existing channel, and their source has changed
 
 The extension created its Eventarc channel when you installed it with events

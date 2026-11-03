@@ -17,18 +17,23 @@
 import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import type { Role } from "firebase-functions/v2";
+import type { CloudEvent, Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
-import { onMessagePublished } from "firebase-functions/v2/pubsub";
+import {
+  type MessagePublishedData,
+  onMessagePublished,
+} from "firebase-functions/v2/pubsub";
 import { assertParams, CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { getDatabaseUrl, resolveDeleteUserDataConfig } from "./export-config";
 import {
+  type DeleteMessageData,
   type HandlerContext,
   handleClear,
   handleDeletion as runDeletion,
   handleSearch as runSearch,
+  type SearchMessageData,
 } from "./handlers";
 import * as logs from "./logs";
 
@@ -105,6 +110,23 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
+// On 2nd gen, a handler that throws is still recorded as HTTP 200 in the
+// request log, and the functions framework prints the stack to stderr with no
+// severity. Log the error at ERROR severity so log-based alerts and Error
+// Reporting see it, then rethrow so the invocation still counts as failed.
+function logFailures<E>(
+  handler: (event: E) => unknown
+): (event: E) => Promise<unknown> {
+  return async (event) => {
+    try {
+      return await handler(event);
+    } catch (err) {
+      logs.unhandledError(err);
+      throw err;
+    }
+  };
+}
+
 /**
  * The extension's 1st gen functions ran at 0.1666 vCPU, one event per
  * instance, with internal-only ingress. Without these options the CLI deploys
@@ -123,7 +145,7 @@ const EXTENSION_RUNTIME_OPTIONS = {
 
 export const clearData = onUserDeleted(
   { ...EXTENSION_RUNTIME_OPTIONS, region: CONFIG_EXPRESSIONS.functionRegion },
-  (event) => {
+  logFailures((event) => {
     // The Auth event delivers no user record when the payload envelope is
     // empty, so bail before getContext() rather than initialising the SDKs for
     // nothing.
@@ -133,8 +155,17 @@ export const clearData = onUserDeleted(
       return;
     }
     return handleClear(uid, getContext());
-  }
+  })
 );
+
+// Parse the message data the way the extension did. `message.json` wraps a parse
+// error as "Unable to parse Pub/Sub message data as JSON", which Error
+// Reporting groups apart from the extension's plain SyntaxError.
+function parseMessage<T>(event: CloudEvent<MessagePublishedData<T>>): T {
+  return JSON.parse(
+    Buffer.from(event.data.message.data, "base64").toString("utf8")
+  );
+}
 
 export const handleSearch = onMessagePublished(
   {
@@ -142,7 +173,9 @@ export const handleSearch = onMessagePublished(
     region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
-  (event) => runSearch(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
+    runSearch(parseMessage(event), getContext())
+  )
 );
 
 export const handleDeletion = onMessagePublished(
@@ -151,5 +184,7 @@ export const handleDeletion = onMessagePublished(
     region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
-  (event) => runDeletion(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>
+    runDeletion(parseMessage(event), getContext())
+  )
 );

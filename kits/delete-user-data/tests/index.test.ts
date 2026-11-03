@@ -70,6 +70,41 @@ describe("clearData", () => {
   });
 });
 
+function pubsubEvent(data: string) {
+  return {
+    specversion: "1.0",
+    id: "message-event-id",
+    type: "google.cloud.pubsub.topic.v1.messagePublished",
+    source: "//pubsub.googleapis.com/projects/test-project/topics/t",
+    time: "2026-01-01T00:00:00.000Z",
+    data: {
+      message: {
+        messageId: "1",
+        data: Buffer.from(data).toString("base64"),
+      },
+      subscription: "s",
+    },
+  } as any;
+}
+
+// 2nd gen records a failed invocation as HTTP 200, so the ERROR log is the
+// only signal. The rethrow keeps the invocation marked as failed.
+describe.each([
+  ["handleSearch", handleSearch],
+  ["handleDeletion", handleDeletion],
+] as const)("%s", (name, fn) => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("logs a malformed message at ERROR severity and rethrows", async () => {
+    // The plain SyntaxError, as the extension threw, not `message.json`'s wrapper.
+    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
+
+    expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
+  });
+});
+
 describe("module load", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
