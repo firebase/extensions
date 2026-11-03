@@ -84,7 +84,7 @@ Add this document to the Firestore mail collection to send an email using a Send
 
 You can also include optional SendGrid fields in the same `sendGrid` object, such as `customArgs` (string key/value metadata) and `ipPoolName` (IP pool selection).
 
-For more details, see the [SendGrid Dynamic Templates documentation](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
+For more details, see the [SendGrid Dynamic Templates documentation](https://www.twilio.com/docs/sendgrid/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
 
 #### Understanding SendGrid Email IDs
 
