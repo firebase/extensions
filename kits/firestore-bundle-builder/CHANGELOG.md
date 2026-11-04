@@ -1,1 +1,0 @@
-- Initial release of kit, see README for differences between the legacy extension and this kit
