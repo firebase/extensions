@@ -59,7 +59,7 @@ Please see the example below...
 }
 ```
 
-Learn [How to configure schema files](https://www.notion.so/Generating-Schemas-2a42ca95fa624215b1cd06d88d71aaa8) later in this guide.
+Learn [How to configure schema files](#how-to-configure-schema-files) later in this guide.
 
 ### Step 2: Set up credentials
 
@@ -154,9 +154,9 @@ Run the schema-views script using `[npx` (the Node Package Runner)](<https://git
 
 ### Next Steps
 
-- [Create your own schema files](https://www.notion.so/Generating-Schemas-2a42ca95fa624215b1cd06d88d71aaa8)
-- [Troubleshoot common issues](https://www.notion.so/Generating-Schemas-2a42ca95fa624215b1cd06d88d71aaa8)
-- [Learn about the columns in a schema view](https://www.notion.so/Generating-Schemas-2a42ca95fa624215b1cd06d88d71aaa8)
+- [Create your own schema files](#how-to-configure-schema-files)
+- [Troubleshoot common issues](#common-schema-file-configuration-mistakes)
+- [Learn about the columns in a schema view](#columns-in-a-schema-view)
 - [Take a look at more SQL examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)
 
 ## How to configure schema files

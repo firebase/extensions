@@ -68,7 +68,7 @@ When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can ass
 
 Add this document to the Firestore mail collection to send categorized emails.
 
-For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
+For more details, see the [SendGrid Categories documentation](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/categories).
 
 #### Firestore-Send-Email: SendGrid Dynamic Templates
 
@@ -91,7 +91,7 @@ When using SendGrid, you can use SendGrid Dynamic Templates to create and send t
 
 Add this document to the Firestore mail collection to send an email using a SendGrid Dynamic Template. The `templateId` is required and should be your SendGrid Dynamic Template ID (always starts with 'd-'). The `dynamicTemplateData` object contains the variables that will be used in your template.
 
-For more details, see the [SendGrid Dynamic Templates documentation](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
+For more details, see the [SendGrid Dynamic Templates documentation](https://www.twilio.com/docs/sendgrid/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
 
 #### Setting Up OAuth2 Authentication
 
@@ -235,7 +235,7 @@ Leave `Use secure OAuth2 connection?` as the default value `true`.
 ###### Additional Resources
 
 - [Google OAuth2 Documentation](https://developers.google.com/identity/protocols/oauth2)
-- [Nodemailer OAuth2 Guide](https://nodemailer.com/smtp/oauth2/)
+- [Nodemailer OAuth2 Guide](https://nodemailer.com/smtp/oauth2)
 - [Firebase Extensions Documentation](https://firebase.google.com/docs/extensions)
 
 #### Automatic Deletion of Email Documents
