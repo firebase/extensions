@@ -26,7 +26,10 @@ import { config } from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import { convertPathToPosix, convertType } from "./util";
+import { restrictLoaders } from "./loaders";
 import { supportedExtensions, supportedImageContentTypeMap } from "./global";
+
+restrictLoaders();
 
 export interface ResizedImageResult {
   size: string;
