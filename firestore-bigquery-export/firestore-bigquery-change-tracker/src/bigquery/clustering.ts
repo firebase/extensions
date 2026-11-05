@@ -33,7 +33,7 @@ const VALID_CLUSTERING_TYPES = [
   "TIMESTAMP",
 ] as const;
 
-type ValidClusteringType = typeof VALID_CLUSTERING_TYPES[number];
+type ValidClusteringType = (typeof VALID_CLUSTERING_TYPES)[number];
 
 interface InvalidFieldType {
   fieldName: string;

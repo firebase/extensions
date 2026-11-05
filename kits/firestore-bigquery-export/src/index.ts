@@ -1,0 +1,271 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Main entry point. Exports the wired functions with deploy-time param
+ * expressions, then resolves concrete config lazily at runtime. Re-export
+ * `fsexportbigquery`, `syncBigQuery`, and `initBigQuerySync` from your own
+ * functions codebase entry; configuration comes from a `.env` (or
+ * `.env.<projectId>`), which the Firebase CLI loads at deploy.
+ *
+ * Because this module initializes runtime dependencies lazily, deploy discovery
+ * can analyze it without resolving params too early.
+ * For side-effect-free imports (the handlers and config types), import from
+ * `./lib` instead.
+ */
+
+import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { onDocumentWritten } from "firebase-functions/firestore";
+import { expr } from "firebase-functions/params";
+import { onTaskDispatched } from "firebase-functions/tasks";
+import type { Role } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
+import {
+  afterFirstDeploy,
+  afterRedeploy,
+} from "firebase-functions/v2/lifecycle";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+} from "./config";
+import * as events from "./events";
+import {
+  DEFAULT_MAX_DISPATCHES_PER_SECOND,
+  resolveExportConfig,
+  toTrackerConfig,
+} from "./export-config";
+import {
+  type HandlerContext,
+  type SerializedDocumentChange,
+  handleDocumentWrite,
+  handleSyncBigQueryTask,
+} from "./handlers";
+import { createEnsureInitialized } from "./init";
+import * as logs from "./logs";
+import { firestoreLocationToFunctionRegion } from "./region";
+import { enqueueSyncTask } from "./tasks";
+
+assertRequiredParams();
+// Re-export the side-effect-free library surface (handlers and config types).
+export * from "./lib";
+
+const INIT_BIGQUERY_SYNC_FUNCTION = "initBigQuerySync";
+const SETUP_BIGQUERY_SYNC_FUNCTION = "setupBigQuerySync";
+const LIFECYCLE_RETRY_CONFIG = {
+  maxAttempts: 15,
+  minBackoffSeconds: 60,
+} as const;
+const SYNC_RETRY_CONFIG = {
+  maxAttempts: 5,
+  minBackoffSeconds: 60,
+} as const;
+const SYNC_MAX_CONCURRENT_DISPATCHES = 500;
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/bigquery.dataEditor",
+  "roles/datastore.user",
+  "roles/bigquery.user",
+  // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
+  "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
+  // The trigger enqueues failed writes onto its own syncBigQuery task queue.
+  "roles/cloudtasks.enqueuer",
+];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason: "Receives document change events from Cloud Firestore.",
+  },
+  {
+    api: "bigquery.googleapis.com",
+    reason: "Mirrors data from your Cloud Firestore collection in BigQuery.",
+  },
+] as const;
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
+}
+
+// Declining a `requiresAPI` prompt aborts the deploy, and nothing publishes without a channel.
+if (events.configuredEventChannel()) {
+  requiresRole("roles/eventarc.publisher");
+  requiresAPI(
+    "eventarcpublishing.googleapis.com",
+    "Publishes the extension's custom events to its Eventarc channel."
+  );
+}
+
+afterFirstDeploy({
+  task: { function: INIT_BIGQUERY_SYNC_FUNCTION, body: { data: {} } },
+});
+afterRedeploy({
+  task: { function: SETUP_BIGQUERY_SYNC_FUNCTION, body: { data: {} } },
+});
+
+let ctx: HandlerContext | undefined;
+
+function getHandlerContext(): HandlerContext {
+  if (ctx) {
+    return ctx;
+  }
+
+  const config = resolveExportConfig(configFromEnv());
+  const tracker = new FirestoreBigQueryEventHistoryTracker(
+    toTrackerConfig(config)
+  );
+
+  logs.logger.setLogLevel(config.logLevel);
+  logs.init(config);
+
+  if (getApps().length === 0) {
+    initializeApp();
+  }
+
+  events.setupEventChannel();
+
+  const ensureInitialized = createEnsureInitialized(tracker);
+
+  ctx = {
+    tracker,
+    config,
+    ensureInitialized,
+    enqueue: (change: SerializedDocumentChange) =>
+      enqueueSyncTask(change, config.maxEnqueueAttempts),
+  };
+
+  return ctx;
+}
+
+/*
+ * Read at module load: the CLI populates `.env` values into the discovery
+ * process env (firebase-tools >= 15.28.0), and the location to Cloud Run region
+ * lookup needs a nested ternary the CLI's CEL subset cannot express. When
+ * unset, no function declares a region and the CLI
+ * falls back to its default. The Eventarc trigger region needs no handling:
+ * the CLI pins it to the database's own region regardless of where the
+ * function runs.
+ */
+const functionRegion = firestoreLocationToFunctionRegion(
+  process.env.DATABASE_REGION
+);
+
+/** Region placement shared by every function; empty when `DATABASE_REGION` is unset. */
+const REGION_OPTION = functionRegion
+  ? ({ region: functionRegion } as const)
+  : {};
+
+/** Options of the Firestore trigger, matching the extension's deployed trigger. */
+const EVENT_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
+  concurrency: 1,
+  cpu: "gcf_gen1",
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
+/** Options shared by the task-queue functions, matching the extension's 1st gen task functions. */
+const TASK_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
+  concurrency: 1,
+  cpu: "gcf_gen1",
+  timeoutSeconds: 540,
+} as const;
+
+/** Options of the two lifecycle tasks, which share one retry config. */
+const LIFECYCLE_TASK_OPTIONS = {
+  ...TASK_FUNCTION_OPTIONS,
+  retryConfig: LIFECYCLE_RETRY_CONFIG,
+} as const;
+
+/**
+ * Firestore trigger: streams document writes on the watched collection into the
+ * BigQuery changelog table. A failed inline write buffers through the
+ * `syncBigQuery` queue and the execution still succeeds. No runtime retry
+ * policy, as in the extension: a failure before the write is attempted fails
+ * the execution once, and a failed enqueue is logged and dropped.
+ */
+export const fsexportbigquery = onDocumentWritten(
+  {
+    ...EVENT_FUNCTION_OPTIONS,
+    document: expr`${CONFIG_EXPRESSIONS.collectionPath}/{documentId}`,
+    database: CONFIG_EXPRESSIONS.database,
+  },
+  (event) => handleDocumentWrite(event, getHandlerContext())
+);
+
+/**
+ * Write-buffer task queue: re-attempts writes that failed inline, on Cloud
+ * Tasks' schedule (5 attempts, 60s minimum backoff, dispatch-throttled by
+ * `MAX_DISPATCHES_PER_SECOND`). After the last attempt the task is dropped;
+ * by then the tracker has written the row to `BACKUP_COLLECTION` on every
+ * terminal insert failure, when that collection is configured. A task refused
+ * with 429s at the instance ceiling never runs the handler, so no backup row
+ * is written for it.
+ */
+export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
+  {
+    ...TASK_FUNCTION_OPTIONS,
+    retryConfig: SYNC_RETRY_CONFIG,
+    maxInstances: SYNC_MAX_CONCURRENT_DISPATCHES,
+    rateLimits: {
+      maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES, // A blank .env value reaches this deploy-time expression as 0, which
+      // Cloud Tasks would not accept; runtime falls back to the same default.
+      maxDispatchesPerSecond: CONFIG_EXPRESSIONS.maxDispatchesPerSecond
+        .lessThan(1)
+        .thenElse(
+          DEFAULT_MAX_DISPATCHES_PER_SECOND,
+          CONFIG_EXPRESSIONS.maxDispatchesPerSecond
+        ),
+    },
+  },
+  (req) => handleSyncBigQueryTask(req, getHandlerContext())
+);
+
+async function handleBigQuerySyncInitialization(): Promise<void> {
+  try {
+    await getHandlerContext().ensureInitialized();
+  } catch (err) {
+    logs.error(false, "Failed to initialize BigQuery resources", err);
+    throw err;
+  }
+}
+
+/**
+ * First-deploy provisioning task (`afterFirstDeploy`). Runs in the function's
+ * own identity, so it has the runtime service account and bound secrets that
+ * creating the dataset/table/views needs (e.g. CMEK). Cloud Tasks retries a
+ * failed initialization on its own schedule, so a transient BigQuery error does
+ * not leave the resources unprovisioned. It is idempotent (`initialize()`
+ * no-ops when resources already exist) and can also be invoked directly as an
+ * authenticated HTTP POST, without queue retries.
+ */
+export const initBigQuerySync = onTaskDispatched(
+  LIFECYCLE_TASK_OPTIONS,
+  handleBigQuerySyncInitialization
+);
+
+/**
+ * Update/configure lifecycle task. Uses the same idempotent provisioning path
+ * so BigQuery resources are reconciled after parameter changes.
+ */
+export const setupBigQuerySync = onTaskDispatched(
+  LIFECYCLE_TASK_OPTIONS,
+  handleBigQuerySyncInitialization
+);

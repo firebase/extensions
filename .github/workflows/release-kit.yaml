@@ -8,19 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - "kits/bigquery-firestore-export"
-          - "kits/delete-user-data"
           - "kits/firestore-bigquery-export"
-          - "kits/firestore-bundle-builder"
-          - "kits/firestore-counter"
-          - "kits/firestore-genai-chatbot"
-          - "kits/firestore-incremental-capture"
-          - "kits/firestore-send-email"
-          - "kits/firestore-translate-text"
-          - "kits/firestore-vector-search"
-          - "kits/rtdb-limit-child-nodes"
-          - "kits/speech-to-text"
-          - "kits/storage-resize-images"
       bump_level:
         description: "Version Bump Level"
         required: true
