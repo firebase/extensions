@@ -13,11 +13,9 @@
         "@google-cloud/bigquery": "^7.6.0",
         "firebase-admin": "^14.4.0",
         "firebase-functions": "^7.4.0",
-        "generate-schema": "^2.6.0",
-        "lodash": "^4.17.14"
+        "generate-schema": "^2.6.0"
       },
       "devDependencies": {
-        "@types/lodash": "^4.17.0",
         "typescript": "^5.9.3",
         "vitest": "^3.2.4"
       },
@@ -2004,13 +2002,6 @@
         "@types/ms": "*",
         "@types/node": "*"
       }
-    },
-    "node_modules/@types/lodash": {
-      "version": "4.17.25",
-      "resolved": "https://registry.npmjs.org/@types/lodash/-/lodash-4.17.25.tgz",
-      "integrity": "sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==",
-      "dev": true,
-      "license": "MIT"
     },
     "node_modules/@types/long": {
       "version": "4.0.2",
