@@ -35,8 +35,7 @@
     "@google-cloud/bigquery": "^7.6.0",
     "firebase-admin": "^14.4.0",
     "firebase-functions": "^7.4.0",
-    "generate-schema": "^2.6.0",
-    "lodash": "^4.17.14"
+    "generate-schema": "^2.6.0"
   },
   "overrides": {
     "@firebaseextensions/firestore-bigquery-change-tracker": {
@@ -44,7 +43,6 @@
     }
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }

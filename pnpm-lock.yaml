@@ -55,13 +55,7 @@ importers:
       generate-schema:
         specifier: ^2.6.0
         version: 2.6.0
-      lodash:
-        specifier: ^4.17.14
-        version: 4.18.1
     devDependencies:
-      "@types/lodash":
-        specifier: ^4.17.0
-        version: 4.17.25
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -2170,12 +2164,6 @@ packages:
     resolution:
       {
         integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==,
-      }
-
-  "@types/lodash@4.17.25":
-    resolution:
-      {
-        integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==,
       }
 
   "@types/long@4.0.2":
@@ -11407,8 +11395,6 @@ snapshots:
     dependencies:
       "@types/ms": 2.1.0
       "@types/node": 26.2.0
-
-  "@types/lodash@4.17.25": {}
 
   "@types/long@4.0.2": {}
 
