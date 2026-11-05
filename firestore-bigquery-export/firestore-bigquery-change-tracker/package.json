@@ -5,7 +5,10 @@
     "url": "git+https://github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "2.0.4",
+  "version": "2.2.1",
+  "engines": {
+    "node": ">=18"
+  },
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
@@ -13,6 +16,7 @@
     "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc",
     "test:local": "jest",
+    "test:offline": "jest --config jest.offline.config.js",
     "prepare": "npm run build",
     "generate-stresstest-table": "bq query --project_id=extensions-testing  --use_legacy_sql=false < ./src/__tests__/fixtures/sql/generateSnapshotStresstestTable.sql"
   },
@@ -26,7 +30,7 @@
     "@google-cloud/bigquery": "^7.6.0",
     "@google-cloud/resource-manager": "^5.1.0",
     "firebase-admin": "^13.2.0 || ^14.0.0",
-    "firebase-functions": "^6.3.2",
+    "firebase-functions": "^6.3.2 || ^7.3.0",
     "sql-formatter": "^2.3.3",
     "traverse": "^0.6.6"
   },

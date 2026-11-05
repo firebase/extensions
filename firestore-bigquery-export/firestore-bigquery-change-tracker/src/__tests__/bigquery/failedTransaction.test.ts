@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
+import { Firestore, getFirestore } from "firebase-admin/firestore";
 import { ChangeTrackerConfig } from "../../bigquery/types";
 
 import handleFailedTransactions from "../../bigquery/handleFailedTransactions";
 
-// admin.initializeApp();
-const db = admin.firestore();
+let db: Firestore;
 
 describe("handleFailedTransactions", () => {
+  beforeAll(() => {
+    db = getFirestore();
+  });
+
   it("should be defined", () => {
     expect(handleFailedTransactions).toBeDefined();
   });

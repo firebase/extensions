@@ -114,10 +114,10 @@ The extension maintains a table and a view in the specified dataset:
 
 Learn about the advanced use of this extension:
 
-- [Generating SQL Schemas](https://www.notion.so/Generating-Schemas-2a42ca95fa624215b1cd06d88d71aaa8)
-- [Import existing data](https://www.notion.so/Importing-Data-12e450250cde4fbc844e13eafbe32e14)
-- [Wildcards](https://www.notion.so/Wildcards-2e43ed6a3e0c45a584a2a49d61f31aec)
-- [Partitioning](https://www.notion.so/Partitioning-6aee582404a1475eaed6e40db374e635)
-- [Clustering](https://www.notion.so/Clustering-998244364c6a46b5951133af87fd17fd)
-- [Cross-project support](https://www.notion.so/Cross-Project-Support-6f160a02142f48bfb120539673b224e0)
-- [Transforming data](https://www.notion.so/Transforming-Data-f5a777dae51e457a930d5cd93a04795d)
+- [Generating SQL Schemas](generating-schemas.md)
+- [Import existing data](importing-data.md)
+- [Wildcards](Wildcards.md)
+- [Partitioning](Partitioning.md)
+- [Clustering](Clustering.md)
+- [Cross-project support](cross-project-support.md)
+- [Transforming data](transforming-data.md)

@@ -67,6 +67,19 @@ export class Partitioning {
     };
   }
 
+  /**
+   * True when the configured partition column belongs in the schema but the
+   * given fields do not contain it. Pure: reads only the config and the
+   * fields passed in, so update checks can call it without a network round
+   * trip. `addPartitioningToSchema` adds exactly this column, which is what
+   * lets a metadata update gated on this check converge.
+   */
+  customPartitionFieldMissingFromSchema(fields: TableField[]): boolean {
+    const partitionField = this.getNewPartitionField();
+    if (!partitionField) return false;
+    return !fields.some((field) => field.name === partitionField.name);
+  }
+
   getPartitionValue(
     event: FirestoreDocumentChangeEvent
   ): Record<string, string> {
@@ -162,20 +175,13 @@ export class Partitioning {
   }
 
   async addPartitioningToSchema(fields: TableField[]): Promise<void> {
-    if (
-      !this.config.isFirestoreFieldPartitioning() &&
-      !this.config.isFirestoreTimestampPartitioning()
-    ) {
-      return;
-    }
-
     const newField = this.getNewPartitionField();
 
     if (!newField) {
       return;
     }
 
-    if (fields.some((field) => field.name === newField.name)) {
+    if (!this.customPartitionFieldMissingFromSchema(fields)) {
       return;
     }
 

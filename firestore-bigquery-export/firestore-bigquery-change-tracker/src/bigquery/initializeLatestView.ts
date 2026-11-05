@@ -104,6 +104,7 @@ export async function initializeLatestView({
         datasetId: config.datasetId,
         tableName: rawChangeLogTableName,
         schema,
+        bqProjectId: bq.projectId,
         useLegacyQuery: !config.useNewSnapshotQuerySyntax,
       });
 

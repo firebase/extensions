@@ -41,3 +41,26 @@ jobs:
           echo SMTP_PASSWORD=${{ secrets.SENDGRID_API_KEY }} >> _emulator/extensions/firestore-send-email-sendgrid.secret.local
       - name: npm test
         run: npm run test:ci
+
+  change_tracker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    name: firestore-bigquery-change-tracker_offline_test
+    defaults:
+      run:
+        working-directory: firestore-bigquery-export/firestore-bigquery-change-tracker
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+        with:
+          persist-credentials: false
+      - name: Setup node
+        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "firestore-bigquery-export/firestore-bigquery-change-tracker/package-lock.json"
+      - name: npm ci
+        run: npm ci
+      - name: Run offline test suites
+        run: npm run test:offline
