@@ -198,8 +198,10 @@ Despite what the prompt says, it doesn't delete your functions source when the
 kit is exported from your own codebase, as in [Usage](#usage).
 
 The command asks you to confirm, twice if this is the kit's only instance. In a
-non-interactive shell (CI, a script, or any shell without a TTY), add
-`--force`: without it the command exits 0 and deletes nothing.
+non-interactive shell (CI, a script, any shell without a TTY, or when the CLI
+detects an AI agent), add `--force`. Without it nothing is deleted: the command
+exits 0 for the kit's only instance, and fails with `Command aborted.`
+otherwise.
 
 It only deletes what is deployed to a project with a `.env.<projectId>` file in
 the instance's config directory. With only a plain `.env`, it still removes the
