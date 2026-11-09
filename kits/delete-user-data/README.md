@@ -258,8 +258,8 @@ On the extension's 1st gen functions, a thrown error or a timeout was logged as
 request log and its `request_count` metric record these event deliveries as
 HTTP 200 even when the function fails. The
 `cloudfunctions.googleapis.com/function/execution_count` metric still reports
-them with a `status` of `error`, `timeout` or `out of memory`, as it did for
-the extension.
+them with a `status` of `error`, `timeout` or `crash` (out of memory), as it
+did for the extension.
 
 The kit also logs the error's stack trace for every failed run at ERROR
 severity, as the extension did, and then lets the run fail. Error Reporting
@@ -284,10 +284,8 @@ log that says "The request has been terminated because it has reached the
 maximum request timeout", which the second clause above matches.
 
 An out-of-memory crash logs one ERROR per crashed instance (`Memory limit of
-256 MiB exceeded…`), which the filter above catches. Each event that was running
-on that instance gets only an INFO, HTTP 200 request log that says "The request
-failed because…", so the log-based alert fires once per crash, not once per
-lost event.
+256 MiB exceeded…`), which the filter above catches. The event that was running
+on that instance gets only an INFO, HTTP 200 request log with no message.
 
 ### Events need an existing channel, and their source has changed
 
