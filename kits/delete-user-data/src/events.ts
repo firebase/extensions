@@ -25,7 +25,16 @@ const EVENT_TYPES: ReadonlyArray<string> = [
   "storage",
 ].map((t) => `firebase.extensions.delete-user-data.v1.${t}`);
 
-const CHANNEL_NAME = /^projects\/[^/]+\/locations\/[^/]+\/channels\/[^/]+$/;
+const CHANNEL_NAME = /^projects\/([^/]+)\/locations\/([^/]+)\/channels\/[^/]+$/;
+
+// The channel locations the extension's install accepted, as in the Firebase
+// CLI's ALLOWED_EVENT_ARC_REGIONS.
+const CHANNEL_LOCATIONS: ReadonlyArray<string> = [
+  "us-central1",
+  "us-west1",
+  "europe-west4",
+  "asia-northeast1",
+];
 
 /**
  * Reads `EXT_SELECTED_EVENTS`, failing on a value the extension's install
@@ -33,8 +42,9 @@ const CHANNEL_NAME = /^projects\/[^/]+\/locations\/[^/]+\/channels\/[^/]+$/;
  *
  * Splits on "," and skips "" (as the CLI did); rejects anything that isn't an
  * exact declared type, or is listed twice (as the platform did). Also rejects
- * event types without `EVENTARC_CHANNEL`, and a malformed channel name, as the
- * install did. Called at module load so a bad value fails the deploy.
+ * event types without `EVENTARC_CHANNEL`, and a channel that is malformed, in
+ * another project or in an unsupported location, as the install did. Called at
+ * module load so a bad value fails the deploy.
  */
 export function selectedEventTypes(): string[] {
   const types = (process.env.EXT_SELECTED_EVENTS ?? "")
@@ -61,11 +71,33 @@ export function selectedEventTypes(): string[] {
         "Must specify eventarc channel if allowing some events to be emitted."
     );
   }
-  if (channel && !CHANNEL_NAME.test(channel)) {
-    throw new Error(
-      `EVENTARC_CHANNEL '${channel}' is invalid. Use the full channel name, ` +
-        "e.g. projects/<project id>/locations/<location>/channels/<channel id>."
-    );
+  if (channel) {
+    const match = CHANNEL_NAME.exec(channel);
+    if (!match) {
+      throw new Error(
+        `EVENTARC_CHANNEL '${channel}' is invalid. Use the full channel name, ` +
+          "e.g. projects/<project id>/locations/<location>/channels/<channel id>."
+      );
+    }
+    const [, project, location] = match;
+    // Set by the CLI when it loads the kit, and at runtime.
+    const currentProject = process.env.GCLOUD_PROJECT;
+    const channelErrors = [
+      ...(CHANNEL_LOCATIONS.includes(location)
+        ? []
+        : [
+            `location '${location}' is not supported, use one of ` +
+              CHANNEL_LOCATIONS.join(", "),
+          ]),
+      ...(currentProject && project !== currentProject
+        ? [`it must be in the same project, '${currentProject}'`]
+        : []),
+    ];
+    if (channelErrors.length) {
+      throw new Error(
+        `EVENTARC_CHANNEL '${channel}' is invalid: ${channelErrors.join("; ")}.`
+      );
+    }
   }
   return types;
 }

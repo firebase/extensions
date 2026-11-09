@@ -177,10 +177,13 @@ The functions can publish deletion events for each backend under
 Only the listed types are published. List the types exactly as shown,
 separated by commas with no spaces. Empty entries are skipped. The deploy fails
 if an entry has spaces or different case, isn't one of the three types, or is
-listed twice, or if types are listed but `EVENTARC_CHANNEL` is unset or isn't
-a full channel name, as the extension's install did. If `EXT_SELECTED_EVENTS`
-is unset or empty, nothing is published, which matches an extension instance
-installed with no event types selected.
+listed twice, or if types are listed but `EVENTARC_CHANNEL` is unset, as the
+extension's install did. It also fails if `EVENTARC_CHANNEL` isn't a full
+channel name, is in another project, or is in a location other than
+`us-central1`, `us-west1`, `europe-west4` or `asia-northeast1`, the locations
+the extension supported. If `EXT_SELECTED_EVENTS` is unset or empty, nothing
+is published, which matches an extension instance installed with no event types
+selected.
 
 The channel must already exist. Deploying the kit does not create it, and
 publishing to a missing channel logs a warning without failing the function.

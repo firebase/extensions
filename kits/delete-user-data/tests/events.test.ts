@@ -24,7 +24,7 @@ vi.mock("firebase-admin/eventarc", () => ({
   getEventarc: () => ({ channel }),
 }));
 
-const CHANNEL = "projects/p/locations/l/channels/firebase";
+const CHANNEL = "projects/p/locations/us-central1/channels/firebase";
 
 const ALL_EVENT_TYPES = [
   "firebase.extensions.delete-user-data.v1.firestore",
@@ -56,14 +56,17 @@ async function importEvents(
 
 const ORIGINAL_CHANNEL = process.env.EVENTARC_CHANNEL;
 const ORIGINAL_SELECTED_EVENTS = process.env.EXT_SELECTED_EVENTS;
+const ORIGINAL_PROJECT = process.env.GCLOUD_PROJECT;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  setEnv("GCLOUD_PROJECT", "p");
 });
 
 afterEach(() => {
   setEnv("EVENTARC_CHANNEL", ORIGINAL_CHANNEL);
   setEnv("EXT_SELECTED_EVENTS", ORIGINAL_SELECTED_EVENTS);
+  setEnv("GCLOUD_PROJECT", ORIGINAL_PROJECT);
 });
 
 describe("setupEventChannel", () => {
@@ -151,6 +154,50 @@ describe("setupEventChannel", () => {
     await expect(importEvents(channelName, ALL_EVENTS)).rejects.toThrow(
       "EVENTARC_CHANNEL"
     );
+    expect(channel).not.toHaveBeenCalled();
+  });
+
+  // The extension's install accepted only a channel in its own project, in one
+  // of the CLI's ALLOWED_EVENT_ARC_REGIONS, even with no event types selected.
+  test.each(["us-central1", "us-west1", "europe-west4", "asia-northeast1"])(
+    "accepts a channel in %s",
+    async (location) => {
+      const name = `projects/p/locations/${location}/channels/c`;
+      await importEvents(name, ALL_EVENTS);
+
+      expect(channel).toHaveBeenCalledWith(name, {
+        allowedEventTypes: ALL_EVENT_TYPES,
+      });
+    }
+  );
+
+  test.each([
+    [
+      "an unsupported location",
+      "projects/p/locations/europe-west1/channels/c",
+      "location 'europe-west1' is not supported",
+    ],
+    [
+      "the global location",
+      "projects/p/locations/global/channels/c",
+      "location 'global' is not supported",
+    ],
+    [
+      "another project",
+      "projects/other/locations/us-central1/channels/c",
+      "it must be in the same project, 'p'",
+    ],
+    [
+      "the project number",
+      "projects/123456/locations/us-central1/channels/c",
+      "it must be in the same project, 'p'",
+    ],
+  ])("rejects a channel in %s", async (_label, channelName, message) => {
+    for (const selected of [ALL_EVENTS, null]) {
+      await expect(importEvents(channelName, selected)).rejects.toThrow(
+        message
+      );
+    }
     expect(channel).not.toHaveBeenCalled();
   });
 });
