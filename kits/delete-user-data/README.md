@@ -237,17 +237,19 @@ generation.
 
 Each function still runs like the extension's: one event per instance
 (`concurrency: 1`) with the 1st gen CPU for its memory (`cpu: "gcf_gen1"`,
-0.1666 vCPU at the default 256MiB) and internal-only ingress, rather than the
-2nd gen defaults of concurrency `80`, 1 vCPU and `ALLOW_ALL`. `setGlobalOptions`
-can't change concurrency, CPU or ingress, so an ingress setting carried over by
-`ext:migrate` doesn't apply to the kit. During a burst, Cloud Run may log
+0.1666 vCPU at the default 256MiB), up to 3000 instances (`maxInstances: 3000`)
+and internal-only ingress, rather than the 2nd gen defaults of concurrency
+`80`, 1 vCPU, 100 instances and `ALLOW_ALL`. During a burst, Cloud Run may log
 `no available instance` errors while it scales; Eventarc redelivers those
 events.
-One difference remains: 2nd gen caps each function at 100 instances by default,
-where the extension's 1st gen functions could scale to 3000. To raise it, call
-`setGlobalOptions({ maxInstances })` from `firebase-functions/v2` in your
-codebase before you load the kit, since the kit's functions read the global
-options when they are defined.
+
+To change the max instances, call `setGlobalOptions({ maxInstances })` from
+`firebase-functions/v2` before you load the kit, since the kit reads it when
+its functions are defined. This applies to every function in your codebase. The
+`ext:migrate` template does this for the extension instance you migrate, and
+the `firebase init functions` template sets `maxInstances: 10`, so check your
+entry file. `setGlobalOptions` can't change concurrency, CPU or ingress, so an
+ingress setting carried over by `ext:migrate` doesn't apply to the kit.
 
 ### Failed runs show as HTTP 200
 
