@@ -50,11 +50,13 @@ export function selectedEventTypes(): string[] {
   const types = (process.env.EXT_SELECTED_EVENTS ?? "")
     .split(",")
     .filter((t) => t !== "");
+  // A repeat is reported as a duplicate even if it isn't a declared type, as
+  // the platform did.
   const errors = types.flatMap((t, i) =>
-    !EVENT_TYPES.includes(t)
-      ? [`'${t}' is not one of ${EVENT_TYPES.join(", ")}`]
-      : types.indexOf(t) !== i
+    types.indexOf(t) !== i
       ? [`'${t}' is listed more than once`]
+      : !EVENT_TYPES.includes(t)
+      ? [`'${t}' is not one of ${EVENT_TYPES.join(", ")}`]
       : []
   );
   if (errors.length) {

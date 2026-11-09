@@ -111,6 +111,14 @@ describe("setupEventChannel", () => {
     expect(channel).not.toHaveBeenCalled();
   });
 
+  // The platform reported a repeat as a duplicate before checking the type.
+  test("reports a repeated unknown entry as listed more than once", async () => {
+    const load = importEvents(CHANNEL, " , ,");
+
+    await expect(load).rejects.toThrow("' ' is not one of");
+    await expect(load).rejects.toThrow("' ' is listed more than once");
+  });
+
   // The extension cleared its channel when no event types were selected, so
   // it published nothing. firebase-admin reads a missing allowlist as "allow
   // every type", which would publish all three.
