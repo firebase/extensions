@@ -232,14 +232,19 @@ topics. The kit also keeps two things:
   removed. They no longer grant access, and show in your project's IAM policy
   as members like
   `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
-  List them with:
+  The account's name doesn't include the instance id, and other kits' deleted
+  accounts look the same, so note the `firebase-fn-<n>` account the uninstall
+  command prints ("The following managed service accounts will also be
+  deleted" or "Deleting managed service account"). List its roles with:
 
   ```sh
-  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-" --format="value(bindings.role,bindings.members)"
+  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-<n>@" --format="value(bindings.role,bindings.members)"
   ```
 
   and remove each one, one command per role, with
-  `gcloud projects remove-iam-policy-binding <project id> --member=<member> --role=<role>`.
+  `gcloud projects remove-iam-policy-binding <project id> --member='<member>' --role=<role> --condition=None`.
+  Keep the quotes: the `?` in the member makes some shells, such as zsh, fail
+  with "no matches found".
 
 ## Differences from the Delete User Data extension
 
