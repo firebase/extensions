@@ -216,8 +216,11 @@ If the instance is deployed to more than one project, give each project its own
 once per project with `--project <projectId>`. The instance stays in
 `firebase.json` until the last project's file is gone.
 
-A `.env.local` file (the emulator override) next to a plain `.env` makes the
-command fail with "contains no .env file for current project".
+Move any `.env.local` file (the emulator override) out of the instance's config
+directory before you uninstall. Next to a plain `.env`, it makes the command
+fail with "contains no .env file for current project". Next to
+`.env.<projectId>`, the command deletes the functions but leaves the instance in
+`firebase.json`, and running it again fails with that error.
 
 Uninstalling the extension removed the same resources and kept its two Pub/Sub
 topics. The kit also keeps two things:
