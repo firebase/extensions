@@ -279,9 +279,12 @@ resource.labels.service_name=~"^kit-<instance id>-"
 (severity>=ERROR OR textPayload:"maximum request timeout")
 ```
 
-A function can't log its own timeout. A timeout shows up only as an INFO request
-log that says "The request has been terminated because it has reached the
-maximum request timeout", which the second clause above matches.
+A function can't log its own timeout. Cloud Run logs it as an INFO request log
+that says "The request has been terminated because it has reached the maximum
+request timeout", which the second clause above matches. On 2nd gen, the
+timed-out run keeps going in the background, so you may still see its INFO
+logs, such as `Successfully removed data for user`, minutes later. If it then
+fails, the kit doesn't log the error, since the timeout was already logged.
 
 An out-of-memory crash logs one ERROR per crashed instance (`Memory limit of
 256 MiB exceeded…`), which the filter above catches. The event that was running

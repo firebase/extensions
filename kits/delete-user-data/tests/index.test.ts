@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { defineInt } from "firebase-functions/params";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -103,6 +104,68 @@ describe.each([
 
     expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
   });
+
+  // A timed-out run keeps going on 2nd gen. The extension logged nothing after
+  // the timeout, and Cloud Run has already logged it.
+  test.each([
+    [59_999, 1],
+    [60_000, 0],
+  ])(
+    "after %ims at the default timeout, logs the error %i times and rethrows",
+    async (elapsed, calls) => {
+      vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValueOnce(elapsed);
+
+      await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
+
+      expect(logs.unhandledError).toHaveBeenCalledTimes(calls);
+    }
+  );
+});
+
+describe("with a global timeout", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    delete (globalThis as any)[
+      Symbol.for("firebase-functions:v2:globalOptions")
+    ].value;
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  test.each([
+    ["a number", () => 300],
+    [
+      "a param",
+      () => {
+        vi.stubEnv("KIT_TEST_TIMEOUT_SECONDS", "300");
+        return defineInt("KIT_TEST_TIMEOUT_SECONDS");
+      },
+    ],
+  ])(
+    "logs errors until the global timeout, set as %s",
+    async (_name, timeout) => {
+      setGlobalOptions({ timeoutSeconds: timeout() });
+      vi.resetModules();
+      const kit = await import("../src/index");
+      const kitLogs = await import("../src/logs");
+
+      for (const [elapsed, calls] of [
+        [299_999, 1],
+        [300_000, 1],
+      ]) {
+        vi.spyOn(Date, "now")
+          .mockReturnValueOnce(0)
+          .mockReturnValueOnce(elapsed);
+        await expect(kit.handleSearch(pubsubEvent("not json"))).rejects.toThrow(
+          SyntaxError
+        );
+        expect(kitLogs.unhandledError).toHaveBeenCalledTimes(calls);
+      }
+    }
+  );
 });
 
 describe("module load", () => {
