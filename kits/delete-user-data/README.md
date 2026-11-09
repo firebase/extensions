@@ -99,7 +99,7 @@ Firebase CLI loads them at deploy time and prompts for any required values that
 are missing. A plain `.env` deploys the same way, but
 `functions:kits:uninstall` ignores it (see [Uninstall](#uninstall)).
 
-The CLI does not check values that are already in `.env`, so the kit checks
+The CLI does not check values that are already in the file, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
 deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
 `ENABLE_AUTO_DISCOVERY` or `SELECTED_DATABASE_LOCATION` is not one of the
@@ -275,12 +275,12 @@ since one function publishes to a topic the other is triggered by.
 
 The extension deployed to the location you picked at install time
 (`us-central1` by default). The kit reads the region from
-`FUNCTION_DEFAULT_REGION` in each instance's `.env`, also defaulting to
+`FUNCTION_DEFAULT_REGION` in each instance's `.env.<projectId>`, also defaulting to
 `us-central1`, so instances can deploy to different regions.
 `firebase ext:migrate` writes it with the region the extension ran in.
 
 ```sh
-# .env (or .env.<projectId>)
+# .env.<projectId>
 FUNCTION_DEFAULT_REGION=us-central1
 ```
 
