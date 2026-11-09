@@ -284,7 +284,8 @@ that says "The request has been terminated because it has reached the maximum
 request timeout", which the second clause above matches. On 2nd gen, the
 timed-out run keeps going in the background, so you may still see its INFO
 logs, such as `Successfully removed data for user`, minutes later. If it then
-fails, the kit doesn't log the error, since the timeout was already logged.
+fails, the kit drops the error without logging it, as the extension recorded
+nothing after a timeout, so it doesn't reach your alerts or Error Reporting.
 
 An out-of-memory crash logs one ERROR per crashed instance (`Memory limit of
 256 MiB exceeded…`), which the filter above catches. The event that was running

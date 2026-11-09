@@ -138,8 +138,9 @@ function timeoutMs(): number {
 // Reporting see it, then rethrow so the invocation still counts as failed.
 //
 // A run that times out keeps going on 2nd gen and can throw minutes later. The
-// extension logged nothing after a timeout, so neither does the kit: Cloud Run
-// has already logged the timeout, and an ERROR now would alert a second time.
+// extension recorded nothing after a timeout, so the kit swallows the error:
+// Cloud Run has already logged the timeout and counted the run as one, and a
+// rethrow would still put the stack on stderr, where Error Reporting picks it up.
 function logFailures<E>(
   handler: (event: E) => unknown
 ): (event: E) => Promise<unknown> {
@@ -148,9 +149,10 @@ function logFailures<E>(
     try {
       return await handler(event);
     } catch (err) {
-      if (Date.now() - started < timeoutMs()) {
-        logs.unhandledError(err);
+      if (Date.now() - started >= timeoutMs()) {
+        return;
       }
+      logs.unhandledError(err);
       throw err;
     }
   };

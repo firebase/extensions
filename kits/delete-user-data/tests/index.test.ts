@@ -105,21 +105,24 @@ describe.each([
     expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
   });
 
-  // A timed-out run keeps going on 2nd gen. The extension logged nothing after
-  // the timeout, and Cloud Run has already logged it.
-  test.each([
-    [59_999, 1],
-    [60_000, 0],
-  ])(
-    "after %ims at the default timeout, logs the error %i times and rethrows",
-    async (elapsed, calls) => {
-      vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValueOnce(elapsed);
+  // A timed-out run keeps going on 2nd gen. The extension recorded nothing
+  // after the timeout, and Cloud Run has already logged it, so a late error is
+  // neither logged nor rethrown to the framework's stderr.
+  test("logs and rethrows an error just before the default timeout", async () => {
+    vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValueOnce(59_999);
 
-      await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
+    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
 
-      expect(logs.unhandledError).toHaveBeenCalledTimes(calls);
-    }
-  );
+    expect(logs.unhandledError).toHaveBeenCalledTimes(1);
+  });
+
+  test("drops an error at the default timeout", async () => {
+    vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValueOnce(60_000);
+
+    await expect(fn(pubsubEvent("not json"))).resolves.toBeUndefined();
+
+    expect(logs.unhandledError).not.toHaveBeenCalled();
+  });
 });
 
 describe("with a global timeout", () => {
@@ -145,25 +148,22 @@ describe("with a global timeout", () => {
       },
     ],
   ])(
-    "logs errors until the global timeout, set as %s",
+    "reports errors until the global timeout, set as %s",
     async (_name, timeout) => {
       setGlobalOptions({ timeoutSeconds: timeout() });
       vi.resetModules();
       const kit = await import("../src/index");
       const kitLogs = await import("../src/logs");
-
-      for (const [elapsed, calls] of [
-        [299_999, 1],
-        [300_000, 1],
-      ]) {
+      const run = (elapsed: number) => {
         vi.spyOn(Date, "now")
           .mockReturnValueOnce(0)
           .mockReturnValueOnce(elapsed);
-        await expect(kit.handleSearch(pubsubEvent("not json"))).rejects.toThrow(
-          SyntaxError
-        );
-        expect(kitLogs.unhandledError).toHaveBeenCalledTimes(calls);
-      }
+        return kit.handleSearch(pubsubEvent("not json"));
+      };
+
+      await expect(run(299_999)).rejects.toThrow(SyntaxError);
+      await expect(run(300_000)).resolves.toBeUndefined();
+      expect(kitLogs.unhandledError).toHaveBeenCalledTimes(1);
     }
   );
 });
