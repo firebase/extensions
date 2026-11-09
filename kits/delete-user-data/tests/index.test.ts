@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { defineInt } from "firebase-functions/params";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -68,6 +69,103 @@ describe("clearData", () => {
     expect(handleClear).not.toHaveBeenCalled();
     expect(logs.deletionEventMissingUid).toHaveBeenCalledWith("event-id");
   });
+});
+
+function pubsubEvent(data: string) {
+  return {
+    specversion: "1.0",
+    id: "message-event-id",
+    type: "google.cloud.pubsub.topic.v1.messagePublished",
+    source: "//pubsub.googleapis.com/projects/test-project/topics/t",
+    time: "2026-01-01T00:00:00.000Z",
+    data: {
+      message: {
+        messageId: "1",
+        data: Buffer.from(data).toString("base64"),
+      },
+      subscription: "s",
+    },
+  } as any;
+}
+
+// 2nd gen records a failed invocation as HTTP 200, so the ERROR log is the
+// only signal. The rethrow keeps the invocation marked as failed.
+describe.each([
+  ["handleSearch", handleSearch],
+  ["handleDeletion", handleDeletion],
+] as const)("%s", (name, fn) => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("logs a malformed message at ERROR severity and rethrows", async () => {
+    // The plain SyntaxError, as the extension threw, not `message.json`'s wrapper.
+    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
+
+    expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
+  });
+
+  // A timed-out run keeps going on 2nd gen. The extension recorded nothing
+  // after the timeout, and Cloud Run has already logged it, so a late error is
+  // neither logged nor rethrown to the framework's stderr.
+  test("logs and rethrows an error just before the default timeout", async () => {
+    vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValueOnce(59_999);
+
+    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
+
+    expect(logs.unhandledError).toHaveBeenCalledTimes(1);
+  });
+
+  test("drops an error at the default timeout", async () => {
+    vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValueOnce(60_000);
+
+    await expect(fn(pubsubEvent("not json"))).resolves.toBeUndefined();
+
+    expect(logs.unhandledError).not.toHaveBeenCalled();
+  });
+});
+
+describe("with a global timeout", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    delete (globalThis as any)[
+      Symbol.for("firebase-functions:v2:globalOptions")
+    ].value;
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  test.each([
+    ["a number", () => 300],
+    [
+      "a param",
+      () => {
+        vi.stubEnv("KIT_TEST_TIMEOUT_SECONDS", "300");
+        return defineInt("KIT_TEST_TIMEOUT_SECONDS");
+      },
+    ],
+  ])(
+    "reports errors until the global timeout, set as %s",
+    async (_name, timeout) => {
+      setGlobalOptions({ timeoutSeconds: timeout() });
+      vi.resetModules();
+      const kit = await import("../src/index");
+      const kitLogs = await import("../src/logs");
+      const run = (elapsed: number) => {
+        vi.spyOn(Date, "now")
+          .mockReturnValueOnce(0)
+          .mockReturnValueOnce(elapsed);
+        return kit.handleSearch(pubsubEvent("not json"));
+      };
+
+      await expect(run(299_999)).rejects.toThrow(SyntaxError);
+      await expect(run(300_000)).resolves.toBeUndefined();
+      expect(kitLogs.unhandledError).toHaveBeenCalledTimes(1);
+    }
+  );
 });
 
 describe("module load", () => {
