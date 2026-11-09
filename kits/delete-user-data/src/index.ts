@@ -195,9 +195,10 @@ export const clearData = onUserDeleted(
   })
 );
 
-// Parse the message data the way the extension did. `message.json` wraps a parse
-// error as "Unable to parse Pub/Sub message data as JSON", which Error
-// Reporting groups apart from the extension's plain SyntaxError.
+// Parse the message data the way the extension did, so a malformed message
+// throws the same plain SyntaxError. `message.json` wraps it as "Unable to
+// parse Pub/Sub message data as JSON". Error Reporting still groups the two
+// apart, since the kit's stack frames are in node_modules.
 function parseMessage<T>(event: CloudEvent<MessagePublishedData<T>>): T {
   return JSON.parse(
     Buffer.from(event.data.message.data, "base64").toString("utf8")
