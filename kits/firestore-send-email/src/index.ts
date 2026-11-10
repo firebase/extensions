@@ -108,6 +108,15 @@ function ensureInitialized(): Promise<HandlerContext> {
 export const processQueue = onDocumentWritten(
   {
     ...(deploy.region ? { region: deploy.region } : {}),
+    // The extension ran this function at 0.1666 vCPU, one event per instance,
+    // with internal-only ingress. Left unset, the CLI deploys the 2nd gen
+    // defaults: 1 vCPU, concurrency 80 and `ALLOW_ALL`. At concurrency 80, a
+    // burst of mail with attachments lands on one 256MiB instance, which runs
+    // out of memory and drops every event in flight on it. The trigger has no
+    // retry policy, so that mail is never sent.
+    concurrency: 1,
+    cpu: "gcf_gen1",
+    ingressSettings: "ALLOW_INTERNAL_ONLY",
     document: deploy.document,
     database: deploy.database,
     timeoutSeconds: 120,
