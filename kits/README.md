@@ -7,10 +7,10 @@ Firebase Functions codebase and deploy into your own project.
 While an extension is installed as a managed instance configured through the
 Firebase console or CLI, a kit is code you own: you install the package, export
 the functions you want from your functions entry file, configure it with a
-`.env`, and deploy with `firebase deploy`. There is no hosted version, so the
-functions run in your project, under your service account, on your deployment
-schedule. That also means you can read the source, fork it, or import the
-package's `./lib` entry point and register the triggers yourself.
+`.env.<projectId>` file, and deploy with `firebase deploy`. There is no hosted
+version, so the functions run in your project, under your service account, on
+your deployment schedule. That also means you can read the source, fork it, or
+import the package's `./lib` entry point and register the triggers yourself.
 
 Each directory here contains the source code for a kit and a README explaining
 how it works, including the roles it needs, the settings it reads, and the
@@ -63,10 +63,16 @@ instances to deploy:
 }
 ```
 
-Each instance ID maps to the directory holding that instance's `.env`, and the
-CLI prefixes every function name with `kit-<instance-id>-`, so one kit can run
-several independently configured instances side by side. See each kit's README
-for its exports, its settings, and the roles the CLI grants on deploy.
+Each instance ID maps to the directory holding that instance's
+`.env.<projectId>` file, and the CLI prefixes every function name with
+`kit-<instance-id>-`, so one kit can run several independently configured
+instances side by side. See each kit's README for its exports, its settings, and
+the roles the CLI grants on deploy.
+
+Use a `.env.<projectId>` file rather than a plain `.env`.
+`firebase functions:kits:uninstall` only deletes what is deployed to a project
+with a `.env.<projectId>` file; with a plain `.env` it removes the instance from
+`firebase.json` but leaves its functions running.
 
 ## Migrating from an extension
 
