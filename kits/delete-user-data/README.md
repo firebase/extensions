@@ -336,6 +336,13 @@ The Firebase CLI now sets it to the function that published the event
 so it differs between `clearData`, `handleSearch` and `handleDeletion`. If your
 event triggers filter on `source`, filter on the event `type` instead.
 
+### A failed event publish doesn't stop deletion
+
+If an event can't be published, the kit logs a warning and carries on deleting.
+The extension failed the function instead: in `clearData`, auto-discovery and
+`SEARCH_FUNCTION` were skipped, so their data was left behind, and
+`handleSearch` and `handleDeletion` failed after deleting.
+
 ### Unchanged
 
 Event types and payloads are the same. The functions still publish
