@@ -99,6 +99,10 @@ Firebase CLI loads them at deploy time and prompts for any required values that
 are missing. A plain `.env` deploys the same way, but
 `functions:kits:uninstall` ignores it (see [Uninstall](#uninstall)).
 
+A setting with **No** under "Can be blank" fails the deploy on a line like
+`FIRESTORE_DELETE_MODE=`. Give it a value, or remove the line and answer the
+prompt.
+
 The CLI does not check values that are already in the file, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
 deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
@@ -107,9 +111,9 @@ values listed below or their labels (the error lists the allowed values), or if
 `SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
 extension accepted: an instance id rather than a URL, and a bucket name without
 `gs://` or capital letters (the error gives the extension's message). One error
-lists every bad setting, along with any required setting left blank. The values
-are case sensitive. The emulator runs the same check, so a bad value stops that
-instance's functions from loading there.
+lists every bad setting, along with any blank setting that can't be blank. The
+values are case sensitive. The emulator runs the same check, so a bad value
+stops that instance's functions from loading there.
 
 An option's label (such as `Recursive`) is accepted because the extension's
 installer accepted it, but it runs as it did in the extension: `Recursive`
@@ -122,23 +126,23 @@ The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
 overridden there.
 
-| Field | Env var | Required | Default | Description |
+| Field | Env var | Can be blank | Default | Description |
 |---|---|---|---|---|
-| `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
-| `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
-| `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
-| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
-| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location: `us-central1`, `europe-west1` or `asia-southeast1` |
-| `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
-| `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
-| `storagePaths` | `STORAGE_PATHS` | no | (empty) | Comma-separated Storage paths with `{UID}` |
-| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `no` | Auto-discover user-linked docs (`yes` or `no`) |
-| `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
-| `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
-| `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | URL of a custom search function that returns paths to delete |
-| — | `FUNCTION_DEFAULT_REGION` | no | `us-central1` | Region the functions deploy to |
-| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
-| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
+| `firestorePaths` | `FIRESTORE_PATHS` | Yes | (empty) | Comma-separated Firestore paths with `{UID}` |
+| `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | No | `(default)` | Firestore database id |
+| `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | No | `shallow` | `shallow` or `recursive` |
+| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | Yes | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
+| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | Yes | `us-central1` | RTDB location: `us-central1`, `europe-west1` or `asia-southeast1` |
+| `rtdbPaths` | `RTDB_PATHS` | Yes | (empty) | Comma-separated RTDB paths with `{UID}` |
+| `storageBucket` | `CLOUD_STORAGE_BUCKET` | No | default Storage bucket | Bucket to clear |
+| `storagePaths` | `STORAGE_PATHS` | Yes | (empty) | Comma-separated Storage paths with `{UID}` |
+| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | No | `no` | Auto-discover user-linked docs (`yes` or `no`) |
+| `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | No | `3` | Discovery depth |
+| `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | Yes | `id,uid,userId` | Fields treated as user ids |
+| `searchFunction` | `SEARCH_FUNCTION` | Yes | (empty) | URL of a custom search function that returns paths to delete |
+| — | `FUNCTION_DEFAULT_REGION` | Yes | `us-central1` | Region the functions deploy to |
+| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | Yes | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
+| `deletionTopicName` | `DELETION_TOPIC_NAME` | Yes | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
 ## Multiple instances
 
