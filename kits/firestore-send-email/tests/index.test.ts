@@ -89,4 +89,13 @@ describe("processQueue options", () => {
     const document = options.document as { toCEL(): string };
     expect(document.toCEL()).toContain("params.MAIL_COLLECTION");
   });
+
+  // Concurrency 80 let a burst of mail with attachments land on one 256MiB
+  // instance, which ran out of memory and dropped it.
+  test("the function runs one event per gen1 CPU instance with internal-only ingress", async () => {
+    const options = await loadTriggerOptions();
+    expect(options.concurrency).toBe(1);
+    expect(options.cpu).toBe("gcf_gen1");
+    expect(options.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+  });
 });
