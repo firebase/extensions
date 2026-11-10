@@ -261,6 +261,12 @@ with `EXT_`, so
 `EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
 unaffected.
 
+### A failed event publish doesn't stop delivery
+
+If an event can't be published, the kit logs a warning and carries on. The
+extension failed the function instead, so a failed `onStart` publish meant the
+mail was never sent.
+
 ### An empty required setting fails the deploy
 
 The kit checks `.env` values against the extension's install-time rules (see
