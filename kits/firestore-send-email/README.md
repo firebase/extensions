@@ -86,31 +86,34 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
-Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
-the CLI connects them to the function at deploy time.
+Rows with a `(secret)` default live in Secret Manager. You can reuse existing
+secrets; the CLI connects them to the function at deploy time.
 
-| Field                 | Env var                | Required | Default            | Description                                           |
-| --------------------- | ---------------------- | -------- | ------------------ | ----------------------------------------------------- |
-| `mailCollection`      | `MAIL_COLLECTION`      | no       | `mail`             | Firestore collection of outbound mail docs            |
-| `defaultFrom`         | `DEFAULT_FROM`         | yes      | —                  | Default From address                                  |
-| `defaultReplyTo`      | `DEFAULT_REPLY_TO`     | no       | (empty)            | Default Reply-To address                              |
-| `databaseRegion`      | `DATABASE_REGION`      | yes      | (prompted)         | Firestore database location; also places the function |
-| `databaseId`          | `DATABASE`             | no       | `(default)`        | Firestore database id                                 |
-| `authType`            | `AUTH_TYPE`            | no       | `UsernamePassword` | `UsernamePassword` or `OAuth2`                        |
-| `smtpConnectionUri`   | `SMTP_CONNECTION_URI`  | no       | (empty)            | SMTP connection URI (username/password auth)          |
-| `smtpPassword`        | `SMTP_PASSWORD`        | secret   | —                  | SMTP password                                         |
-| `host`                | `HOST`                 | no       | (empty)            | SMTP host (OAuth2)                                    |
-| `oauthPort`           | `OAUTH_PORT`           | no       | `465`              | SMTP port (OAuth2)                                    |
-| `oauthSecure`         | `OAUTH_SECURE`         | no       | `true`             | Use TLS (OAuth2)                                      |
-| `user`                | `USER`                 | no       | (empty)            | SMTP username (OAuth2)                                |
-| `clientId`            | `CLIENT_ID`            | secret   | —                  | OAuth2 client id                                      |
-| `clientSecret`        | `CLIENT_SECRET`        | secret   | —                  | OAuth2 client secret                                  |
-| `refreshToken`        | `REFRESH_TOKEN`        | secret   | —                  | OAuth2 refresh token                                  |
-| `templatesCollection` | `TEMPLATES_COLLECTION` | no       | (empty)            | Optional Handlebars templates collection              |
-| `usersCollection`     | `USERS_COLLECTION`     | no       | (empty)            | Optional users collection for recipient lookup        |
-| `ttlExpireType`       | `TTL_EXPIRE_TYPE`      | no       | `never`            | TTL policy for processed docs                         |
-| `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | no       | `1`                | TTL amount when expire type is set                    |
-| `tlsOptions`          | `TLS_OPTIONS`          | no       | `{}`               | JSON TLS options for the SMTP transport               |
+A setting with **No** under "Can be blank" fails the deploy on a line like
+`DEFAULT_FROM=`. Give it a value, or remove the line and answer the prompt.
+
+| Field                 | Env var                | Can be blank | Default            | Description                                           |
+| --------------------- | ---------------------- | ------------ | ------------------ | ----------------------------------------------------- |
+| `mailCollection`      | `MAIL_COLLECTION`      | No           | `mail`             | Firestore collection of outbound mail docs            |
+| `defaultFrom`         | `DEFAULT_FROM`         | No           | —                  | Default From address                                  |
+| `defaultReplyTo`      | `DEFAULT_REPLY_TO`     | Yes          | (empty)            | Default Reply-To address                              |
+| `databaseRegion`      | `DATABASE_REGION`      | Yes          | (prompted)         | Firestore database location; also places the function |
+| `databaseId`          | `DATABASE`             | No           | `(default)`        | Firestore database id                                 |
+| `authType`            | `AUTH_TYPE`            | No           | `UsernamePassword` | `UsernamePassword` or `OAuth2`                        |
+| `smtpConnectionUri`   | `SMTP_CONNECTION_URI`  | Yes          | (empty)            | SMTP connection URI (username/password auth)          |
+| `smtpPassword`        | `SMTP_PASSWORD`        | —            | (secret)           | SMTP password                                         |
+| `host`                | `HOST`                 | Yes          | (empty)            | SMTP host (OAuth2)                                    |
+| `oauthPort`           | `OAUTH_PORT`           | Yes          | `465`              | SMTP port (OAuth2)                                    |
+| `oauthSecure`         | `OAUTH_SECURE`         | Yes          | `true`             | Use TLS (OAuth2)                                      |
+| `user`                | `USER`                 | Yes          | (empty)            | SMTP username (OAuth2)                                |
+| `clientId`            | `CLIENT_ID`            | —            | (secret)           | OAuth2 client id                                      |
+| `clientSecret`        | `CLIENT_SECRET`        | —            | (secret)           | OAuth2 client secret                                  |
+| `refreshToken`        | `REFRESH_TOKEN`        | —            | (secret)           | OAuth2 refresh token                                  |
+| `templatesCollection` | `TEMPLATES_COLLECTION` | Yes          | (empty)            | Optional Handlebars templates collection              |
+| `usersCollection`     | `USERS_COLLECTION`     | Yes          | (empty)            | Optional users collection for recipient lookup        |
+| `ttlExpireType`       | `TTL_EXPIRE_TYPE`      | No           | `never`            | TTL policy for processed docs                         |
+| `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | No           | `1`                | TTL amount when expire type is set                    |
+| `tlsOptions`          | `TLS_OPTIONS`          | Yes          | `{}`               | JSON TLS options for the SMTP transport               |
 
 ## Multiple instances
 
