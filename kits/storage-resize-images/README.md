@@ -92,27 +92,30 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
-| Field                  | Env var                  | Required | Default                | Description                                                                                |
-| ---------------------- | ------------------------ | -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
-| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
-| `bucket`               | `IMG_BUCKET`             | no       | default Storage bucket | Bucket to watch                                                                            |
-| `sizes`                | `IMG_SIZES`              | no       | `200x200`              | Comma-separated resize sizes                                                               |
-| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
-| `makePublic`           | `MAKE_PUBLIC`            | no       | `false`                | Make resized objects public                                                                |
-| `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | no       | (empty)                | Output path prefix                                                                         |
-| `includePathList`      | `INCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
-| `excludePathList`      | `EXCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`)           |
-| `failedImagesPath`     | `FAILED_IMAGES_PATH`     | no       | (empty)                | Failed-image output path                                                                   |
-| `cacheControlHeader`   | `CACHE_CONTROL_HEADER`   | no       | (empty)                | Cache-Control for outputs                                                                  |
-| `imageTypes`           | `IMAGE_TYPE`             | no       | `["false"]`            | Output image types list                                                                    |
-| `outputOptions`        | `OUTPUT_OPTIONS`         | no       | (empty)                | JSON output options                                                                        |
-| `sharpOptions`         | `SHARP_OPTIONS`          | no       | `{}`                   | JSON Sharp options                                                                         |
-| `isAnimated`           | `IS_ANIMATED`            | no       | `true`                 | Preserve animation                                                                         |
-| `memory`               | `FUNCTION_MEMORY`        | no       | `1024`                 | Function memory (MiB)                                                                      |
-| `regenerateToken`      | `REGENERATE_TOKEN`       | no       | `true`                 | Regenerate download tokens                                                                 |
-| `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | no       | `OFF`                  | Content filter level                                                                       |
-| `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
-| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
+A setting with **No** under "Can be blank" fails the deploy on a line like
+`IMG_SIZES=`. Give it a value, or remove the line and answer the prompt.
+
+| Field                  | Env var                  | Can be blank | Default                | Description                                                                                |
+| ---------------------- | ------------------------ | ------------ | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `bucketRegion`         | `BUCKET_REGION`          | Yes          | (prompted)             | Cloud Storage bucket location; also places the function                                    |
+| `bucket`               | `IMG_BUCKET`             | No           | default Storage bucket | Bucket to watch                                                                            |
+| `sizes`                | `IMG_SIZES`              | No           | `200x200`              | Comma-separated resize sizes                                                               |
+| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | No           | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
+| `makePublic`           | `MAKE_PUBLIC`            | Yes          | `false`                | Make resized objects public                                                                |
+| `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | Yes          | (empty)                | Output path prefix                                                                         |
+| `includePathList`      | `INCLUDE_PATH_LIST`      | Yes          | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
+| `excludePathList`      | `EXCLUDE_PATH_LIST`      | Yes          | (empty)                | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`)           |
+| `failedImagesPath`     | `FAILED_IMAGES_PATH`     | Yes          | (empty)                | Failed-image output path                                                                   |
+| `cacheControlHeader`   | `CACHE_CONTROL_HEADER`   | Yes          | (empty)                | Cache-Control for outputs                                                                  |
+| `imageTypes`           | `IMAGE_TYPE`             | No           | `["false"]`            | Output image types list                                                                    |
+| `outputOptions`        | `OUTPUT_OPTIONS`         | Yes          | (empty)                | JSON output options                                                                        |
+| `sharpOptions`         | `SHARP_OPTIONS`          | Yes          | `{}`                   | JSON Sharp options                                                                         |
+| `isAnimated`           | `IS_ANIMATED`            | Yes          | `true`                 | Preserve animation                                                                         |
+| `memory`               | `FUNCTION_MEMORY`        | No           | `1024`                 | Function memory (MiB)                                                                      |
+| `regenerateToken`      | `REGENERATE_TOKEN`       | Yes          | `true`                 | Regenerate download tokens                                                                 |
+| `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | No           | `OFF`                  | Content filter level                                                                       |
+| `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | Yes          | (empty)                | Custom filter prompt                                                                       |
+| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | Yes          | (empty)                | Placeholder for filtered images                                                            |
 
 Single-quote JSON values such as `SHARP_OPTIONS` and `OUTPUT_OPTIONS` in
 `.env`. In an unquoted value, `#` starts a comment and cuts the rest of the value off:
