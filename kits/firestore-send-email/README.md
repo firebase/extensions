@@ -112,6 +112,36 @@ the CLI connects them to the function at deploy time.
 | `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | no       | `1`                | TTL amount when expire type is set                    |
 | `tlsOptions`          | `TLS_OPTIONS`          | no       | `{}`               | JSON TLS options for the SMTP transport               |
 
+Single-quote JSON values such as `TLS_OPTIONS` in `.env`. In a double-quoted
+value the CLI turns `\n` into a real newline, so a PEM certificate no longer
+parses as JSON, and the kit falls back to `{"rejectUnauthorized":false}`
+(certificate checks off) with only a warning:
+
+```
+TLS_OPTIONS='{"ca":"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"}'
+```
+
+The CLI does not check values that are already in `.env`, so the kit checks
+them itself when the deploy loads it, as the extension did at install time. The
+deploy fails with an error naming the setting if `DATABASE_REGION`,
+`AUTH_TYPE`, `OAUTH_SECURE` or `TTL_EXPIRE_TYPE` is not one of its option values
+or their labels (the error lists the allowed values), or if
+`SMTP_CONNECTION_URI`, `MAIL_COLLECTION`, `DEFAULT_FROM` or `TTL_EXPIRE_VALUE`
+is not in the format the extension accepted (the error gives the extension's
+message). It also fails if `SMTP_CONNECTION_URI` is set to an empty value and
+`AUTH_TYPE` is not `OAuth2`, as no mail can be sent that way. One error lists
+every bad setting, along with any required setting left blank. The values are
+case sensitive. The emulator runs the same check, so a bad value stops the
+function from loading there. An empty `OAUTH_SECURE` means `true`, as it did in
+the extension.
+
+An option's label (such as `Day`) is accepted because the extension's
+installer accepted it, but it runs as it did in the extension: any
+`TTL_EXPIRE_TYPE` label, `Never` included, leaves every document without a
+`delivery` field, `OAUTH_SECURE=Yes` connects without TLS, and a
+`DATABASE_REGION` label is not a region the function can deploy to. Use the
+values instead.
+
 ## Multiple instances
 
 To process several mail queues, add one entry per instance to the `instances`
@@ -177,8 +207,8 @@ location setting. The kit deploys the function to the region derived from
 Firestore locations (`europe-west2`, `us-east1`, ...) are used as-is; the
 multi-region locations map to a Cloud Run region inside them - `nam5` and
 `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are not Cloud
-Run regions themselves and would fail the deploy. The value is matched
-case-insensitively. The Firestore trigger always fires in the database's own
+Run regions themselves and would fail the deploy. The value is case sensitive,
+as in the extension, so `NAM5` fails the deploy. The Firestore trigger always fires in the database's own
 region, whatever region the function runs in.
 
 If you copied `DATABASE_REGION` into your `.env` from an extension install, it
@@ -232,18 +262,13 @@ with `EXT_`, so
 `EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
 unaffected.
 
-### Settings in `.env` are not validated at deploy time
+### An empty `SMTP_CONNECTION_URI` fails the deploy
 
-The extension rejected a malformed `DEFAULT_FROM`, a `MAIL_COLLECTION` that was
-not a valid collection path, an `SMTP_CONNECTION_URI` that was not
-`smtp(s)://...:port`, and a `TTL_EXPIRE_VALUE` that was not a positive integer,
-before it would install. The kit declares the same checks, but they apply only to
-a value entered at the `firebase deploy` prompt, not to one read from `.env`. A
-bad from address or connection URI in `.env` deploys cleanly and every document
-fails at send time with `delivery.state: ERROR` instead. `TTL_EXPIRE_VALUE: 0` is
-silently treated as `1`, and a negative value produces a `delivery.expireAt` in
-the past, which a TTL policy will act on immediately. Only a required setting
-left empty in `.env`, such as `DEFAULT_FROM=`, fails the deploy.
+The kit checks `.env` values against the extension's install-time rules (see
+[Configuration](#configuration)), with two differences. A required setting left
+empty, such as `DEFAULT_FROM=`, fails the deploy instead of taking its default.
+And `SMTP_CONNECTION_URI=` fails the deploy unless `AUTH_TYPE` is `OAuth2`. The
+extension installed with it, but could never send mail with it.
 
 ### The setup steps and the OAuth2 helper are not in the README
 

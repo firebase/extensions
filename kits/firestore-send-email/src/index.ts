@@ -20,7 +20,7 @@ import { onDocumentWritten } from "firebase-functions/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import {
-  assertRequiredParams,
+  assertParams,
   configFromEnv,
   envDeployOptions,
   secretParams,
@@ -32,7 +32,7 @@ import { transportLayer } from "./helpers";
 import * as logs from "./logs";
 import { Templates } from "./templates";
 
-assertRequiredParams();
+assertParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [

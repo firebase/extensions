@@ -29,6 +29,7 @@
 import { declaredParams } from "firebase-functions/params";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { configFromEnv } from "../src/config";
+import { resolveConfig } from "../src/export-config";
 
 function declaration(name: string) {
   const param = declaredParams.find((candidate) => candidate.name === name);
@@ -84,5 +85,11 @@ describe("OAUTH_SECURE values inherited from the extension", () => {
 
   test("treats an unset variable as insecure, as the extension did", () => {
     expect(configFromEnv().oauthSecure).toBe(false);
+  });
+
+  // The extension platform replaced a blank optional value with its default.
+  test("treats a blank variable as secure, as the extension did", () => {
+    process.env.OAUTH_SECURE = "";
+    expect(resolveConfig(configFromEnv()).oauthSecure).toBe(true);
   });
 });
