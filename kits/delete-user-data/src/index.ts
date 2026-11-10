@@ -33,6 +33,7 @@ import {
 import * as logs from "./logs";
 
 assertParams();
+events.selectedEventTypes();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
