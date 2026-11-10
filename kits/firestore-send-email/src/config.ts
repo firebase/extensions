@@ -482,23 +482,6 @@ export function assertValidParams(): void {
     }
   }
 
-  // Not an install-time check in the extension, which accepted a blank URI but
-  // could never send mail with it. The handlers send through the URI under any
-  // auth type but OAuth2, so a blank one leaves every document without a
-  // `delivery` field. The TESTING transport ignores the URI, and an invalid
-  // AUTH_TYPE is reported above.
-  const authType = process.env.AUTH_TYPE || AuthenticatonType.UsernamePassword;
-  if (
-    process.env.SMTP_CONNECTION_URI === "" &&
-    authType !== AuthenticatonType.OAuth2 &&
-    !invalid.some((message) => message.startsWith("AUTH_TYPE=")) &&
-    process.env.TESTING !== "true"
-  ) {
-    invalid.push(
-      `SMTP_CONNECTION_URI="" must be set unless AUTH_TYPE is ${AuthenticatonType.OAuth2}`
-    );
-  }
-
   if (invalid.length > 0) {
     throw new Error(
       `Invalid parameter values: ${invalid.join("; ")}. ` +

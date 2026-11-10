@@ -34,7 +34,7 @@ beforeAll(async () => {
 // AUTH_TYPE is a real param name that can collide with an ambient shell var,
 // so start every test from a known environment.
 beforeEach(() => {
-  for (const name of ["AUTH_TYPE", "SMTP_CONNECTION_URI", "TESTING"]) {
+  for (const name of ["AUTH_TYPE", "SMTP_CONNECTION_URI"]) {
     vi.stubEnv(name, undefined);
   }
 });
@@ -171,44 +171,5 @@ describe("assertValidParams", () => {
     expect(() => assertValidParams()).toThrow(
       /TTL_EXPIRE_TYPE="days".*; TTL_EXPIRE_VALUE="0"/
     );
-  });
-});
-
-// A blank URI under username/password auth leaves every document without a
-// `delivery` field, so the kit rejects it even though the extension's
-// installer allowed it.
-describe("assertValidParams with a blank SMTP_CONNECTION_URI", () => {
-  test.each([undefined, "UsernamePassword", "Username & Password"])(
-    "rejects it when AUTH_TYPE is %j",
-    (authType) => {
-      vi.stubEnv("AUTH_TYPE", authType);
-      vi.stubEnv("SMTP_CONNECTION_URI", "");
-
-      expect(() => assertValidParams()).toThrow(
-        'SMTP_CONNECTION_URI="" must be set unless AUTH_TYPE is OAuth2'
-      );
-    }
-  );
-
-  test("accepts it under OAuth2, which does not use the URI", () => {
-    vi.stubEnv("AUTH_TYPE", "OAuth2");
-    vi.stubEnv("SMTP_CONNECTION_URI", "");
-
-    expect(() => assertValidParams()).not.toThrow();
-  });
-
-  test("accepts it in TESTING mode, whose transport ignores the URI", () => {
-    vi.stubEnv("TESTING", "true");
-    vi.stubEnv("SMTP_CONNECTION_URI", "");
-
-    expect(() => assertValidParams()).not.toThrow();
-  });
-
-  test("reports only AUTH_TYPE when that is invalid too", () => {
-    vi.stubEnv("AUTH_TYPE", "oauth2");
-    vi.stubEnv("SMTP_CONNECTION_URI", "");
-
-    expect(() => assertValidParams()).toThrow('AUTH_TYPE="oauth2"');
-    expect(() => assertValidParams()).not.toThrow(/SMTP_CONNECTION_URI/);
   });
 });

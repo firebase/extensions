@@ -128,8 +128,7 @@ deploy fails with an error naming the setting if `DATABASE_REGION`,
 or their labels (the error lists the allowed values), or if
 `SMTP_CONNECTION_URI`, `MAIL_COLLECTION`, `DEFAULT_FROM` or `TTL_EXPIRE_VALUE`
 is not in the format the extension accepted (the error gives the extension's
-message). It also fails if `SMTP_CONNECTION_URI` is set to an empty value and
-`AUTH_TYPE` is not `OAuth2`, as no mail can be sent that way. One error lists
+message). One error lists
 every bad setting, along with any required setting left blank. The values are
 case sensitive. The emulator runs the same check, so a bad value stops the
 function from loading there. An empty `OAUTH_SECURE` means `true`, as it did in
@@ -262,13 +261,11 @@ with `EXT_`, so
 `EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
 unaffected.
 
-### An empty `SMTP_CONNECTION_URI` fails the deploy
+### An empty required setting fails the deploy
 
 The kit checks `.env` values against the extension's install-time rules (see
-[Configuration](#configuration)), with two differences. A required setting left
+[Configuration](#configuration)), with one difference: a required setting left
 empty, such as `DEFAULT_FROM=`, fails the deploy instead of taking its default.
-And `SMTP_CONNECTION_URI=` fails the deploy unless `AUTH_TYPE` is `OAuth2`. The
-extension installed with it, but could never send mail with it.
 
 ### The setup steps and the OAuth2 helper are not in the README
 
