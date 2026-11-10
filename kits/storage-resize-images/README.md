@@ -297,6 +297,12 @@ an empty one: a non-interactive deploy fails with `In non-interactive mode but
 have no value for the following environment variables: BUCKET_REGION`. Note that
 changing an existing instance's region deletes and recreates the function.
 
+### A failed event publish doesn't stop resizing
+
+If an event can't be published, the kit logs a warning and carries on. The
+extension failed the function instead, so a failed `onStart` publish meant the
+image was never resized.
+
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/storage-resize-images`): exports
