@@ -137,8 +137,6 @@ overridden there.
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | URL of a custom search function that returns paths to delete |
 | — | `FUNCTION_DEFAULT_REGION` | no | `us-central1` | Region the functions deploy to |
-| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
-| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
 ## Multiple instances
 
@@ -232,9 +230,8 @@ fail with "contains no .env file for current project". Next to
 Uninstalling the extension removed the same resources and kept its two Pub/Sub
 topics. The kit also keeps two things:
 
-- The topics `kit-<instance id>-discovery` and `kit-<instance id>-deletion` (or
-  the names in `DISCOVERY_TOPIC_NAME` and `DELETION_TOPIC_NAME`). Delete them
-  with `gcloud pubsub topics delete <topic>`.
+- The topics `kit-<instance id>-discovery` and `kit-<instance id>-deletion`.
+  Delete them with `gcloud pubsub topics delete <topic>`.
 - The deleted service account's seven project roles, which the extension
   removed. They no longer grant access, and show in your project's IAM policy
   as members like
@@ -272,11 +269,7 @@ Discovery and deletion topics are now `kit-<instance id>-discovery` and
 `kit-<instance id>-deletion`, where the extension used an `ext-` prefix. The
 Firebase CLI creates them for you on deploy, so there is no manual setup step,
 but the old topics from an extension install are not reused and can be deleted
-once you have migrated.
-
-You can also override both names with `DISCOVERY_TOPIC_NAME` and
-`DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
-since one function publishes to a topic the other is triggered by.
+once you have migrated. As in the extension, the names can't be changed.
 
 ### Functions deploy to `FUNCTION_DEFAULT_REGION`
 
