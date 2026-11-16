@@ -249,7 +249,7 @@ kit's only function and nothing reconciles the mail collection afterwards, so
 any document written while the function is gone is never delivered. Stop
 writers and let the collection drain before a deploy that moves the region.
 
-### Create the Eventarc channel yourself for events, and their source has changed
+### Create the Eventarc channel yourself for events
 
 Choosing events at install used to create the channel and set both event
 variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
@@ -260,6 +260,8 @@ with `EXT_`, so
 `EXT_SELECTED_EVENTS` cannot be set and every event type is published. With
 `EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
 unaffected.
+
+### CloudEvent source has changed
 
 Each event's CloudEvent `source` used to identify the extension instance
 (`//firebaseextensions.googleapis.com/extensions/projects/<project id>/instances/<instance id>`).
