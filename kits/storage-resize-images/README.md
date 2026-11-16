@@ -154,8 +154,8 @@ When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
 such as `onStart`, `onStartResize`, `onSuccess`, `onError`, and `onCompletion`
 under `firebase.extensions.storage-resize-images.v1.*`.
 `EXT_SELECTED_EVENTS` filters by exact type. A config exported from the
-extension carries its `EXT_SELECTED_EVENTS` over, so check it lists what you
-expect.
+extension carries its `EXT_SELECTED_EVENTS` over, so it should be reviewed to
+match your expected event types.
 
 ## Differences from the Resize Images extension
 
