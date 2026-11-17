@@ -246,6 +246,18 @@ error such as `Max instances must be set to 2500 or fewer to set the requested
 total CPU`. Lower `maxInstances`, or request a quota increase for Cloud Run in
 that region.
 
+### Event source
+
+The extension's events had the `source`
+`//firebaseextensions.googleapis.com/extensions/projects/<project>/instances/<instance>`.
+The kit's events have the function's service as their `source`:
+`projects/<project>/locations/<region>/services/kit-<instance id>-generateResizedImage`.
+
+A trigger that filters on the extension's `source` receives no events from the
+kit, and nothing reports an error. Change the filter to the new value. To keep
+instances apart on a shared channel, you can instead give each instance its
+own `EVENTARC_CHANNEL`.
+
 ### Region
 
 `BUCKET_REGION` decides where the function deploys, as described below, rather
