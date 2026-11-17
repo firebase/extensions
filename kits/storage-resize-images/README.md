@@ -65,11 +65,12 @@ later, behind the `kits` experiment):
 {
   "functions": [
     {
-      "source": ".",
+      "source": "functions",
       "kit": "storage-resize-images",
       "instances": {
-        "default": "."
-      }
+        "default": "functions"
+      },
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ]
 }
@@ -90,7 +91,8 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 ## Configuration
 
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
-loads them at deploy time and prompts for any required values that are missing.
+loads them at deploy time and prompts for any variable that is missing, optional
+ones included. A non-interactive deploy fails instead, so set every variable.
 
 A setting with **No** under "Can be blank" fails the deploy on a line like
 `IMG_SIZES=`. Give it a value, or remove the line and answer the prompt.
@@ -111,7 +113,7 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | `imageTypes`           | `IMAGE_TYPE`             | No           | `["false"]`            | Output image types list                                                                    |
 | `outputOptions`        | `OUTPUT_OPTIONS`         | Yes          | (empty)                | JSON output options                                                                        |
 | `sharpOptions`         | `SHARP_OPTIONS`          | Yes          | `{}`                   | JSON Sharp options                                                                         |
-| `isAnimated`           | `IS_ANIMATED`            | Yes          | `true`                 | Preserve animation                                                                         |
+| `isAnimated`           | `IS_ANIMATED`            | Yes          | `true`                 | Preserve animation; an empty value means `false` (see note below)                          |
 | `memory`               | `FUNCTION_MEMORY`        | No           | `1024`                 | Function memory (MiB)                                                                      |
 | `regenerateToken`      | `REGENERATE_TOKEN`       | Yes          | `true`                 | Regenerate download tokens                                                                 |
 | `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | No           | `OFF`                  | Content filter level                                                                       |
@@ -138,30 +140,28 @@ call to `resolveResizeImagesConfig` deletes the original on a successful
 resize, as the extension did for an unset `DELETE_ORIGINAL_FILE`; pass
 `"false"` to keep originals.
 
+An empty `IS_ANIMATED=` line is treated as `false`, not as the `true` default:
+the deploy accepts it without a prompt, and animated GIF and WebP images are
+resized to their first frame only.
+
 ## Multiple instances
 
-To resize images from several buckets or pipelines, add one entry per instance
-to the `instances` map, each pointing at its own config directory with its own
-`.env`:
+Add one entry per instance, each with its own config directory and `.env`.
+Instance ids must be unique across the project. In a project set up by
+`firebase functions:kits:install`, add them to the entry it wrote. Running the
+install again adds an instance with a generated id; to choose the id, copy an
+existing config directory and add it to `instances` yourself.
 
 ```json
-{
-  "functions": [
-    {
-      "source": ".",
-      "kit": "storage-resize-images",
-      "instances": {
-        "avatars": "instances/avatars",
-        "uploads": "instances/uploads"
-      }
-    }
-  ]
+"instances": {
+  "storage-resize-images": "function-kits/storage-resize-images/config-storage-resize-images",
+  "avatars": "function-kits/storage-resize-images/config-avatars"
 }
 ```
 
-Instance ids must be unique across all kit stanzas in the project, and every
-instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide.
+Each instance's `.env` must be complete, including `FUNCTION_DEFAULT_REGION`.
+Remove one instance with `firebase functions:kits:uninstall --instance <id>`;
+the others keep running.
 
 ## Events
 
@@ -337,7 +337,9 @@ it, so it only takes effect when `BUCKET_REGION` is empty.
 With an explicit empty `BUCKET_REGION=` line in `.env`, the function deploys to
 `FUNCTION_DEFAULT_REGION`, which must then match the bucket. If both are empty,
 the deploy fails with `A function in region  cannot listen to a bucket in
-region <region>`. Omitting the `BUCKET_REGION` line is not the same as an empty
+region <region>`. In a codebase you set up yourself, which has no
+`FUNCTION_DEFAULT_REGION`, it lands in the CLI's default region, `us-central1`
+on a first deploy. Omitting the `BUCKET_REGION` line is not the same as an empty
 one: a non-interactive deploy fails with `In non-interactive mode but have no
 value for the following environment variables: BUCKET_REGION`. Changing an
 existing instance's region, through either variable, deletes and recreates the
