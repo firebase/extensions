@@ -204,6 +204,12 @@ function formatZodError(
           return `Field '${path}' must be a string`;
         }
         if (issue.expected === "array") {
+          if (
+            issue.received === "object" &&
+            issue.path[issue.path.length - 1] === "attachments"
+          ) {
+            return `Field '${path}' must be an array. To send a single attachment, wrap it in an array: [{ filename: '...', path: '...' }]`;
+          }
           return `Field '${path}' must be an array`;
         }
         if (issue.expected === "object") {
@@ -270,6 +276,27 @@ function validateField(
     const adjustedError = adjustZodErrorIssues(result.error, [fieldName]);
     throw new ValidationError(formatZodError(adjustedError, context));
   }
+}
+
+/**
+ * Parses attachments with attachmentsSchema, throwing a ValidationError that names the field on failure.
+ * @param attachments - The attachments value to parse
+ * @param path - The path of the field the attachments came from
+ * @param context - The context for error messages
+ * @returns The parsed attachments
+ * @throws {ValidationError} When validation fails
+ */
+export function parseAttachments(
+  attachments: unknown,
+  path: string[],
+  context: string
+) {
+  const result = attachmentsSchema.safeParse(attachments);
+  if (!result.success) {
+    const adjustedError = adjustZodErrorIssues(result.error, path);
+    throw new ValidationError(formatZodError(adjustedError, context));
+  }
+  return result.data;
 }
 
 /**

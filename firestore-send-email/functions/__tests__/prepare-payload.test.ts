@@ -15,6 +15,7 @@
  */
 
 import { preparePayload, setDependencies } from "../src/prepare-payload";
+import { ValidationError } from "../src/validation";
 
 class MockTemplates {
   async render(name: string, data: any) {
@@ -40,6 +41,12 @@ class MockTemplates {
           html: "<h1>Template HTML</h1>",
           subject: "Template Subject",
           attachments: [{ filename: "template.pdf" }],
+        };
+      case "template-with-single-attachment-object":
+        return {
+          html: "<h1>Template HTML</h1>",
+          subject: "Template Subject",
+          attachments: { filename: "template.pdf" },
         };
       case "template-with-data":
         return {
@@ -439,6 +446,22 @@ describe("preparePayload Template Merging", () => {
 
       const result = await preparePayload(payload);
       expect(result.message.attachments).toBeUndefined();
+    });
+
+    it("should name the template when its attachments are not an array", async () => {
+      const payload = {
+        to: "test@example.com",
+        template: {
+          name: "template-with-single-attachment-object",
+          data: {},
+        },
+      };
+
+      await expect(preparePayload(payload)).rejects.toThrow(
+        new ValidationError(
+          "Invalid template 'template-with-single-attachment-object': Field 'attachments' must be an array. To send a single attachment, wrap it in an array: [{ filename: '...', path: '...' }]"
+        )
+      );
     });
 
     it("should handle empty attachments array", async () => {
