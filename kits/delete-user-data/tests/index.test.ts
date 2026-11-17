@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("../src/logs");
 vi.mock("../src/handlers", async (importOriginal) => ({
@@ -23,7 +24,7 @@ vi.mock("../src/handlers", async (importOriginal) => ({
 }));
 
 import { handleClear } from "../src/handlers";
-import { clearData } from "../src/index";
+import { clearData, handleDeletion, handleSearch } from "../src/index";
 import * as logs from "../src/logs";
 
 function deletionEvent(data: unknown) {
@@ -66,5 +67,110 @@ describe("clearData", () => {
 
     expect(handleClear).not.toHaveBeenCalled();
     expect(logs.deletionEventMissingUid).toHaveBeenCalledWith("event-id");
+  });
+});
+
+// The CLI loads the kit to read its manifest, so a throw at import fails the
+// deploy, as the extension's install failed on the same value.
+describe("module load", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("fails on an invalid EXT_SELECTED_EVENTS", async () => {
+    vi.resetModules();
+    vi.stubEnv(
+      "EXT_SELECTED_EVENTS",
+      "firebase.extensions.delete-user-data.v1.firestore, firebase.extensions.delete-user-data.v1.storage"
+    );
+
+    await expect(import("../src/index")).rejects.toThrow(
+      "EXT_SELECTED_EVENTS is invalid"
+    );
+  });
+
+  // Deploy-time discovery imports the kit, so this is what fails the deploy.
+  test("throws when a param value is invalid", async () => {
+    vi.resetModules();
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    await expect(import("../src/index")).rejects.toThrow(
+      'FIRESTORE_DELETE_MODE="RECURSIVE"'
+    );
+  });
+
+  test("reports blank required and invalid params in one error", async () => {
+    vi.resetModules();
+    vi.stubEnv("CLOUD_STORAGE_BUCKET", "");
+    vi.stubEnv("FIRESTORE_DELETE_MODE", "RECURSIVE");
+
+    const load = import("../src/index");
+
+    await expect(load).rejects.toThrow("CLOUD_STORAGE_BUCKET");
+    await expect(load).rejects.toThrow('FIRESTORE_DELETE_MODE="RECURSIVE"');
+  });
+});
+
+describe("runtime options", () => {
+  // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
+  // instance, which ran out of memory and dropped them. The 2nd gen default of
+  // 100 instances held each function to 100 events at once, against 3000.
+  test.each([
+    ["clearData", clearData],
+    ["handleSearch", handleSearch],
+    ["handleDeletion", handleDeletion],
+  ])(
+    "%s runs one event per gen1 CPU instance, up to 3000 instances, with internal-only ingress",
+    (_name, fn) => {
+      const endpoint = (fn as any).__endpoint;
+
+      expect(endpoint.concurrency).toBe(1);
+      expect(endpoint.cpu).toBe("gcf_gen1");
+      expect(endpoint.maxInstances).toBe(3000);
+      expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    }
+  );
+
+  describe("with global options set", () => {
+    afterEach(() => {
+      delete (globalThis as any)[
+        Symbol.for("firebase-functions:v2:globalOptions")
+      ].value;
+    });
+
+    // Only max instances follow the global options. Concurrency, CPU and
+    // ingress stay the extension's, and the region comes from
+    // FUNCTION_DEFAULT_REGION. A global concurrency without a full CPU would
+    // otherwise fail the deploy.
+    test("only lets the global options change max instances", async () => {
+      setGlobalOptions({
+        concurrency: 80,
+        ingressSettings: "ALLOW_ALL",
+        maxInstances: 10,
+        region: "europe-west1",
+      });
+      vi.resetModules();
+      const kit = await import("../src/index");
+
+      for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
+        const endpoint = (fn as any).__endpoint;
+
+        expect(endpoint.maxInstances).toBe(10);
+        expect(endpoint.concurrency).toBe(1);
+        expect(endpoint.cpu).toBe("gcf_gen1");
+        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+        expect(endpoint.region.name).toBe("FUNCTION_DEFAULT_REGION");
+      }
+    });
+
+    test("keeps 3000 max instances when only other global options are set", async () => {
+      setGlobalOptions({ memory: "512MiB" });
+      vi.resetModules();
+      const kit = await import("../src/index");
+
+      for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
+        expect((fn as any).__endpoint.maxInstances).toBe(3000);
+      }
+    });
   });
 });

@@ -114,6 +114,17 @@ loads them at deploy time and prompts for any required values that are missing.
 | `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
 
+Single-quote JSON values such as `SHARP_OPTIONS` and `OUTPUT_OPTIONS` in
+`.env`. In an unquoted value, `#` starts a comment and cuts the rest of the value off:
+
+```
+SHARP_OPTIONS='{"fit":"contain","background":"#ff0000"}'
+```
+
+The deploy fails, naming the variable, if `IMG_SIZES` is not a list of
+`WIDTHxHEIGHT` values, if `SHARP_OPTIONS` is not a JSON object, or if
+`OUTPUT_OPTIONS` is not wrapped in `{}`.
+
 The `deleteOriginal` default above is what the CLI proposes at the deploy
 prompt and writes to `.env.<projectId>` when the variable is missing (a
 non-interactive deploy fails instead). Omitting `deleteOriginal` in a direct
@@ -194,6 +205,18 @@ The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
 CLI grants these for you.
 
+In 2nd gen every event is recorded as HTTP 200, including thrown errors,
+timeouts and out-of-memory kills, and the trigger does not retry, so alert on
+the function's logs rather than its request status. Any error the function
+raises is logged at ERROR severity with its stack. A timeout or an
+out-of-memory kill stops the function before it can log an error:
+
+- An out-of-memory kill is logged at ERROR in the `varlog/system` log as
+  `Memory limit of ... exceeded`.
+- A timeout is never logged at ERROR, so an alert on ERROR alone misses it.
+  Cloud Run logs it at INFO in the requests log as
+  `The request has been terminated because it has reached the maximum request timeout.`
+
 ### At most 100 images resize at once by default
 
 The function deploys with the 2nd gen default of 100 instances, where the
@@ -255,6 +278,10 @@ inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
 `asia-east1` - because they are not Cloud Run regions themselves and would fail
 the deploy. The value is matched case-insensitively.
 
+Cloud Functions has no location in `europe-north2` or `northamerica-south1`, so
+the kit can't serve a bucket there. The extension can: keep using it, or move to
+a listed region.
+
 Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
 not mapped. Pick one of the regions the pair is made of instead, all of which
 are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
@@ -290,6 +317,12 @@ function in the deploy, not just this kit. Omitting the line is not the same as
 an empty one: a non-interactive deploy fails with `In non-interactive mode but
 have no value for the following environment variables: BUCKET_REGION`. Note that
 changing an existing instance's region deletes and recreates the function.
+
+### A failed event publish doesn't stop resizing
+
+If an event can't be published, the kit logs a warning and carries on. The
+extension failed the function instead, so a failed `onStart` publish meant the
+image was never resized.
 
 ## API surface
 
