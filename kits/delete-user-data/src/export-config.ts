@@ -30,8 +30,6 @@ export interface DeleteUserDataConfig {
   searchFields?: string;
   searchFunction?: string;
   instanceId: string;
-  discoveryTopicName?: string;
-  deletionTopicName?: string;
   projectId?: string;
 }
 
@@ -58,12 +56,17 @@ const DEFAULT_FIRESTORE_DATABASE_ID = "(default)";
 const DEFAULT_FIRESTORE_DELETE_MODE: FirestoreDeleteMode = "shallow";
 const DEFAULT_SEARCH_DEPTH = 3;
 const DEFAULT_SEARCH_FIELDS = "id,uid,userId";
-function topicName(
-  name: string | undefined,
-  instanceId: string,
-  suffix: string
+
+/**
+ * The Pub/Sub topic an instance publishes to and is triggered by. The extension
+ * named its topics the same way from its instance id (with an `ext-` prefix)
+ * and offered no setting to change them.
+ */
+export function topicName(
+  instanceId: string | undefined,
+  suffix: "discovery" | "deletion"
 ): string {
-  return name ?? `kit-${instanceId}-${suffix}`;
+  return `kit-${instanceId}-${suffix}`;
 }
 
 export function resolveDeleteUserDataConfig(
@@ -86,16 +89,8 @@ export function resolveDeleteUserDataConfig(
     searchFields: config.searchFields ?? DEFAULT_SEARCH_FIELDS,
     searchFunction: config.searchFunction,
     instanceId,
-    discoveryTopicName: topicName(
-      config.discoveryTopicName,
-      instanceId,
-      "discovery"
-    ),
-    deletionTopicName: topicName(
-      config.deletionTopicName,
-      instanceId,
-      "deletion"
-    ),
+    discoveryTopicName: topicName(instanceId, "discovery"),
+    deletionTopicName: topicName(instanceId, "deletion"),
     projectId: config.projectId,
   };
 }

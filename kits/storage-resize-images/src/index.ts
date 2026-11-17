@@ -111,6 +111,10 @@ export const generateResizedImage = onObjectFinalized(
     // policy, so those images are never resized.
     concurrency: 1,
     cpu: "gcf_gen1",
+    // Only Eventarc invokes this trigger, so ingress is pinned and a global
+    // `ingressSettings` does not apply. `maxInstances` is left to
+    // `setGlobalOptions`.
+    ingressSettings: "ALLOW_INTERNAL_ONLY",
   },
   async (event) => {
     // 2nd gen records every event as HTTP 200, even a failed one, so this

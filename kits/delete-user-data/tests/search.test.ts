@@ -105,12 +105,12 @@ describe("search", () => {
     expect(discoveryMessages(ctx)).toEqual([]);
   });
 
-  test("publishes to the configured discovery topic", async () => {
+  test("publishes to the instance's discovery topic", async () => {
     const firestore = createFakeFirestore({ "users/doc1": { foo: "bar" } });
     const ctx = makeContext({
       firestore,
       config: {
-        discoveryTopicName: "custom-discovery",
+        instanceId: "my-instance",
         projectId: "demo-test",
       },
     });
@@ -119,7 +119,7 @@ describe("search", () => {
 
     expect(ctx.pubsub.published).toEqual([
       {
-        topic: "projects/demo-test/topics/custom-discovery",
+        topic: "projects/demo-test/topics/kit-my-instance-discovery",
         json: { path: "users", uid: UID, depth: 1 },
       },
     ]);
