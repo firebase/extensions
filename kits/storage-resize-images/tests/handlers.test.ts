@@ -506,19 +506,24 @@ describe("handleObjectFinalized", () => {
     type: "google.cloud.storage.object.v1.finalized",
     source: "//storage.googleapis.com/projects/_/buckets/demo-bucket",
     time: "2026-01-01T00:00:00.000Z",
-    data: mockObject,
+    data: { ...mockObject, kind: "storage#object" },
   } as unknown as Parameters<typeof handleObjectFinalized>[0];
 
   test("brackets the resize with start and completion events", async () => {
     await handleObjectFinalized(storageEvent, makeCtx());
 
-    expect(events.recordStartEvent).toHaveBeenCalledWith(mockObject);
+    expect(events.recordStartEvent).toHaveBeenCalledWith(storageEvent.data);
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
       context: {
         eventId: "event-1",
-        eventType: "google.cloud.storage.object.v1.finalized",
-        resource: "//storage.googleapis.com/projects/_/buckets/demo-bucket",
-        timestamp: "2026-01-01T00:00:00.000Z",
+        timestamp: "2026-01-01T00:00:00Z",
+        eventType: "google.storage.object.finalize",
+        resource: {
+          service: "storage.googleapis.com",
+          name: "projects/_/buckets/demo-bucket/objects/images/test.jpg",
+          type: "storage#object",
+        },
+        params: {},
       },
     });
   });

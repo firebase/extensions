@@ -59,7 +59,6 @@ describe("processQueue options", () => {
     ["nam5", "us-central1"],
     ["nam7", "us-central1"],
     ["eur3", "europe-west1"],
-    ["NAM5", "us-central1"],
   ])(
     "multi-region DATABASE_REGION %s deploys the function to %s",
     async (databaseRegion, expectedRegion) => {
@@ -88,5 +87,52 @@ describe("processQueue options", () => {
     expect(String(options.database)).toBe("params.DATABASE");
     const document = options.document as { toCEL(): string };
     expect(document.toCEL()).toContain("params.MAIL_COLLECTION");
+  });
+
+  // Concurrency 80 let a burst of mail with attachments land on one 256MiB
+  // instance, which ran out of memory and dropped it.
+  test("the function runs one event per gen1 CPU instance with internal-only ingress", async () => {
+    const options = await loadTriggerOptions();
+    expect(options.concurrency).toBe(1);
+    expect(options.cpu).toBe("gcf_gen1");
+    expect(options.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+  });
+});
+
+describe("module load", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // Deploy-time discovery imports the kit, so this is what fails the deploy.
+  test("throws when a param value is invalid", async () => {
+    vi.resetModules();
+    vi.stubEnv("TTL_EXPIRE_TYPE", "days");
+
+    await expect(import("../src/index")).rejects.toThrow(
+      'TTL_EXPIRE_TYPE="days"'
+    );
+  });
+
+  // The extension's select is case sensitive, so a DATABASE_REGION it rejected
+  // no longer reaches the case-insensitive region lookup.
+  test("throws on a DATABASE_REGION in the wrong case", async () => {
+    vi.resetModules();
+    vi.stubEnv("DATABASE_REGION", "NAM5");
+
+    await expect(import("../src/index")).rejects.toThrow(
+      'DATABASE_REGION="NAM5"'
+    );
+  });
+
+  test("reports blank required and invalid params in one error", async () => {
+    vi.resetModules();
+    vi.stubEnv("DEFAULT_FROM", "");
+    vi.stubEnv("TTL_EXPIRE_VALUE", "0");
+
+    const load = import("../src/index");
+
+    await expect(load).rejects.toThrow("DEFAULT_FROM");
+    await expect(load).rejects.toThrow('TTL_EXPIRE_VALUE="0"');
   });
 });
