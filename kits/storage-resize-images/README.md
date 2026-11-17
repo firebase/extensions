@@ -98,6 +98,7 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | Field                  | Env var                  | Can be blank | Default                | Description                                                                                |
 | ---------------------- | ------------------------ | ------------ | ---------------------- | ------------------------------------------------------------------------------------------ |
 | `bucketRegion`         | `BUCKET_REGION`          | Yes          | (prompted)             | Cloud Storage bucket location; also places the function                                    |
+| (none)                 | `FUNCTION_DEFAULT_REGION` | Yes         | (prompted)             | Function region when `BUCKET_REGION` is empty ([details](#bucket_region-decides-where-the-function-runs)) |
 | `bucket`               | `IMG_BUCKET`             | No           | default Storage bucket | Bucket to watch                                                                            |
 | `sizes`                | `IMG_SIZES`              | No           | `200x200`              | Comma-separated resize sizes                                                               |
 | `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | No           | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
@@ -316,20 +317,19 @@ places the function correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
-`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
-recording where the extension's function ran. Nothing reads it: placement comes
-from `BUCKET_REGION` alone, so if the two disagree your next deploy moves the
-function.
+Projects created by `firebase functions:kits:install` or `firebase ext:migrate`
+also require `FUNCTION_DEFAULT_REGION` in `.env`. `ext:migrate` sets it to the
+region the extension's function ran in. A non-empty `BUCKET_REGION` overrides
+it, so it only takes effect when `BUCKET_REGION` is empty.
 
-With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
-region and the Firebase CLI resolves one at deploy time: it keeps the region it
-is already deployed in, and on a first deploy lands in `us-central1` unless you
-set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Omitting the line is not the same as
-an empty one: a non-interactive deploy fails with `In non-interactive mode but
-have no value for the following environment variables: BUCKET_REGION`. Note that
-changing an existing instance's region deletes and recreates the function.
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function deploys to
+`FUNCTION_DEFAULT_REGION`, which must then match the bucket. If both are empty,
+the deploy fails with `A function in region  cannot listen to a bucket in
+region <region>`. Omitting the `BUCKET_REGION` line is not the same as an empty
+one: a non-interactive deploy fails with `In non-interactive mode but have no
+value for the following environment variables: BUCKET_REGION`. Changing an
+existing instance's region, through either variable, deletes and recreates the
+function.
 
 ### A failed event publish doesn't stop resizing
 
