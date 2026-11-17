@@ -109,9 +109,9 @@ export const generateResizedImage = onObjectFinalized(
     // policy, so those images are never resized.
     concurrency: 1,
     cpu: "gcf_gen1",
-    // Only Eventarc invokes this trigger. Pinned rather than read from
-    // `setGlobalOptions`, which may not have run yet when an ESM codebase
-    // imports the kit. `maxInstances` is left to `setGlobalOptions`.
+    // Only Eventarc invokes this trigger, so ingress is pinned and a global
+    // `ingressSettings` does not apply. `maxInstances` is left to
+    // `setGlobalOptions`.
     ingressSettings: "ALLOW_INTERNAL_ONLY",
   },
   (event) => handleObjectFinalized(event, getContext())
