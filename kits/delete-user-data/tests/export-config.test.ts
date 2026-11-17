@@ -77,17 +77,6 @@ describe("resolveDeleteUserDataConfig", () => {
     expect(config.deletionTopicName).toBe("kit-my-instance-deletion");
   });
 
-  test("honours explicit topic names", () => {
-    const config = resolveDeleteUserDataConfig({
-      instanceId: "my-instance",
-      discoveryTopicName: "custom-discovery",
-      deletionTopicName: "custom-deletion",
-    });
-
-    expect(config.discoveryTopicName).toBe("custom-discovery");
-    expect(config.deletionTopicName).toBe("custom-deletion");
-  });
-
   test("passes through the supplied values", () => {
     const config = resolveDeleteUserDataConfig({
       instanceId: "my-instance",

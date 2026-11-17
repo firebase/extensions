@@ -68,10 +68,6 @@ const select = vi.fn((options: Record<string, string>) => ({
   },
 }));
 
-function cel(value: unknown): string {
-  return value instanceof FakeExpression ? value.toCEL() : String(value);
-}
-
 vi.mock("firebase-functions/params", () => ({
   Expression: FakeExpression,
   defineInt,
@@ -162,8 +158,6 @@ describe("configFromEnv", () => {
         "STORAGE_PATHS",
         "AUTO_DISCOVERY_SEARCH_FIELDS",
         "SEARCH_FUNCTION",
-        "DISCOVERY_TOPIC_NAME",
-        "DELETION_TOPIC_NAME",
       ])
     );
     expect(defineInt.mock.calls).toContainEqual([
@@ -212,23 +206,26 @@ describe("configFromEnv", () => {
     );
   });
 
-  test("defaults the topic names to kit-{instanceId}-*", async () => {
+  test("derives the trigger topics from the instance id", async () => {
     const { CONFIG_EXPRESSIONS } = await importConfig();
 
-    expect(cel(CONFIG_EXPRESSIONS.discoveryTopicName)).toBe(
-      "{{ params.DISCOVERY_TOPIC_NAME }}"
+    expect(CONFIG_EXPRESSIONS.discoveryTopicName).toBe(
+      "kit-test-instance-discovery"
     );
-    expect(cel(CONFIG_EXPRESSIONS.deletionTopicName)).toBe(
-      "{{ params.DELETION_TOPIC_NAME }}"
+    expect(CONFIG_EXPRESSIONS.deletionTopicName).toBe(
+      "kit-test-instance-deletion"
     );
-    expect(defineString.mock.calls).toContainEqual([
-      "DISCOVERY_TOPIC_NAME",
-      { default: "kit-test-instance-discovery" },
-    ]);
-    expect(defineString.mock.calls).toContainEqual([
-      "DELETION_TOPIC_NAME",
-      { default: "kit-test-instance-deletion" },
-    ]);
+  });
+
+  // The extension had no topic settings, so `ext:migrate` has no value to
+  // write for them, and a non-interactive migration fails on any param the
+  // CLI can't fill (#3260).
+  test("does not declare topic-name params", async () => {
+    await importConfig();
+
+    const declared = defineString.mock.calls.map(([name]) => name);
+    expect(declared).not.toContain("DISCOVERY_TOPIC_NAME");
+    expect(declared).not.toContain("DELETION_TOPIC_NAME");
   });
 
   test("defaults the storage bucket to the project bucket param", async () => {

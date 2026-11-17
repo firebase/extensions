@@ -22,7 +22,7 @@ import {
   select,
   storageBucket,
 } from "firebase-functions/params";
-import type { DeleteUserDataConfig } from "./export-config";
+import { type DeleteUserDataConfig, topicName } from "./export-config";
 
 // firebase-tools injects this for kit instances (set to the instance's key in
 // firebase.json) during discovery, in the emulator, and on deployed functions.
@@ -172,20 +172,17 @@ const params = {
       "Where do you want to deploy the functions created for this kit? You usually want a location close to your database.",
     default: "us-central1",
   }),
-  // Non-empty defaults so Pub/Sub trigger bindings resolve during deploy
-  // discovery without freezing an empty topic name into the manifest.
-  discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", {
-    default: `kit-${instanceId}-discovery`,
-  }),
-  deletionTopicName: defineString("DELETION_TOPIC_NAME", {
-    default: `kit-${instanceId}-deletion`,
-  }),
 };
 
+// Topic names are derived from the instance id, as the extension's were, rather
+// than declared as params. The instance id is already set during deploy
+// discovery, and a param here would be a setting the extension never had, so
+// `ext:migrate` would have no value for it and a non-interactive migration
+// would fail.
 export const CONFIG_EXPRESSIONS = {
   functionRegion: params.functionRegion,
-  discoveryTopicName: params.discoveryTopicName,
-  deletionTopicName: params.deletionTopicName,
+  discoveryTopicName: topicName(instanceId, "discovery"),
+  deletionTopicName: topicName(instanceId, "deletion"),
 } as const;
 
 function optional(value: string): string | undefined {
@@ -227,8 +224,6 @@ export function configFromEnv(): DeleteUserDataConfig {
     searchFields: optional(params.searchFields.value()),
     searchFunction: optional(params.searchFunction.value()),
     instanceId,
-    discoveryTopicName: optional(params.discoveryTopicName.value()),
-    deletionTopicName: optional(params.deletionTopicName.value()),
     projectId: projectID.value(),
   };
 }
