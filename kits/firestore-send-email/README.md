@@ -261,6 +261,15 @@ with `EXT_`, so
 `EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
 unaffected.
 
+### CloudEvent source has changed
+
+Each event's CloudEvent `source` used to identify the extension instance
+(`//firebaseextensions.googleapis.com/extensions/projects/<project id>/instances/<instance id>`).
+The Firebase CLI now sets it to the function that published the event
+(`projects/<project id>/locations/<region>/services/kit-<instance id>-processQueue`).
+Only `processQueue` publishes, so each instance still has one `source`. If your
+event triggers filter on `source`, change the filter to the new value.
+
 ### A failed event publish doesn't stop delivery
 
 If an event can't be published, the kit logs a warning and carries on. The
