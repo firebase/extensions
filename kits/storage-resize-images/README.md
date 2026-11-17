@@ -225,6 +225,11 @@ that caps how many images resize at the same time. To raise it, call
 `setGlobalOptions({ maxInstances })` from `firebase-functions/v2` in your
 codebase.
 
+If you migrated with `ext:migrate`, its entry file passes the extension's
+limit to `setGlobalOptions`, so the function scales to that limit (3000 for the
+extension's default) rather than 100, and the quota note below applies. Check
+`EXT_MIGRATED_SYSTEM_MAXINSTANCES` in `.env`.
+
 The total CPU and memory of those instances must fit your project's Cloud Run
 quota in the function's region, so the highest value that deploys depends on
 `FUNCTION_MEMORY` and the region. Too high a value fails the deploy with an
