@@ -330,10 +330,9 @@ HTTP 200 even when the function fails. The
 them with a `status` of `error`, `timeout` or `crash` (out of memory), as it
 did for the extension.
 
-The kit also logs the error's stack trace for every failed run at ERROR
-severity, as the extension did, and then lets the run fail. Error Reporting
-groups it with the copy of the stack that the functions framework writes to
-stderr, so each failure shows up twice in the same group.
+The functions framework writes a failed run's stack trace to stderr, which 2nd
+gen logs with no severity. The kit marks it as ERROR, so each failed run logs
+its stack trace once at ERROR, as the extension did.
 
 To be told about failures, create a
 [metric alert](https://cloud.google.com/monitoring/alerts/using-alerting-ui)

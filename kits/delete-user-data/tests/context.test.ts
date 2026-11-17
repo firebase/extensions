@@ -52,7 +52,6 @@ import * as admin from "firebase-admin";
 import type { HandlerContext } from "../src/handlers";
 import { handleClear } from "../src/handlers";
 import { clearData } from "../src/index";
-import * as logs from "../src/logs";
 
 function deletionEvent(uid: string) {
   return {
@@ -120,20 +119,26 @@ describe("handler context", () => {
     });
   });
 
-  test("logs a failed deletion at ERROR severity and rethrows", async () => {
+  // The functions framework prints `err.stack || err` to stderr, so the
+  // rethrown value carries a structured ERROR entry for it to print.
+  test("rethrows a failed deletion with its stack as an ERROR entry", async () => {
     const err = new Error("boom");
+    const stack = err.stack;
     vi.mocked(handleClear).mockRejectedValueOnce(err);
 
     await expect(clearData(deletionEvent("uid-7"))).rejects.toBe(err);
 
-    expect(logs.unhandledError).toHaveBeenCalledWith(err);
+    expect(JSON.parse(err.stack as string)).toEqual({
+      severity: "ERROR",
+      message: stack,
+    });
   });
 
-  test("does not log an error when the deletion succeeds", async () => {
-    vi.mocked(handleClear).mockResolvedValueOnce(undefined);
+  test("rethrows a value that is not an Error as an ERROR entry", async () => {
+    vi.mocked(handleClear).mockRejectedValueOnce("plain string");
 
-    await clearData(deletionEvent("uid-8"));
-
-    expect(logs.unhandledError).not.toHaveBeenCalled();
+    await expect(clearData(deletionEvent("uid-8"))).rejects.toEqual({
+      stack: JSON.stringify({ severity: "ERROR", message: "plain string" }),
+    });
   });
 });

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { format } from "node:util";
 import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
@@ -112,9 +113,11 @@ function getContext(): HandlerContext {
 }
 
 // On 2nd gen, a handler that throws is still recorded as HTTP 200 in the
-// request log, and the functions framework prints the stack to stderr with no
-// severity. Log the error at ERROR severity so log-based alerts see it, then
-// rethrow so the invocation still counts as failed.
+// request log. The functions framework prints the thrown value's
+// `err.stack || err` to stderr, which 1st gen logged at ERROR but 2nd gen logs
+// with no severity. Rewrite it as a structured entry with ERROR severity before
+// rethrowing, so the framework's copy is the run's one ERROR entry, as it was
+// for the extension. The rethrow keeps the invocation counted as failed.
 function logFailures<E>(
   handler: (event: E) => unknown
 ): (event: E) => Promise<unknown> {
@@ -122,10 +125,19 @@ function logFailures<E>(
     try {
       return await handler(event);
     } catch (err) {
-      logs.unhandledError(err);
-      throw err;
+      throw withErrorSeverity(err);
     }
   };
+}
+
+function withErrorSeverity(err: unknown): unknown {
+  const message = (err instanceof Error && err.stack) || format(err);
+  const stack = JSON.stringify({ severity: "ERROR", message });
+  if (err instanceof Error) {
+    err.stack = stack;
+    return err;
+  }
+  return { stack };
 }
 
 /**

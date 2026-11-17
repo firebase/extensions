@@ -87,21 +87,21 @@ function pubsubEvent(data: string) {
   } as any;
 }
 
-// 2nd gen records a failed invocation as HTTP 200, so the ERROR log is the
+// 2nd gen records a failed invocation as HTTP 200, so the ERROR entry is the
 // only signal. The rethrow keeps the invocation marked as failed.
 describe.each([
   ["handleSearch", handleSearch],
   ["handleDeletion", handleDeletion],
-] as const)("%s", (name, fn) => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("logs a malformed message at ERROR severity and rethrows", async () => {
+] as const)("%s", (_name, fn) => {
+  test("rethrows a malformed message with its stack as an ERROR entry", async () => {
     // The plain SyntaxError, as the extension threw, not `message.json`'s wrapper.
-    await expect(fn(pubsubEvent("not json"))).rejects.toThrow(SyntaxError);
+    const err = await fn(pubsubEvent("not json")).catch((e: unknown) => e);
 
-    expect(logs.unhandledError).toHaveBeenCalledWith(expect.any(SyntaxError));
+    expect(err).toBeInstanceOf(SyntaxError);
+    expect(JSON.parse((err as Error).stack as string)).toEqual({
+      severity: "ERROR",
+      message: expect.stringMatching(/^SyntaxError: .*\n\s+at JSON\.parse/),
+    });
   });
 });
 
