@@ -111,48 +111,17 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-// Read when the functions are defined, as the SDK does.
-const globalOptions = (
-  globalThis as unknown as Record<
-    symbol,
-    { value?: { maxInstances?: unknown; timeoutSeconds?: unknown } } | undefined
-  >
-)[Symbol.for("firebase-functions:v2:globalOptions")]?.value;
-
-// The kit sets no timeout, so its functions take the global one, or 2nd gen's
-// default of 60 seconds for event functions. A global value can be a param.
-function timeoutMs(): number {
-  const option = globalOptions?.timeoutSeconds as
-    | number
-    | { value?: () => unknown }
-    | undefined;
-  const seconds =
-    typeof option === "object" && typeof option.value === "function"
-      ? option.value()
-      : option;
-  return (typeof seconds === "number" && seconds > 0 ? seconds : 60) * 1000;
-}
-
 // On 2nd gen, a handler that throws is still recorded as HTTP 200 in the
 // request log, and the functions framework prints the stack to stderr with no
-// severity. Log the error at ERROR severity so log-based alerts and Error
-// Reporting see it, then rethrow so the invocation still counts as failed.
-//
-// A run that times out keeps going on 2nd gen and can throw minutes later. The
-// extension recorded nothing after a timeout, so the kit swallows the error:
-// Cloud Run has already logged the timeout and counted the run as one, and a
-// rethrow would still put the stack on stderr, where Error Reporting picks it up.
+// severity. Log the error at ERROR severity so log-based alerts see it, then
+// rethrow so the invocation still counts as failed.
 function logFailures<E>(
   handler: (event: E) => unknown
 ): (event: E) => Promise<unknown> {
   return async (event) => {
-    const started = Date.now();
     try {
       return await handler(event);
     } catch (err) {
-      if (Date.now() - started >= timeoutMs()) {
-        return;
-      }
       logs.unhandledError(err);
       throw err;
     }
@@ -174,7 +143,12 @@ function logFailures<E>(
  * Concurrency, CPU and ingress are always the extension's, as in the
  * firestore-bigquery-export kit.
  */
-const globalMaxInstances = globalOptions?.maxInstances;
+const globalMaxInstances = (
+  globalThis as unknown as Record<
+    symbol,
+    { value?: { maxInstances?: unknown } } | undefined
+  >
+)[Symbol.for("firebase-functions:v2:globalOptions")]?.value?.maxInstances;
 
 const EXTENSION_RUNTIME_OPTIONS = {
   concurrency: 1,
