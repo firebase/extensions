@@ -70,9 +70,23 @@ describe("clearData", () => {
   });
 });
 
+// The CLI loads the kit to read its manifest, so a throw at import fails the
+// deploy, as the extension's install failed on the same value.
 describe("module load", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  test("fails on an invalid EXT_SELECTED_EVENTS", async () => {
+    vi.resetModules();
+    vi.stubEnv(
+      "EXT_SELECTED_EVENTS",
+      "firebase.extensions.delete-user-data.v1.firestore, firebase.extensions.delete-user-data.v1.storage"
+    );
+
+    await expect(import("../src/index")).rejects.toThrow(
+      "EXT_SELECTED_EVENTS is invalid"
+    );
   });
 
   // Deploy-time discovery imports the kit, so this is what fails the deploy.
@@ -99,18 +113,20 @@ describe("module load", () => {
 
 describe("runtime options", () => {
   // Concurrency 80 let auto-discovery fan many searches onto one 256MiB
-  // instance, which ran out of memory and dropped them.
+  // instance, which ran out of memory and dropped them. The 2nd gen default of
+  // 100 instances held each function to 100 events at once, against 3000.
   test.each([
     ["clearData", clearData],
     ["handleSearch", handleSearch],
     ["handleDeletion", handleDeletion],
   ])(
-    "%s runs one event per gen1 CPU instance with internal-only ingress",
+    "%s runs one event per gen1 CPU instance, up to 3000 instances, with internal-only ingress",
     (_name, fn) => {
       const endpoint = (fn as any).__endpoint;
 
       expect(endpoint.concurrency).toBe(1);
       expect(endpoint.cpu).toBe("gcf_gen1");
+      expect(endpoint.maxInstances).toBe(3000);
       expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
     }
   );
@@ -122,13 +138,15 @@ describe("runtime options", () => {
       ].value;
     });
 
-    // The README tells users to raise maxInstances and set the region with
-    // setGlobalOptions, so the kit's function-level options must not override
-    // them. Ingress stays internal-only, like the extension's.
-    test("keeps the global options and the extension's runtime", async () => {
+    // Only max instances follow the global options. Concurrency, CPU and
+    // ingress stay the extension's, and the region comes from
+    // FUNCTION_DEFAULT_REGION. A global concurrency without a full CPU would
+    // otherwise fail the deploy.
+    test("only lets the global options change max instances", async () => {
       setGlobalOptions({
+        concurrency: 80,
         ingressSettings: "ALLOW_ALL",
-        maxInstances: 3000,
+        maxInstances: 10,
         region: "europe-west1",
       });
       vi.resetModules();
@@ -137,11 +155,21 @@ describe("runtime options", () => {
       for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
         const endpoint = (fn as any).__endpoint;
 
-        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
-        expect(endpoint.maxInstances).toBe(3000);
-        expect(endpoint.region).toEqual(["europe-west1"]);
+        expect(endpoint.maxInstances).toBe(10);
         expect(endpoint.concurrency).toBe(1);
         expect(endpoint.cpu).toBe("gcf_gen1");
+        expect(endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+        expect(endpoint.region.name).toBe("FUNCTION_DEFAULT_REGION");
+      }
+    });
+
+    test("keeps 3000 max instances when only other global options are set", async () => {
+      setGlobalOptions({ memory: "512MiB" });
+      vi.resetModules();
+      const kit = await import("../src/index");
+
+      for (const fn of [kit.clearData, kit.handleSearch, kit.handleDeletion]) {
+        expect((fn as any).__endpoint.maxInstances).toBe(3000);
       }
     });
   });
