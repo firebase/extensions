@@ -163,6 +163,15 @@ const params = {
       },
     },
   }),
+  // The extension's install-time location, under the name the CLI's generated
+  // entry file and `ext:migrate` use. Defaulting here keeps the extension's
+  // `us-central1`; with no region set the CLI would deploy to `us-east1`.
+  functionRegion: defineString("FUNCTION_DEFAULT_REGION", {
+    label: "Cloud Functions location",
+    description:
+      "Where do you want to deploy the functions created for this kit? You usually want a location close to your database.",
+    default: "us-central1",
+  }),
   // Non-empty defaults so Pub/Sub trigger bindings resolve during deploy
   // discovery without freezing an empty topic name into the manifest.
   discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", {
@@ -174,6 +183,7 @@ const params = {
 };
 
 export const CONFIG_EXPRESSIONS = {
+  functionRegion: params.functionRegion,
   discoveryTopicName: params.discoveryTopicName,
   deletionTopicName: params.deletionTopicName,
 } as const;

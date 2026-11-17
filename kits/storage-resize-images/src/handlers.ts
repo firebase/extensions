@@ -20,6 +20,7 @@ import type { File } from "@google-cloud/storage";
 import type * as admin from "firebase-admin";
 import type { StorageEvent } from "firebase-functions/v2/storage";
 import { checkImageContent } from "./content-filter";
+import { toEventContext } from "./event-context";
 import * as events from "./events";
 import { DELETE_IMAGE, type ResolvedResizeImagesConfig } from "./export-config";
 import {
@@ -48,14 +49,7 @@ export async function handleObjectFinalized(
     event.data as unknown as StorageObjectMetadata,
     ctx
   );
-  await events.recordCompletionEvent({
-    context: {
-      eventId: event.id,
-      eventType: event.type,
-      resource: event.source,
-      timestamp: event.time,
-    },
-  });
+  await events.recordCompletionEvent({ context: toEventContext(event) });
 }
 
 export async function generateResizedImageHandler(
