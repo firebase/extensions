@@ -54,6 +54,15 @@ describe("bucketLocationToFunctionRegion", () => {
     expect(bucketLocationToFunctionRegion(location)).toBe(region);
   });
 
+  test.each(["europe-north2", "northamerica-south1", " Europe-North2 "])(
+    "rejects %s, which has no Cloud Functions location",
+    (location) => {
+      expect(() => bucketLocationToFunctionRegion(location)).toThrow(
+        /Cloud Functions has no location there/
+      );
+    }
+  );
+
   test("lowercases and trims a regional location", () => {
     expect(bucketLocationToFunctionRegion(" Europe-West2 ")).toBe(
       "europe-west2"

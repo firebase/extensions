@@ -53,7 +53,8 @@ export {
 } from "@firebase-function-kits/delete-user-data";
 ```
 
-and configure with a `.env` (or `.env.<projectId>`).
+and configure it in a `.env.<projectId>` file (see [Uninstall](#uninstall) for
+why not a plain `.env`).
 
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
@@ -79,7 +80,7 @@ later, behind the `kits` experiment — earlier CLIs do not provide the
 ```
 
 `instances` maps each instance id to the directory (relative to
-`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+`firebase.json`) holding that instance's `.env.<projectId>`. The CLI prefixes every
 function and task queue name with `kit-<instance id>-`, so the functions above
 deploy as `kit-default-clearData`, `kit-default-handleSearch`, and
 `kit-default-handleDeletion`.
@@ -93,35 +94,60 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
-loads them at deploy time and prompts for any required values that are missing.
+Set these values in a `.env.<projectId>` file, such as `.env.my-project`. The
+Firebase CLI loads them at deploy time and prompts for any required values that
+are missing. A plain `.env` deploys the same way, but
+`functions:kits:uninstall` ignores it (see [Uninstall](#uninstall)).
+
+A setting with **No** under "Can be blank" fails the deploy on a line like
+`FIRESTORE_DELETE_MODE=`. Give it a value, or remove the line and answer the
+prompt.
+
+The CLI does not check values that are already in the file, so the kit checks
+them itself when the deploy loads it, as the extension did at install time. The
+deploy fails with an error naming the setting if `FIRESTORE_DELETE_MODE`,
+`ENABLE_AUTO_DISCOVERY` or `SELECTED_DATABASE_LOCATION` is not one of the
+values listed below or their labels (the error lists the allowed values), or if
+`SELECTED_DATABASE_INSTANCE` or `CLOUD_STORAGE_BUCKET` is not in the format the
+extension accepted: an instance id rather than a URL, and a bucket name without
+`gs://` or capital letters (the error gives the extension's message). One error
+lists every bad setting, along with any blank setting that can't be blank. The
+values are case sensitive. The emulator runs the same check, so a bad value
+stops that instance's functions from loading there.
+
+An option's label (such as `Recursive`) is accepted because the extension's
+installer accepted it, but it runs as it did in the extension: `Recursive`
+deletes shallowly, `Yes` leaves auto-discovery off, and a location label
+(`United States`, `Belgium`, `Singapore`) gives a database URL that doesn't
+exist. Use the values instead.
 
 The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
 `FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
 overridden there.
 
-| Field | Env var | Required | Default | Description |
+| Field | Env var | Can be blank | Default | Description |
 |---|---|---|---|---|
-| `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
-| `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
-| `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
-| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
-| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location: `us-central1`, `europe-west1` or `asia-southeast1` |
-| `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
-| `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
-| `storagePaths` | `STORAGE_PATHS` | no | (empty) | Comma-separated Storage paths with `{UID}` |
-| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `no` | Auto-discover user-linked docs (`yes` or `no`) |
-| `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
-| `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
-| `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | URL of a custom search function that returns paths to delete |
-| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
-| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
+| `firestorePaths` | `FIRESTORE_PATHS` | Yes | (empty) | Comma-separated Firestore paths with `{UID}` |
+| `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | No | `(default)` | Firestore database id |
+| `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | No | `shallow` | `shallow` or `recursive` |
+| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | Yes | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
+| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | Yes | `us-central1` | RTDB location: `us-central1`, `europe-west1` or `asia-southeast1` |
+| `rtdbPaths` | `RTDB_PATHS` | Yes | (empty) | Comma-separated RTDB paths with `{UID}` |
+| `storageBucket` | `CLOUD_STORAGE_BUCKET` | No | default Storage bucket | Bucket to clear |
+| `storagePaths` | `STORAGE_PATHS` | Yes | (empty) | Comma-separated Storage paths with `{UID}` |
+| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | No | `no` | Auto-discover user-linked docs (`yes` or `no`) |
+| `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | No | `3` | Discovery depth |
+| `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | Yes | `id,uid,userId` | Fields treated as user ids |
+| `searchFunction` | `SEARCH_FUNCTION` | Yes | (empty) | URL of a custom search function that returns paths to delete |
+| — | `FUNCTION_DEFAULT_REGION` | Yes | `us-central1` | Region the functions deploy to |
+| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | Yes | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
+| `deletionTopicName` | `DELETION_TOPIC_NAME` | Yes | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
 ## Multiple instances
 
 To run several deletion pipelines, add one entry per instance to the `instances`
-map, each pointing at its own config directory with its own `.env`:
+map, each pointing at its own config directory with its own `.env.<projectId>`:
 
 ```json
 {
@@ -148,19 +174,88 @@ in sync by hand.
 
 The functions can publish deletion events for each backend under
 `firebase.extensions.delete-user-data.v1.*` (`firestore`, `database`, and
-`storage`). Set both of these in `.env` to turn them on:
+`storage`). Set both of these in `.env.<projectId>` to turn them on:
 
 | Env var | Description |
 |---|---|
 | `EVENTARC_CHANNEL` | Full channel name, e.g. `projects/<project id>/locations/us-central1/channels/firebase` |
 | `EXT_SELECTED_EVENTS` | Comma-separated event types to publish, e.g. `firebase.extensions.delete-user-data.v1.firestore,firebase.extensions.delete-user-data.v1.storage` |
 
-Only the listed types are published. If `EXT_SELECTED_EVENTS` is unset or
-empty, nothing is published, which matches an extension instance installed with
-no event types selected.
+Only the listed types are published. List the types exactly as shown,
+separated by commas with no spaces. Empty entries are skipped. The deploy fails
+if an entry has spaces or different case, isn't one of the three types, or is
+listed twice, or if types are listed but `EVENTARC_CHANNEL` is unset, as the
+extension's install did. It also fails if `EVENTARC_CHANNEL` isn't a full
+channel name, is in another project, or is in a location other than
+`us-central1`, `us-west1`, `europe-west4` or `asia-northeast1`, the locations
+the extension supported. If `EXT_SELECTED_EVENTS` is unset or empty, nothing
+is published, which matches an extension instance installed with no event types
+selected.
 
 The channel must already exist. Deploying the kit does not create it, and
 publishing to a missing channel logs a warning without failing the function.
+
+## Uninstall
+
+```sh
+firebase functions:kits:uninstall --instance <instance id>
+```
+
+This deletes the instance's functions, their triggers and Pub/Sub subscriptions,
+and the service account the CLI created for them. It then removes the instance
+from `firebase.json` and deletes its `.env.<projectId>` file. If it is the kit's
+only instance, it removes the whole kit entry, leaving `"functions": []`.
+Despite what the prompt says, it doesn't delete your functions source when the
+kit is exported from your own codebase, as in [Usage](#usage).
+
+The command asks you to confirm, twice if this is the kit's only instance. In a
+non-interactive shell (CI, a script, any shell without a TTY, or when the CLI
+detects an AI agent), add `--force`. Without it nothing is deleted: the command
+exits 0 for the kit's only instance, and fails with `Command aborted.`
+otherwise.
+
+It only deletes what is deployed to a project with a `.env.<projectId>` file in
+the instance's config directory. With only a plain `.env`, it still removes the
+instance from `firebase.json` and exits without an error, but the functions keep
+running and keep deleting user data. Rename `.env` to `.env.<projectId>` before
+you uninstall. If you already uninstalled with a plain `.env`, put the instance
+(or, if it was the only one, the whole kit entry) back in `firebase.json`,
+rename the file, and run the command again.
+
+If the instance is deployed to more than one project, give each project its own
+`.env.<projectId>` (copy a shared `.env`, don't rename it) and run the command
+once per project with `--project <projectId>`. The instance stays in
+`firebase.json` until the last project's file is gone.
+
+Move any `.env.local` file (the emulator override) out of the instance's config
+directory before you uninstall. Next to a plain `.env`, it makes the command
+fail with "contains no .env file for current project". Next to
+`.env.<projectId>`, the command deletes the functions but leaves the instance in
+`firebase.json`, and running it again fails with that error.
+
+Uninstalling the extension removed the same resources and kept its two Pub/Sub
+topics. The kit also keeps two things:
+
+- The topics `kit-<instance id>-discovery` and `kit-<instance id>-deletion` (or
+  the names in `DISCOVERY_TOPIC_NAME` and `DELETION_TOPIC_NAME`). Delete them
+  with `gcloud pubsub topics delete <topic>`.
+- The deleted service account's seven project roles, which the extension
+  removed. They no longer grant access, and show in your project's IAM policy
+  as members like
+  `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
+  The account's name doesn't include the instance id, and other kits' deleted
+  accounts look the same, so note the `firebase-fn-<n>` account the uninstall
+  command prints ("The following managed service accounts will also be
+  deleted" or "Deleting managed service account"). List its roles with:
+
+  ```sh
+  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-<n>@" --format="value(bindings.role,bindings.members)"
+  ```
+
+  and remove each one, one command per role, with
+  `gcloud projects remove-iam-policy-binding <project id> --member='<member>' --role=<role> --condition=None`.
+  Keep the quotes: the `?` in the member makes some shells, such as zsh, fail
+  with "no matches found".
 
 ## Differences from the Delete User Data extension
 
@@ -187,11 +282,25 @@ You can also override both names with `DISCOVERY_TOPIC_NAME` and
 `DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
 since one function publishes to a topic the other is triggered by.
 
-### Functions deploy to your default region
+### Functions deploy to `FUNCTION_DEFAULT_REGION`
 
-The extension deployed to the location you picked at install time. This kit
-sets no region, so its functions deploy to your codebase's default
-(`us-central1` unless you have changed it).
+The extension deployed to the location you picked at install time
+(`us-central1` by default). The kit reads the region from
+`FUNCTION_DEFAULT_REGION` in each instance's `.env.<projectId>`, also defaulting to
+`us-central1`, so instances can deploy to different regions.
+`firebase ext:migrate` writes it with the region the extension ran in.
+
+```sh
+# .env.<projectId>
+FUNCTION_DEFAULT_REGION=us-central1
+```
+
+Keep the functions in the same region as your Firestore database (for a `nam5`
+database, `us-central1`), so user data is not read and deleted from another
+region.
+
+The kit sets the region on each function, so `setGlobalOptions({ region })`
+does not move them. Set `FUNCTION_DEFAULT_REGION` instead.
 
 ### All functions are 2nd gen
 
@@ -201,6 +310,22 @@ Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
 `user.delete` trigger. That event type is still beta in `firebase-functions`.
 This mainly matters if you have infrastructure or alerting keyed to function
 generation.
+
+Each function still runs like the extension's: one event per instance
+(`concurrency: 1`) with the 1st gen CPU for its memory (`cpu: "gcf_gen1"`,
+0.1666 vCPU at the default 256MiB), up to 3000 instances (`maxInstances: 3000`)
+and internal-only ingress, rather than the 2nd gen defaults of concurrency
+`80`, 1 vCPU, 100 instances and `ALLOW_ALL`. During a burst, Cloud Run may log
+`no available instance` errors while it scales; Eventarc redelivers those
+events.
+
+To change the max instances, call `setGlobalOptions({ maxInstances })` from
+`firebase-functions/v2` before you load the kit, since the kit reads it when
+its functions are defined. This applies to every function in your codebase. The
+`ext:migrate` template does this for the extension instance you migrate, and
+the `firebase init functions` template sets `maxInstances: 10`, so check your
+entry file. `setGlobalOptions` can't change concurrency, CPU or ingress, so an
+ingress setting carried over by `ext:migrate` doesn't apply to the kit.
 
 ### Events need an existing channel, and their source has changed
 
@@ -214,6 +339,13 @@ The Firebase CLI now sets it to the function that published the event
 (`projects/<project id>/locations/<region>/services/kit-<instance id>-<function>`),
 so it differs between `clearData`, `handleSearch` and `handleDeletion`. If your
 event triggers filter on `source`, filter on the event `type` instead.
+
+### A failed event publish doesn't stop deletion
+
+If an event can't be published, the kit logs a warning and carries on deleting.
+The extension failed the function instead: in `clearData`, auto-discovery and
+`SEARCH_FUNCTION` were skipped, so their data was left behind, and
+`handleSearch` and `handleDeletion` failed after deleting.
 
 ### Unchanged
 
@@ -252,7 +384,7 @@ using the bug template, with `delete-user-data kit` in the title. Include:
 - The kit version (run `npm ls @firebase-function-kits/delete-user-data` in the
   directory where you installed it), your `firebase-tools` version
   (`firebase --version`) and Node.js version.
-- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+- Your configuration from your `.env.<projectId>` (or `.env`) file, with
   secrets and project details redacted.
 - Steps to reproduce, the result you expected, and the result you got.
 - Logs from the kit's functions in Cloud Logging (with their

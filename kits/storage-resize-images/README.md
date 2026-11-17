@@ -92,27 +92,41 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
-| Field                  | Env var                  | Required | Default                | Description                                                                                |
-| ---------------------- | ------------------------ | -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
-| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
-| `bucket`               | `IMG_BUCKET`             | no       | default Storage bucket | Bucket to watch                                                                            |
-| `sizes`                | `IMG_SIZES`              | no       | `200x200`              | Comma-separated resize sizes                                                               |
-| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
-| `makePublic`           | `MAKE_PUBLIC`            | no       | `false`                | Make resized objects public                                                                |
-| `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | no       | (empty)                | Output path prefix                                                                         |
-| `includePathList`      | `INCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
-| `excludePathList`      | `EXCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`)           |
-| `failedImagesPath`     | `FAILED_IMAGES_PATH`     | no       | (empty)                | Failed-image output path                                                                   |
-| `cacheControlHeader`   | `CACHE_CONTROL_HEADER`   | no       | (empty)                | Cache-Control for outputs                                                                  |
-| `imageTypes`           | `IMAGE_TYPE`             | no       | `["false"]`            | Output image types list                                                                    |
-| `outputOptions`        | `OUTPUT_OPTIONS`         | no       | (empty)                | JSON output options                                                                        |
-| `sharpOptions`         | `SHARP_OPTIONS`          | no       | `{}`                   | JSON Sharp options                                                                         |
-| `isAnimated`           | `IS_ANIMATED`            | no       | `true`                 | Preserve animation                                                                         |
-| `memory`               | `FUNCTION_MEMORY`        | no       | `1024`                 | Function memory (MiB)                                                                      |
-| `regenerateToken`      | `REGENERATE_TOKEN`       | no       | `true`                 | Regenerate download tokens                                                                 |
-| `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | no       | `OFF`                  | Content filter level                                                                       |
-| `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
-| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
+A setting with **No** under "Can be blank" fails the deploy on a line like
+`IMG_SIZES=`. Give it a value, or remove the line and answer the prompt.
+
+| Field                  | Env var                  | Can be blank | Default                | Description                                                                                |
+| ---------------------- | ------------------------ | ------------ | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `bucketRegion`         | `BUCKET_REGION`          | Yes          | (prompted)             | Cloud Storage bucket location; also places the function                                    |
+| `bucket`               | `IMG_BUCKET`             | No           | default Storage bucket | Bucket to watch                                                                            |
+| `sizes`                | `IMG_SIZES`              | No           | `200x200`              | Comma-separated resize sizes                                                               |
+| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | No           | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
+| `makePublic`           | `MAKE_PUBLIC`            | Yes          | `false`                | Make resized objects public                                                                |
+| `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | Yes          | (empty)                | Output path prefix                                                                         |
+| `includePathList`      | `INCLUDE_PATH_LIST`      | Yes          | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
+| `excludePathList`      | `EXCLUDE_PATH_LIST`      | Yes          | (empty)                | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`)           |
+| `failedImagesPath`     | `FAILED_IMAGES_PATH`     | Yes          | (empty)                | Failed-image output path                                                                   |
+| `cacheControlHeader`   | `CACHE_CONTROL_HEADER`   | Yes          | (empty)                | Cache-Control for outputs                                                                  |
+| `imageTypes`           | `IMAGE_TYPE`             | No           | `["false"]`            | Output image types list                                                                    |
+| `outputOptions`        | `OUTPUT_OPTIONS`         | Yes          | (empty)                | JSON output options                                                                        |
+| `sharpOptions`         | `SHARP_OPTIONS`          | Yes          | `{}`                   | JSON Sharp options                                                                         |
+| `isAnimated`           | `IS_ANIMATED`            | Yes          | `true`                 | Preserve animation                                                                         |
+| `memory`               | `FUNCTION_MEMORY`        | No           | `1024`                 | Function memory (MiB)                                                                      |
+| `regenerateToken`      | `REGENERATE_TOKEN`       | Yes          | `true`                 | Regenerate download tokens                                                                 |
+| `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | No           | `OFF`                  | Content filter level                                                                       |
+| `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | Yes          | (empty)                | Custom filter prompt                                                                       |
+| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | Yes          | (empty)                | Placeholder for filtered images                                                            |
+
+Single-quote JSON values such as `SHARP_OPTIONS` and `OUTPUT_OPTIONS` in
+`.env`. In an unquoted value, `#` starts a comment and cuts the rest of the value off:
+
+```
+SHARP_OPTIONS='{"fit":"contain","background":"#ff0000"}'
+```
+
+The deploy fails, naming the variable, if `IMG_SIZES` is not a list of
+`WIDTHxHEIGHT` values, if `SHARP_OPTIONS` is not a JSON object, or if
+`OUTPUT_OPTIONS` is not wrapped in `{}`.
 
 The `deleteOriginal` default above is what the CLI proposes at the deploy
 prompt and writes to `.env.<projectId>` when the variable is missing (a
@@ -188,6 +202,18 @@ The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
 CLI grants these for you.
 
+In 2nd gen every event is recorded as HTTP 200, including thrown errors,
+timeouts and out-of-memory kills, and the trigger does not retry, so alert on
+the function's logs rather than its request status. Any error the function
+raises is logged at ERROR severity with its stack. A timeout or an
+out-of-memory kill stops the function before it can log an error:
+
+- An out-of-memory kill is logged at ERROR in the `varlog/system` log as
+  `Memory limit of ... exceeded`.
+- A timeout is never logged at ERROR, so an alert on ERROR alone misses it.
+  Cloud Run logs it at INFO in the requests log as
+  `The request has been terminated because it has reached the maximum request timeout.`
+
 ### Region
 
 `BUCKET_REGION` decides where the function deploys, as described below, rather
@@ -234,6 +260,10 @@ inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
 `asia-east1` - because they are not Cloud Run regions themselves and would fail
 the deploy. The value is matched case-insensitively.
 
+Cloud Functions has no location in `europe-north2` or `northamerica-south1`, so
+the kit can't serve a bucket there. The extension can: keep using it, or move to
+a listed region.
+
 Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
 not mapped. Pick one of the regions the pair is made of instead, all of which
 are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
@@ -269,6 +299,12 @@ function in the deploy, not just this kit. Omitting the line is not the same as
 an empty one: a non-interactive deploy fails with `In non-interactive mode but
 have no value for the following environment variables: BUCKET_REGION`. Note that
 changing an existing instance's region deletes and recreates the function.
+
+### A failed event publish doesn't stop resizing
+
+If an event can't be published, the kit logs a warning and carries on. The
+extension failed the function instead, so a failed `onStart` publish meant the
+image was never resized.
 
 ## API surface
 

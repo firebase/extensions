@@ -24,6 +24,7 @@ import {
   CONFIG_EXPRESSIONS,
   envFunctionRegion,
   configFromEnv,
+  validateParamFormatsFromEnv,
   validatePathListsFromEnv,
 } from "./config";
 import * as events from "./events";
@@ -73,6 +74,7 @@ for (const { api, reason } of REQUIRED_APIS) {
 sharp.cache(false);
 
 validatePathListsFromEnv();
+validateParamFormatsFromEnv();
 let ctx: HandlerContext | undefined;
 
 function getContext(): HandlerContext {
@@ -110,5 +112,14 @@ export const generateResizedImage = onObjectFinalized(
     concurrency: 1,
     cpu: "gcf_gen1",
   },
-  (event) => handleObjectFinalized(event, getContext())
+  async (event) => {
+    // 2nd gen records every event as HTTP 200, even a failed one, so this
+    // ERROR entry is what log-based alerts can match on.
+    try {
+      await handleObjectFinalized(event, getContext());
+    } catch (err) {
+      logs.unhandledError(err);
+      throw err;
+    }
+  }
 );

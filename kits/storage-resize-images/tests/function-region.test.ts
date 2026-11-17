@@ -15,6 +15,7 @@
  */
 
 import { afterEach, describe, expect, test } from "vitest";
+import { declaredParams } from "firebase-functions/params";
 
 import { envFunctionRegion } from "../src/config";
 
@@ -59,4 +60,24 @@ describe("envFunctionRegion function region", () => {
     setBucketRegion("");
     expect(envFunctionRegion()).toBeUndefined();
   });
+});
+
+describe("BUCKET_REGION options", () => {
+  test.each(["europe-north2", "northamerica-south1"])(
+    "do not offer %s, which has no Cloud Functions location",
+    (region) => {
+      const declaration = (
+        declaredParams as unknown as {
+          name: string;
+          options?: { input?: { select?: { options: { value: string }[] } } };
+        }[]
+      ).find((param) => param.name === "BUCKET_REGION");
+      const values = declaration?.options?.input?.select?.options.map(
+        (option) => option.value
+      );
+
+      expect(values).toContain("europe-north1");
+      expect(values).not.toContain(region);
+    }
+  );
 });
