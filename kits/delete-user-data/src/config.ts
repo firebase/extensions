@@ -147,7 +147,7 @@ const params = {
   searchFields: defineString("AUTO_DISCOVERY_SEARCH_FIELDS", {
     label: "Auto discovery search fields",
     description:
-      "If auto discovery is enabled, specify what document fields are used to associate the UID with the document. The extension will delete documents where the value for one or more of these fields matches the deleting user’s UID. If left empty, document fields will not be used in auto discovery.",
+      "If auto discovery is enabled, specify what document fields are used to associate the UID with the document. The extension will delete documents where the value for one or more of these fields matches the deleting user’s UID. If left empty, the default fields (`id,uid,userId`) are used.",
 
     default: "id,uid,userId",
   }),
