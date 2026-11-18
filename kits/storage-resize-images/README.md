@@ -51,10 +51,18 @@ npm install --save-dev typescript@5
 
 ## Required IAM
 
-Nothing to do by hand. Firebase CLI 15.23.0 or later creates a service account
-for the kit, grants it these roles, enables the APIs, and attaches the account
-to the function. Don't set a custom runtime service account: it conflicts with
-that setup.
+Nothing to do by hand. On the first deploy, Firebase CLI 15.23.0 or later asks
+you to confirm these roles (`This codebase uses declarative security …
+Continue? (y/N)`), then creates a service account for the kit, grants them,
+enables the APIs, and attaches the account to the function. Don't set a custom
+runtime service account: it conflicts with that setup.
+
+Without a terminal (for example in CI), there's no one to answer, so confirm
+with `--force`. It accepts every prompt, so limit it to one instance:
+
+```sh
+firebase deploy --only functions:<instance-id> --force
+```
 
 | Role / API                          | Why                                                                |
 | ----------------------------------- | ------------------------------------------------------------------ |
@@ -236,7 +244,8 @@ The trigger never retries, and 2nd gen records every event as HTTP 200, so
 alert on the function's logs rather than its request status.
 
 1. **A size fails to resize, or content filtering errors** (after 3 attempts).
-   The function logs `Failed execution of extension` at ERROR and copies the
+   The function logs the cause at ERROR (`Error when resizing image` for a
+   size), then `Failed execution of extension`, and copies the
    original to `FAILED_IMAGES_PATH` (when set), relative to the original's
    directory, with `resizeFailed: true` in its metadata. The original isn't
    deleted under `DELETE_ORIGINAL_FILE=on_success`. When filtering succeeded,
@@ -254,7 +263,8 @@ alert on the function's logs rather than its request status.
    `The request has been terminated because it has reached the maximum request timeout.`
 
 Copies under `FAILED_IMAGES_PATH` are never resized. To retry an image, upload
-the original again to its original path.
+the original again to its original path. A successful retry leaves the copy in
+place, so delete it yourself.
 
 ## Migrating from the extension
 
@@ -268,8 +278,9 @@ firebase ext:migrate --ext-instance <instance-id> \
 ```
 
 It exports the instance's configuration, sets `FUNCTION_DEFAULT_REGION` to the
-region the extension's function ran in, prompts for `BUCKET_REGION`, deploys
-the kit, then offers to uninstall the extension. Keep the extension until the
+region the extension's function ran in, and asks for the kit name, instance id
+and `BUCKET_REGION`. It then deploys the kit, asking you to confirm the
+[roles](#required-iam), and offers to uninstall the extension. Keep the extension until the
 kit resizes an upload (see [Check that it works](#deploy)), then uninstall it:
 
 ```sh
