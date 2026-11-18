@@ -195,6 +195,76 @@ describe("changelog wire format", () => {
     });
   });
 
+  test("tags a null array element as 'null'", () => {
+    // Not `{ type: "object" }`: the original extension tagged null elements
+    // with `typeof null`, which the pipeline cannot tell from a map.
+    expect(serializeDocument({ arrayValue: [null] })).toEqual({
+      arrayValue: {
+        type: "array",
+        value: [{ type: "null", value: null }],
+      },
+    });
+  });
+
+  test("tags a Buffer, DocumentReference or Timestamp array element", () => {
+    const timestampValue = Timestamp.fromDate(
+      new Date("2026-01-02T03:04:05.000Z")
+    );
+
+    expect(
+      serializeDocument({
+        arrayValue: [Buffer.from("hi"), ref, timestampValue],
+      })
+    ).toEqual({
+      arrayValue: {
+        type: "array",
+        value: [
+          { type: "binary", value: "aGk=" },
+          { type: "reference", value: "products/abc" },
+          { type: "timestamp", value: "2026-01-02T03:04:05.000Z" },
+        ],
+      },
+    });
+  });
+
+  test("tags a nested array element as 'array'", () => {
+    expect(serializeDocument({ arrayValue: [["a", 1]] })).toEqual({
+      arrayValue: {
+        type: "array",
+        value: [
+          {
+            type: "array",
+            value: [
+              { type: "string", value: "a" },
+              { type: "number", value: 1 },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  test("keeps a map element's own 'type' key distinct from a type tag", () => {
+    // The pipeline reads an element as a tagged value only when its `type` is
+    // a string. A user map's `type` field is serialized to an object, so a map
+    // element carrying `type` and `value` keys stays unambiguous.
+    const serialized = serializeDocument({
+      arrayValue: [{ type: "invoice", value: 10 }],
+    });
+
+    expect(serialized).toEqual({
+      arrayValue: {
+        type: "array",
+        value: [
+          {
+            type: { type: "string", value: "invoice" },
+            value: { type: "number", value: 10 },
+          },
+        ],
+      },
+    });
+  });
+
   test("base64-encodes a Buffer", () => {
     expect(serializeDocument({ binaryValue: Buffer.from("hi") })).toEqual({
       binaryValue: { type: "binary", value: "aGk=" },
