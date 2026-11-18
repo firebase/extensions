@@ -70,6 +70,41 @@ describe("clearData", () => {
   });
 });
 
+function pubsubEvent(data: string) {
+  return {
+    specversion: "1.0",
+    id: "message-event-id",
+    type: "google.cloud.pubsub.topic.v1.messagePublished",
+    source: "//pubsub.googleapis.com/projects/test-project/topics/t",
+    time: "2026-01-01T00:00:00.000Z",
+    data: {
+      message: {
+        messageId: "1",
+        data: Buffer.from(data).toString("base64"),
+      },
+      subscription: "s",
+    },
+  } as any;
+}
+
+// 2nd gen records a failed invocation as HTTP 200, so the ERROR entry is the
+// only signal. The rethrow keeps the invocation marked as failed.
+describe.each([
+  ["handleSearch", handleSearch],
+  ["handleDeletion", handleDeletion],
+] as const)("%s", (_name, fn) => {
+  test("rethrows a malformed message with its stack as an ERROR entry", async () => {
+    // The plain SyntaxError, as the extension threw, not `message.json`'s wrapper.
+    const err = await fn(pubsubEvent("not json")).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(SyntaxError);
+    expect(JSON.parse((err as Error).stack as string)).toEqual({
+      severity: "ERROR",
+      message: expect.stringMatching(/^SyntaxError: .*\n\s+at JSON\.parse/),
+    });
+  });
+});
+
 // The CLI loads the kit to read its manifest, so a throw at import fails the
 // deploy, as the extension's install failed on the same value.
 describe("module load", () => {

@@ -118,4 +118,27 @@ describe("handler context", () => {
       options: { projectId: PROJECT_ID },
     });
   });
+
+  // The functions framework prints `err.stack || err` to stderr, so the
+  // rethrown value carries a structured ERROR entry for it to print.
+  test("rethrows a failed deletion with its stack as an ERROR entry", async () => {
+    const err = new Error("boom");
+    const stack = err.stack;
+    vi.mocked(handleClear).mockRejectedValueOnce(err);
+
+    await expect(clearData(deletionEvent("uid-7"))).rejects.toBe(err);
+
+    expect(JSON.parse(err.stack as string)).toEqual({
+      severity: "ERROR",
+      message: stack,
+    });
+  });
+
+  test("rethrows a value that is not an Error as an ERROR entry", async () => {
+    vi.mocked(handleClear).mockRejectedValueOnce("plain string");
+
+    await expect(clearData(deletionEvent("uid-8"))).rejects.toEqual({
+      stack: JSON.stringify({ severity: "ERROR", message: "plain string" }),
+    });
+  });
 });
