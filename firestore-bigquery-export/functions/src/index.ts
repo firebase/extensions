@@ -171,6 +171,15 @@ export const fsexportbigquery = onDocumentWritten(
     const eventId = context.id;
     const operation = changeType;
 
+    if (config.ignoreDocumentDeletion && isDeleted) {
+      logs.logEventAction(
+        "Firestore event received and ignored by onDocumentWritten trigger",
+        fullResourceName,
+        eventId,
+        operation
+      );
+      return;
+    }
     logs.logEventAction(
       "Firestore event received by onDocumentWritten trigger",
       fullResourceName,

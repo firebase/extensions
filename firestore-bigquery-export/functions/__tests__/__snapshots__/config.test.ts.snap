@@ -17,6 +17,7 @@ Object {
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
   "excludeOldData": false,
+  "ignoreDocumentDeletion": false,
   "importCollectionPath": undefined,
   "initialized": false,
   "instanceId": undefined,
