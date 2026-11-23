@@ -93,8 +93,10 @@ secrets; the CLI connects them to the function at deploy time.
 `SMTP_CONNECTION_URI` already includes the password. The kit decides this when
 the deploy loads it, from the values in your `.env` files, so put both settings
 there. A value you answer at the deploy prompt is written to
-`.env.<projectId>` and only takes effect on the next deploy, so until then the
-deploy asks for `SMTP_PASSWORD`. OAuth2 and a SendGrid URI
+`.env.<projectId>` and only takes effect on the next deploy. Until then the
+deploy asks for `SMTP_PASSWORD` and attaches it, so it replaces the URI
+password. Answer with your real SMTP password, or answer with any value and run
+`firebase deploy` again, which no longer attaches it. OAuth2 and a SendGrid URI
 (`smtp.sendgrid.net`) always need `SMTP_PASSWORD`.
 
 `firebase ext:migrate` and `firebase functions:kits:install` still ask for
