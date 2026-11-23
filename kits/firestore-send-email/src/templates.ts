@@ -116,7 +116,7 @@ export class Templates {
 
   async render(
     name: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown> | undefined
   ): Promise<{
     subject: string | null;
     html: string | null;

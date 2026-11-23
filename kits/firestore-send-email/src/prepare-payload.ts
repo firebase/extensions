@@ -49,7 +49,7 @@ export async function preparePayload(
 
     const templateRender = await templates.render(
       payload.template.name,
-      payload.template.data || {}
+      payload.template.data
     );
     const mergeMessage = payload.message || {};
     const attachments = attachmentsSchema.parse(

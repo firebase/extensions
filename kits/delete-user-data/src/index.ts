@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
+import { format } from "node:util";
 import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import type { Role } from "firebase-functions/v2";
+import type { CloudEvent, Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
-import { onMessagePublished } from "firebase-functions/v2/pubsub";
+import {
+  type MessagePublishedData,
+  onMessagePublished,
+} from "firebase-functions/v2/pubsub";
 import { assertParams, CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { getDatabaseUrl, resolveDeleteUserDataConfig } from "./export-config";
 import {
+  type DeleteMessageData,
   type HandlerContext,
   handleClear,
   handleDeletion as runDeletion,
   handleSearch as runSearch,
+  type SearchMessageData,
 } from "./handlers";
 import * as logs from "./logs";
 
@@ -106,6 +112,34 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
+// On 2nd gen, a handler that throws is still recorded as HTTP 200 in the
+// request log. The functions framework prints the thrown value's
+// `err.stack || err` to stderr, which 1st gen logged at ERROR but 2nd gen logs
+// with no severity. Rewrite it as a structured entry with ERROR severity before
+// rethrowing, so the framework's copy is the run's one ERROR entry, as it was
+// for the extension. The rethrow keeps the invocation counted as failed.
+function logFailures<E>(
+  handler: (event: E) => unknown
+): (event: E) => Promise<unknown> {
+  return async (event) => {
+    try {
+      return await handler(event);
+    } catch (err) {
+      throw withErrorSeverity(err);
+    }
+  };
+}
+
+function withErrorSeverity(err: unknown): unknown {
+  const message = (err instanceof Error && err.stack) || format(err);
+  const stack = JSON.stringify({ severity: "ERROR", message });
+  if (err instanceof Error) {
+    err.stack = stack;
+    return err;
+  }
+  return { stack };
+}
+
 /**
  * The extension's 1st gen functions ran at 0.1666 vCPU, one event per
  * instance, up to 3000 instances, with internal-only ingress. Without these
@@ -137,7 +171,7 @@ const EXTENSION_RUNTIME_OPTIONS = {
 
 export const clearData = onUserDeleted(
   { ...EXTENSION_RUNTIME_OPTIONS, region: CONFIG_EXPRESSIONS.functionRegion },
-  (event) => {
+  logFailures((event) => {
     // The Auth event delivers no user record when the payload envelope is
     // empty, so bail before getContext() rather than initialising the SDKs for
     // nothing.
@@ -147,8 +181,18 @@ export const clearData = onUserDeleted(
       return;
     }
     return handleClear(uid, getContext());
-  }
+  })
 );
+
+// Parse the message data the way the extension did, so a malformed message
+// throws the same plain SyntaxError. `message.json` wraps it as "Unable to
+// parse Pub/Sub message data as JSON". Error Reporting still groups the two
+// apart, since the kit's stack frames are in node_modules.
+function parseMessage<T>(event: CloudEvent<MessagePublishedData<T>>): T {
+  return JSON.parse(
+    Buffer.from(event.data.message.data, "base64").toString("utf8")
+  );
+}
 
 export const handleSearch = onMessagePublished(
   {
@@ -156,7 +200,9 @@ export const handleSearch = onMessagePublished(
     region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
-  (event) => runSearch(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<SearchMessageData>>) =>
+    runSearch(parseMessage(event), getContext())
+  )
 );
 
 export const handleDeletion = onMessagePublished(
@@ -165,5 +211,7 @@ export const handleDeletion = onMessagePublished(
     region: CONFIG_EXPRESSIONS.functionRegion,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
-  (event) => runDeletion(event.data.message.json, getContext())
+  logFailures((event: CloudEvent<MessagePublishedData<DeleteMessageData>>) =>
+    runDeletion(parseMessage(event), getContext())
+  )
 );
