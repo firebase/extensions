@@ -104,6 +104,10 @@ the kit attach `SMTP_PASSWORD`, even when the URI includes the password.
 URI password, as in the extension, so remove the binding if you want the URI
 password used.
 
+When the URI includes the password, leave `SMTP_PASSWORD` out of
+`.secret.local` for the emulator. The emulator passes every `.secret.local`
+value to the function, so an `SMTP_PASSWORD` there replaces the URI password.
+
 A setting with **No** under "Can be blank" fails the deploy on a line like
 `DEFAULT_FROM=`. Give it a value, or remove the line and answer the prompt.
 
