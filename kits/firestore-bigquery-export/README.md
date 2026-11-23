@@ -186,7 +186,7 @@ Settings go in the instance's `.env` (or `.env.<project-id>`). If a setting
 isn't there, the deploy asks you for it, suggesting the default, and saves your
 answer to `.env.<project-id>`.
 
-A value that contains `#` needs quotes in `.env`; see
+A value that contains `#` may need quotes in `.env`; see
 [Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
 
 A setting with **No** under "Can be blank" fails the deploy on a line like

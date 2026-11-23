@@ -166,7 +166,7 @@ isn't there, the deploy asks you for it and saves your answer to
 `.env.<project-id>`. A non-interactive deploy fails instead, so set every
 variable.
 
-A value that contains `#` needs quotes in `.env`; see
+A value that contains `#` may need quotes in `.env`; see
 [Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
 
 A setting with **No** under "Can be blank" fails the deploy on a line like
