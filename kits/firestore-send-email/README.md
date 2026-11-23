@@ -64,7 +64,7 @@ later, behind the `kits` experiment):
       "source": ".",
       "kit": "firestore-send-email",
       "instances": {
-        "default": "."
+        "default": "instances/default"
       }
     }
   ]
@@ -72,9 +72,11 @@ later, behind the `kits` experiment):
 ```
 
 `instances` maps each instance id to the directory (relative to
-`firebase.json`) holding that instance's `.env.<projectId>`. The CLI prefixes every
-function and task queue name with `kit-<instance id>-`, so the function above
-deploys as `kit-default-processQueue`.
+`firebase.json`) holding that instance's `.env.<projectId>`. Give each instance
+a directory of its own: `functions:kits:uninstall` treats every `.env.*` file in
+it as instance config. The CLI prefixes every function and task queue name with
+`kit-<instance id>-`, so the function above deploys as
+`kit-default-processQueue`.
 
 ```sh
 firebase experiments:enable kits
@@ -203,21 +205,19 @@ instance from `firebase.json` and exits without an error, but the function keeps
 running and keeps sending mail. Rename `.env` to `.env.<projectId>` before you
 uninstall. If you already uninstalled with a plain `.env`, put the instance
 (or, if it was the only one, the whole kit entry) back in `firebase.json`,
-rename the file, and run the command again. If the config directory also has
-another `.env.<name>` file, such as `.env.bak`, the command fails with "contains
-no .env file for current project". Move such files out of the directory before
-you uninstall.
+rename the file, and run the command again.
 
 If the instance is deployed to more than one project, give each project its own
 `.env.<projectId>` (copy a shared `.env`, don't rename it) and run the command
 once per project with `--project <projectId>`. The instance stays in
 `firebase.json` until the last project's file is gone.
 
-Move any `.env.local` file (the emulator override) out of the instance's config
-directory before you uninstall. Next to a plain `.env`, it makes the command
-fail with "contains no .env file for current project". Next to
-`.env.<projectId>`, the command deletes the function but leaves the instance in
-`firebase.json`, and running it again fails with that error.
+Move any other `.env.*` file, such as `.env.local` (the emulator override) or a
+`.env.bak`, out of the instance's config directory before you uninstall. Next
+to a plain `.env`, it makes the command fail with "contains no .env file for
+current project". Next to `.env.<projectId>`, the command deletes the function
+but leaves the instance in `firebase.json`, and running it again fails with that
+error.
 
 Uninstalling the extension also deleted its secrets and the service account's
 IAM role bindings. The kit's uninstall leaves both:
@@ -227,7 +227,10 @@ IAM role bindings. The kit's uninstall leaves both:
   `kit-<instance id>-REFRESH_TOKEN`. `SMTP_PASSWORD` and the OAuth2 ones hold
   credentials for your mail server. Delete each with
   `gcloud secrets delete <secret> --project <project id>`, unless you pointed
-  another function at it.
+  another function at it. A secret you reused with a
+  `FIREBASE_SECRET_REF_<NAME>` line in `.env.<projectId>` is used under its own
+  name instead, so there is no `kit-<instance id>-<NAME>` secret for it. Delete
+  it only if nothing else uses it.
 - The deleted service account's project roles. They no longer grant
   access, and show in your project's IAM policy as members like
   `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
@@ -259,16 +262,21 @@ and what is no longer checked or set up for you.
 ### Create the four secrets by name, all of them
 
 The extension stored each secret param as `ext-<instance id>-<PARAM>` in Secret
-Manager. The kit asks for secrets named exactly `SMTP_PASSWORD`, `CLIENT_ID`,
-`CLIENT_SECRET` and `REFRESH_TOKEN`, so your existing extension secrets are not
-picked up. All four are attached to the function whatever `AUTH_TYPE` is set to,
-and were optional in the extension. If a secret does not exist, `firebase deploy`
-prompts you for a value, and fails outright when running non-interactively (CI).
-On username/password auth create the three OAuth2 secrets with a placeholder
-value. On OAuth2 auth do the same for `SMTP_PASSWORD`, unless you send through
-SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key whatever
-`AUTH_TYPE` is set to, so a connection URI pointing at `smtp.sendgrid.net` needs
-your real API key there and a placeholder fails every send with a 401.
+Manager. The kit asks for `kit-<instance id>-SMTP_PASSWORD`,
+`kit-<instance id>-CLIENT_ID`, `kit-<instance id>-CLIENT_SECRET` and
+`kit-<instance id>-REFRESH_TOKEN` (`kit-default-SMTP_PASSWORD` and so on for the
+`default` instance), so your existing extension secrets are not picked up unless
+you add a line such as
+`FIREBASE_SECRET_REF_SMTP_PASSWORD=ext-<instance id>-SMTP_PASSWORD` to
+`.env.<projectId>`. All four are attached to the function whatever `AUTH_TYPE`
+is set to, and were optional in the extension. If a secret does not exist,
+`firebase deploy` prompts you for a value, and fails outright when running
+non-interactively (CI). On username/password auth create the three OAuth2
+secrets with a placeholder value. On OAuth2 auth do the same for
+`SMTP_PASSWORD`, unless you send through SendGrid: the SendGrid transport reads
+`SMTP_PASSWORD` as its API key whatever `AUTH_TYPE` is set to, so a connection
+URI pointing at `smtp.sendgrid.net` needs your real API key there and a
+placeholder fails every send with a 401.
 
 ### DATABASE_REGION now decides where the function runs
 
