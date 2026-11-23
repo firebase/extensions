@@ -94,6 +94,9 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
 the CLI connects them to the function at deploy time.
 
+A value that contains `#` needs quotes in `.env`; see
+[Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
+
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
 | `provider` | `GENERATIVE_AI_PROVIDER` | no | `google-ai` | `google-ai` or `vertex-ai` |

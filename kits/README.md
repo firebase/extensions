@@ -84,6 +84,29 @@ to you is the configuration itself, so check the kit's README against your
 installed instance's settings before deploying, rather than copying the `.env`
 across unchanged.
 
+### Quote settings that contain a hash sign
+
+In firebase-tools 15.37.0 and earlier, the CLI writes settings to `.env` without
+quotes, so the kit reads everything from a `#` onwards as a comment. This
+applies to the values `firebase ext:migrate`, `firebase ext:export` and
+`firebase functions:kits:install` write, and to answers you give at a deploy
+prompt. For example, `DEFAULT_FROM=Support #1 <support@example.com>` reaches the
+kit as `Support`, and a collection named `mail#v2` reaches it as `mail`. This is
+fixed in
+[firebase/firebase-tools#11315](https://github.com/firebase/firebase-tools/pull/11315).
+
+Until you are on a release with that fix, check any setting that contains `#`,
+such as a collection or field name, a path, a prompt, a query, or a JSON value
+like `{"background":"#ffffff"}`. `ext:migrate` deploys the kit before you can
+edit `.env`, so after migrating:
+
+1. Wrap the value in double quotes in
+   `function-kits/<kit>/config-<instance-id>/.env.<project-id>`, for example
+   `DEFAULT_FROM="Support #1 <support@example.com>"`. Use single quotes for JSON
+   values that contain `\n`.
+2. Redeploy with `firebase deploy --only functions:<instance-id>`.
+3. Uninstall the extension only after that.
+
 Extensions themselves are unaffected and remain available. To learn more about
 Firebase Extensions, including how to install them, visit the
 [Firebase documentation](https://firebase.google.com/docs/extensions).
