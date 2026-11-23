@@ -46,7 +46,8 @@ Export the function from your functions codebase entry:
 export { processQueue } from "@firebase-function-kits/firestore-send-email";
 ```
 
-and configure it with a `.env` (or `.env.<projectId>`).
+and configure it in a `.env.<projectId>` file (see [Uninstall](#uninstall) for
+why not a plain `.env`).
 
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
@@ -71,7 +72,7 @@ later, behind the `kits` experiment):
 ```
 
 `instances` maps each instance id to the directory (relative to
-`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+`firebase.json`) holding that instance's `.env.<projectId>`. The CLI prefixes every
 function and task queue name with `kit-<instance id>-`, so the function above
 deploys as `kit-default-processQueue`.
 
@@ -84,8 +85,10 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
-loads them at deploy time and prompts for any required values that are missing.
+Set these values in a `.env.<projectId>` file, such as `.env.my-project`. The
+Firebase CLI loads them at deploy time and prompts for any required values that
+are missing. A plain `.env` deploys the same way, but
+`functions:kits:uninstall` ignores it (see [Uninstall](#uninstall)).
 Rows with a `(secret)` default live in Secret Manager. You can reuse existing
 secrets; the CLI connects them to the function at deploy time.
 
@@ -115,7 +118,7 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | No           | `1`                | TTL amount when expire type is set                    |
 | `tlsOptions`          | `TLS_OPTIONS`          | Yes          | `{}`               | JSON TLS options for the SMTP transport               |
 
-Single-quote JSON values such as `TLS_OPTIONS` in `.env`. In a double-quoted
+Single-quote JSON values such as `TLS_OPTIONS` in the `.env.<projectId>` file. In a double-quoted
 value the CLI turns `\n` into a real newline, so a PEM certificate no longer
 parses as JSON, and the kit falls back to `{"rejectUnauthorized":false}`
 (certificate checks off) with only a warning:
@@ -124,7 +127,7 @@ parses as JSON, and the kit falls back to `{"rejectUnauthorized":false}`
 TLS_OPTIONS='{"ca":"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"}'
 ```
 
-The CLI does not check values that are already in `.env`, so the kit checks
+The CLI does not check values that are already in the file, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
 deploy fails with an error naming the setting if `DATABASE_REGION`,
 `AUTH_TYPE`, `OAUTH_SECURE` or `TTL_EXPIRE_TYPE` is not one of its option values
@@ -147,7 +150,7 @@ values instead.
 ## Multiple instances
 
 To process several mail queues, add one entry per instance to the `instances`
-map, each pointing at its own config directory with its own `.env`:
+map, each pointing at its own config directory with its own `.env.<projectId>`:
 
 ```json
 {
@@ -174,6 +177,73 @@ When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
 such as `onStart`, `onProcessing`, `onSuccess`, `onError`, `onComplete`,
 `onPending`, and `onRetry` under
 `firebase.extensions.firestore-send-email.v1.*`.
+
+## Uninstall
+
+```sh
+firebase functions:kits:uninstall --instance <instance id>
+```
+
+This deletes the instance's function, its trigger, and the service account the
+CLI created for it. It then removes the instance from `firebase.json` and
+deletes its `.env.<projectId>` file. If it is the kit's only instance, it
+removes the whole kit entry, leaving `"functions": []`. Despite what the prompt
+says, it doesn't delete your functions source when the kit is exported from
+your own codebase, as in [Usage](#usage).
+
+The command asks you to confirm, twice if this is the kit's only instance. In a
+non-interactive shell (CI, a script, any shell without a TTY, or when the CLI
+detects an AI agent), add `--force`. Without it nothing is deleted: the command
+exits 0 for the kit's only instance, and fails with `Command aborted.`
+otherwise.
+
+It only deletes what is deployed to a project with a `.env.<projectId>` file in
+the instance's config directory. With only a plain `.env`, it still removes the
+instance from `firebase.json` and exits without an error, but the function keeps
+running and keeps sending mail. Rename `.env` to `.env.<projectId>` before you
+uninstall. If you already uninstalled with a plain `.env`, put the instance
+(or, if it was the only one, the whole kit entry) back in `firebase.json`,
+rename the file, and run the command again. If the config directory also has
+another `.env.<name>` file, such as `.env.bak`, the command fails with "contains
+no .env file for current project". Move such files out of the directory before
+you uninstall.
+
+If the instance is deployed to more than one project, give each project its own
+`.env.<projectId>` (copy a shared `.env`, don't rename it) and run the command
+once per project with `--project <projectId>`. The instance stays in
+`firebase.json` until the last project's file is gone.
+
+Move any `.env.local` file (the emulator override) out of the instance's config
+directory before you uninstall. Next to a plain `.env`, it makes the command
+fail with "contains no .env file for current project". Next to
+`.env.<projectId>`, the command deletes the function but leaves the instance in
+`firebase.json`, and running it again fails with that error.
+
+Uninstalling the extension also deleted its secrets and the service account's
+IAM role bindings. The kit's uninstall leaves both:
+
+- The instance's secrets in Secret Manager, `kit-<instance id>-SMTP_PASSWORD`,
+  `kit-<instance id>-CLIENT_ID`, `kit-<instance id>-CLIENT_SECRET` and
+  `kit-<instance id>-REFRESH_TOKEN`. `SMTP_PASSWORD` and the OAuth2 ones hold
+  credentials for your mail server. Delete each with
+  `gcloud secrets delete <secret> --project <project id>`, unless you pointed
+  another function at it.
+- The deleted service account's project roles. They no longer grant
+  access, and show in your project's IAM policy as members like
+  `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
+  The account's name doesn't include the instance id, and other kits' deleted
+  accounts look the same, so note the `firebase-fn-<n>` account the uninstall
+  command prints ("The following managed service accounts will also be
+  deleted" or "Deleting managed service account"). List its roles with:
+
+  ```sh
+  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-<n>@" --format="value(bindings.role,bindings.members)"
+  ```
+
+  and remove each one, one command per role, with
+  `gcloud projects remove-iam-policy-binding <project id> --member='<member>' --role=<role> --condition=None`.
+  Keep the quotes: the `?` in the member makes some shells, such as zsh, fail
+  with "no matches found".
 
 ## Differences from the Trigger Email from Firestore extension
 
@@ -255,7 +325,7 @@ writers and let the collection drain before a deploy that moves the region.
 ### Create the Eventarc channel yourself for events
 
 Choosing events at install used to create the channel and set both event
-variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
+variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env.<projectId>`
 to a channel you have created, and the same seven
 `firebase.extensions.firestore-send-email.v1.*` events are published. Per-event
 selection is gone in practice, because the CLI rejects any `.env` key beginning
@@ -347,7 +417,7 @@ using the bug template, with `firestore-send-email kit` in the title. Include:
 - The kit version (run `npm ls @firebase-function-kits/firestore-send-email` in the
   directory where you installed it), your `firebase-tools` version
   (`firebase --version`) and Node.js version.
-- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+- Your configuration from your `.env.<projectId>` (or `.env`) file, with
   secrets and project details redacted.
 - Steps to reproduce, the result you expected, and the result you got.
 - Logs from the kit's functions in Cloud Logging (with their
