@@ -156,8 +156,8 @@ gone within a few seconds, and `firebase functions:log --only
 kit-<instance-id>-clearData` shows `Successfully removed data for user`. If it
 doesn't, look for an error there (see [Failure handling](#failure-handling)).
 
-Only users deleted after the deploy are cleared. There is no backfill, as with
-the extension.
+Only users deleted after the deploy are cleared. Like the extension, the kit
+has no backfill.
 
 ## Configuration
 
@@ -172,7 +172,7 @@ prompt.
 
 | Field                 | Env var                        | Can be blank | Default                | Description                                                                 |
 | --------------------- | ------------------------------ | ------------ | ---------------------- | --------------------------------------------------------------------------- |
-| (none)                | `FUNCTION_DEFAULT_REGION`      | Yes          | `us-central1`          | Region the functions deploy to ([Region](#region))                          |
+| (none)                | `FUNCTION_DEFAULT_REGION`      | No           | `us-central1`          | Region the functions deploy to ([Region](#region))                          |
 | `firestorePaths`      | `FIRESTORE_PATHS`              | Yes          | (empty)                | Comma-separated Firestore paths with `{UID}`                                |
 | `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID`        | No           | `(default)`            | Firestore database id                                                       |
 | `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE`        | No           | `shallow`              | `shallow` or `recursive`                                                    |
@@ -197,7 +197,10 @@ bad setting, along with any blank setting that can't be blank. It fails if:
   Values are case sensitive.
 - `SELECTED_DATABASE_INSTANCE` is a URL rather than an instance id, or
   `CLOUD_STORAGE_BUCKET` has `gs://` or capital letters.
-- `EVENTARC_CHANNEL` or `EXT_SELECTED_EVENTS` is invalid (see [Events](#events)).
+
+`EVENTARC_CHANNEL` and `EXT_SELECTED_EVENTS` are checked separately, after
+these (see [Events](#events)), so their errors appear only once the settings
+above are valid.
 
 The emulator runs the same check, so a bad value stops that instance's
 functions from loading there.
@@ -223,7 +226,7 @@ wrote.
 "instances": { "app": "instances/app", "admin": "instances/admin" }
 ```
 
-Each instance's `.env.<project-id>` must be complete, including
+Each instance has its own `.env.<project-id>`, with its own
 `FUNCTION_DEFAULT_REGION`. Its functions and Pub/Sub topics are prefixed with
 `kit-<instance-id>-`, so instances can't collide.
 
@@ -306,8 +309,9 @@ The events' `source` differs from the extension's; see
 
 ## Failure handling
 
-The functions never retry, and 2nd gen records every event as HTTP 200, so
-alert on the functions' logs or `execution_count` rather than request status.
+The functions don't retry a failed run, and 2nd gen records every event as
+HTTP 200, so alert on the functions' logs or `execution_count` rather than
+request status.
 
 1. **A configured path fails to delete.** `clearData` logs it at ERROR
    (`Error when deleting: '<path>' from Cloud Firestore`, `... from the Realtime
@@ -317,19 +321,22 @@ alert on the functions' logs or `execution_count` rather than request status.
 2. **The custom search function returns an error status.** `clearData` logs
    `Call to custom hook function threw an error` at ERROR, with the response
    body, and deletes nothing from it.
-3. **A discovered document no longer matches.** `handleDeletion` skips any
-   document whose search field no longer holds the user id, and logs a warning
-   with the count.
+3. **A path doesn't match the user.** `handleDeletion` checks every path from
+   auto-discovery or the custom search function. It skips the path unless the
+   path contains the user id or one of the search fields holds a value
+   containing it, and logs a warning with the count.
 4. **Anything else throws** (for example auto-discovery or a Pub/Sub publish
    fails, or a message can't be parsed). The run fails, logs its stack trace
    once at ERROR, and the event isn't redelivered. On `clearData`, the custom
    search function then doesn't run.
 5. **A timeout or out-of-memory kill** stops the function before it can log an
    error. An out-of-memory kill logs one ERROR per crashed instance (`Memory
-   limit of 256 MiB exceeded…`). A timeout is never logged at ERROR: Cloud Run
-   logs it at INFO as `The request has been terminated because it has reached
-   the maximum request timeout.` The timed-out run keeps going in the
-   background, so its INFO logs can still appear minutes later.
+   limit of 256 MiB exceeded…`); the event it was running gets only an INFO,
+   HTTP 200 request log with no message. Cloud Run logs a timeout at INFO as
+   `The request has been terminated because it has reached the maximum request
+   timeout.` The timed-out run keeps going in the background, so its INFO logs
+   can still appear minutes later, and if it then fails, that failure is logged
+   at ERROR too.
 
 To be told about failures, create a
 [metric alert](https://cloud.google.com/monitoring/alerts/using-alerting-ui) on
@@ -369,9 +376,11 @@ then uninstall it:
 firebase ext:uninstall <instance-id>
 ```
 
-Running both at once is safe: each user deletion is handled twice, and the
-second pass finds nothing left to delete. The extension's `ext-` Pub/Sub topics
-aren't reused and can be deleted afterwards.
+Running both at once deletes the same data twice, which is harmless. Both
+also call `SEARCH_FUNCTION` for each deleted user, and if both have events
+configured, each deletion publishes every event twice, with different
+`source`s. The extension's `ext-` Pub/Sub topics aren't reused and can be
+deleted afterwards.
 
 To set up the kit yourself instead, write the instance's configuration to an
 existing kit instance's config directory, then deploy:
@@ -427,7 +436,9 @@ can be derived), and event types and payloads are unchanged.
 
 The functions deploy to `FUNCTION_DEFAULT_REGION` in each instance's
 `.env.<project-id>`, defaulting to `us-central1`, so instances can deploy to
-different regions. `functions:kits:install` asks for it and `ext:migrate`
+different regions. A blank `FUNCTION_DEFAULT_REGION=` replaces the default
+rather than falling back to it, and the kit doesn't check it, so set a region
+or remove the line. `functions:kits:install` asks for it and `ext:migrate`
 writes the region the extension ran in.
 
 Keep the functions in your Firestore database's region (for a `nam5` database,
@@ -437,8 +448,11 @@ doesn't move them. Changing region deletes and recreates the functions.
 
 ## API surface
 
-- **Main entry** (`@firebase-function-kits/delete-user-data`): `clearData`,
-  `handleSearch`, `handleDeletion` and everything from the library entry. It
+- **Main entry** (`@firebase-function-kits/delete-user-data`): the
+  `clearData`, `handleSearch` and `handleDeletion` triggers, and everything else
+  from the library entry. Its `handleSearch` and `handleDeletion` are the
+  triggers, not the library's handlers, so import those from `/lib` for your
+  own triggers. It
   reads environment variables when the module loads, so use it from a Firebase
   deploy, the emulator or the runtime.
 - **Library entry** (`@firebase-function-kits/delete-user-data/lib`): the
