@@ -88,14 +88,14 @@ const DATABASE_REGION_OPTIONS = [
  * so anything it cannot see falls back to declaring the secret. OAuth2 and
  * SendGrid never send the URI password. A `.env` secret binding (which
  * `ext:migrate` writes for the extension's secret) is only honoured for a
- * declared secret, and a bound secret in the runtime environment keeps its
- * precedence over the URI.
+ * declared secret; an empty one marks the secret as deliberately unset. A
+ * bound secret in the runtime environment keeps its precedence over the URI.
  */
 export function smtpPasswordDeclared(
   env: NodeJS.ProcessEnv = process.env
 ): boolean {
   if (
-    env.FIREBASE_SECRET_REF_SMTP_PASSWORD !== undefined ||
+    env.FIREBASE_SECRET_REF_SMTP_PASSWORD ||
     env.SMTP_PASSWORD !== undefined ||
     env.AUTH_TYPE === AuthenticatonType.OAuth2
   ) {
