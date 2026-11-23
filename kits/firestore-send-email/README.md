@@ -208,13 +208,18 @@ your real API key there and a placeholder fails every send with a 401.
 In the extension it only told the trigger where your database lived; the
 function itself always ran in `us-central1`, as the extension offered no
 location setting. The kit deploys the function to the region derived from
-`DATABASE_REGION`, so the function moves next to your database. Regional
-Firestore locations (`europe-west2`, `us-east1`, ...) are used as-is; the
-multi-region locations map to a Cloud Run region inside them - `nam5` and
-`nam7` to `us-central1`, `eur3` to `europe-west1` - because they are not Cloud
-Run regions themselves and would fail the deploy. The value is case sensitive,
-as in the extension, so `NAM5` fails the deploy. The Firestore trigger always fires in the database's own
-region, whatever region the function runs in.
+`DATABASE_REGION`, so the function moves next to your database. Firestore
+locations (`europe-west2`, `us-east1`, ...) are used as-is, except these, which
+would fail the deploy and so map to a nearby region:
+
+- `nam5` and `nam7` to `us-central1`, and `eur3` to `europe-west1`, because
+  multi-regions are not Cloud Run regions.
+- `europe-north2` to `europe-north1`, and `northamerica-south1` to
+  `us-south1`, because Cloud Functions is not available there.
+
+The value is case sensitive, as in the extension, so `NAM5` fails the deploy.
+The Firestore trigger always fires in the database's own region, whatever
+region the function runs in.
 
 If you copied `DATABASE_REGION` into your `.env` from an extension install, it
 is honored: the function deploys near your database.
