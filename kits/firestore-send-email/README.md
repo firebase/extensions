@@ -273,6 +273,25 @@ The Firebase CLI now sets it to the function that published the event
 Only `processQueue` publishes, so each instance still has one `source`. If your
 event triggers filter on `source`, change the filter to the new value.
 
+### Quote settings that contain `#` after migrating
+
+`firebase ext:migrate`, `firebase ext:export` and
+`firebase functions:kits:install` in firebase-tools 15.37.0 and earlier write
+values to `.env` without quotes, so the kit reads everything from a `#` onwards
+as a comment. `DEFAULT_FROM=Support #1 <support@example.com>` reaches the kit as
+`Support`, and `MAIL_COLLECTION=mail#v2` makes it watch `mail`. This is fixed in
+[firebase/firebase-tools#11315](https://github.com/firebase/firebase-tools/pull/11315).
+
+`ext:migrate` deploys the kit before you can edit `.env`, so until you are on a
+release with that fix, check any setting that contains `#` after migrating:
+
+1. Wrap the value in double quotes in
+   `function-kits/<kit>/config-<instance-id>/.env.<project-id>`, for example
+   `DEFAULT_FROM="Support #1 <support@example.com>"`.
+2. Redeploy with `firebase deploy --only functions:<instance-id>`.
+3. Uninstall the extension only after that, so mail keeps being sent from the
+   right collection and address.
+
 ### A failed event publish doesn't stop delivery
 
 If an event can't be published, the kit logs a warning and carries on. The
