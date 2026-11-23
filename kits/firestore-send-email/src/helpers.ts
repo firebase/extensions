@@ -22,7 +22,7 @@ import { invalidTlsOptions, invalidURI } from "./logs";
 import { SendGridTransport } from "./nodemailer-sendgrid";
 import { AuthenticatonType } from "./types";
 
-function compileUrl(value?: string): URL | null {
+export function compileUrl(value?: string): URL | null {
   if (!value) {
     return null;
   }
