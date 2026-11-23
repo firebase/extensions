@@ -115,6 +115,9 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | No           | `1`                | TTL amount when expire type is set                    |
 | `tlsOptions`          | `TLS_OPTIONS`          | Yes          | `{}`               | JSON TLS options for the SMTP transport               |
 
+A value that contains `#` may need quotes in `.env`; see
+[Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
+
 Single-quote JSON values such as `TLS_OPTIONS` in `.env`. In a double-quoted
 value the CLI turns `\n` into a real newline, so a PEM certificate no longer
 parses as JSON, and the kit falls back to `{"rejectUnauthorized":false}`

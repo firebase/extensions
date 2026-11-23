@@ -88,6 +88,9 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
+A value that contains `#` may need quotes in `.env`; see
+[Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
+
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
 | `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
