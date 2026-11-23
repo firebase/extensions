@@ -17,7 +17,7 @@
 import { describe, expect, test, vi } from "vitest";
 import type { ResolvedSendEmailConfig } from "../src/export-config";
 import { preparePayload } from "../src/prepare-payload";
-import type { Templates } from "../src/templates";
+import { Templates } from "../src/templates";
 import type { QueuePayload } from "../src/types";
 
 const baseConfig: ResolvedSendEmailConfig = {
@@ -256,6 +256,33 @@ describe("preparePayload template merging", () => {
 
     expect(result.message.html).toBe("<h1>Hello John</h1>");
     expect(result.message.subject).toBe("Subject for John");
+  });
+
+  test("renders a template sent without data against an undefined context", async () => {
+    const collection = {
+      onSnapshot: (onNext: (snap: unknown) => void) =>
+        onNext({
+          docs: [
+            {
+              id: "no-data",
+              data: () => ({
+                html: "IF:{{#if this}}Y{{else}}N{{/if}} THIS:[{{this}}]",
+              }),
+            },
+          ],
+        }),
+    } as any;
+
+    const result = await preparePayload(
+      { to: "test@example.com", template: { name: "no-data" } } as QueuePayload,
+      {
+        db: { getAll: vi.fn() } as any,
+        config: baseConfig,
+        templates: new Templates(collection),
+      }
+    );
+
+    expect(result.message.html).toBe("IF:N THIS:[]");
   });
 
   test("wraps string recipient addresses in arrays", async () => {

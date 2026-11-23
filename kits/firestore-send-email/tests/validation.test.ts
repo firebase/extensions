@@ -18,6 +18,7 @@ import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import {
   ValidationError,
+  attachmentSchema,
   formatZodError,
   validatePayload,
 } from "../src/validation";
@@ -448,6 +449,15 @@ describe("validatePayload", () => {
             },
           })
         ).not.toThrow();
+      });
+
+      test("strips a per-attachment tls option so a document cannot disable certificate checks", () => {
+        expect(
+          attachmentSchema.parse({
+            href: "https://example.com/file.txt",
+            tls: { rejectUnauthorized: false },
+          })
+        ).toEqual({ href: "https://example.com/file.txt" });
       });
 
       test("accepts a base64 encoded attachment", () => {
