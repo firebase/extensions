@@ -97,6 +97,11 @@ there. A value you answer at the deploy prompt is written to
 deploy asks for `SMTP_PASSWORD`. OAuth2 and a SendGrid URI
 (`smtp.sendgrid.net`) always need `SMTP_PASSWORD`.
 
+`firebase ext:migrate` and `firebase functions:kits:install` still ask for
+`SMTP_PASSWORD` once, even when the URI includes the password. Any value works,
+for example a placeholder, because the deploy does not attach it when the URI
+includes the password. An empty value is still rejected.
+
 A `FIREBASE_SECRET_REF_SMTP_PASSWORD` binding in your `.env` files also makes
 the kit attach `SMTP_PASSWORD`, even when the URI includes the password.
 `firebase ext:migrate` writes this binding when the extension instance had an
@@ -218,9 +223,9 @@ prompts you for a value, and fails outright when running non-interactively (CI).
 
 On username/password auth create the three OAuth2 secrets with a placeholder
 value. If your `SMTP_CONNECTION_URI` includes the password, keep it and
-`AUTH_TYPE` in your `.env` file and do not create `SMTP_PASSWORD`: a placeholder
-there replaces the URI password and every send fails with
-`535 Authentication failed`.
+`AUTH_TYPE` in your `.env` file and the deploy does not attach `SMTP_PASSWORD`.
+`firebase ext:migrate` still asks for it once: answer with any non-empty value,
+such as a placeholder, which is stored but not used.
 
 On OAuth2 auth create `SMTP_PASSWORD` with a placeholder value, unless you send
 through SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key
