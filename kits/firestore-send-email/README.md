@@ -94,9 +94,15 @@ secrets; the CLI connects them to the function at deploy time.
 the deploy loads it, from the values in your `.env` files, so put both settings
 there. A value you answer at the deploy prompt is written to
 `.env.<projectId>` and only takes effect on the next deploy, so until then the
-deploy asks for `SMTP_PASSWORD`. When `SMTP_PASSWORD` is attached it replaces
-the URI password, as in the extension. OAuth2 and a SendGrid URI
+deploy asks for `SMTP_PASSWORD`. OAuth2 and a SendGrid URI
 (`smtp.sendgrid.net`) always need `SMTP_PASSWORD`.
+
+A `FIREBASE_SECRET_REF_SMTP_PASSWORD` binding in your `.env` files also makes
+the kit attach `SMTP_PASSWORD`, even when the URI includes the password.
+`firebase ext:migrate` writes this binding when the extension instance had an
+`SMTP_PASSWORD` secret. Whenever `SMTP_PASSWORD` is attached it replaces the
+URI password, as in the extension, so remove the binding if you want the URI
+password used.
 
 A setting with **No** under "Can be blank" fails the deploy on a line like
 `DEFAULT_FROM=`. Give it a value, or remove the line and answer the prompt.
@@ -202,8 +208,8 @@ Manager. The kit asks for secrets named exactly `SMTP_PASSWORD`, `CLIENT_ID`,
 `CLIENT_SECRET` and `REFRESH_TOKEN`, so your existing extension secrets are not
 picked up. All four were optional in the extension. The three OAuth2 secrets
 are attached to the function whatever `AUTH_TYPE` is set to, and so is
-`SMTP_PASSWORD` unless the connection URI already includes the password (see
-[Configuration](#configuration)). If a secret does not exist, `firebase deploy`
+`SMTP_PASSWORD` unless the connection URI already includes the password and
+`.env` has no binding for it (see [Configuration](#configuration)). If a secret does not exist, `firebase deploy`
 prompts you for a value, and fails outright when running non-interactively (CI).
 
 On username/password auth create the three OAuth2 secrets with a placeholder

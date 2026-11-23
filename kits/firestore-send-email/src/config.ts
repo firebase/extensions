@@ -86,13 +86,16 @@ const DATABASE_REGION_OPTIONS = [
  * connection URI that already carries the password would otherwise force a
  * placeholder secret that then overrides it. Discovery only sees `.env` values,
  * so anything it cannot see falls back to declaring the secret. OAuth2 and
- * SendGrid never send the URI password, and a bound secret in the runtime
- * environment keeps its precedence over the URI.
+ * SendGrid never send the URI password. A `.env` secret binding (which
+ * `ext:migrate` writes for the extension's secret) is only honoured for a
+ * declared secret, and a bound secret in the runtime environment keeps its
+ * precedence over the URI.
  */
 export function smtpPasswordDeclared(
   env: NodeJS.ProcessEnv = process.env
 ): boolean {
   if (
+    env.FIREBASE_SECRET_REF_SMTP_PASSWORD !== undefined ||
     env.SMTP_PASSWORD !== undefined ||
     env.AUTH_TYPE === AuthenticatonType.OAuth2
   ) {

@@ -116,6 +116,17 @@ describe("SMTP_PASSWORD declaration", () => {
     expect(loaded.boundSecrets).toEqual(ALL_SECRETS);
   });
 
+  test("is declared and bound when .env binds SMTP_PASSWORD with a secret reference", () => {
+    const loaded = loadKit({
+      AUTH_TYPE: "UsernamePassword",
+      SMTP_CONNECTION_URI: "smtp://u:inline@h.example:587",
+      FIREBASE_SECRET_REF_SMTP_PASSWORD:
+        "projects/p/secrets/ext-foo-SMTP_PASSWORD/versions/1",
+    });
+    expect(loaded.declaredSecrets).toEqual(ALL_SECRETS);
+    expect(loaded.boundSecrets).toEqual(ALL_SECRETS);
+  });
+
   // A deploy that could not see the URI at discovery binds the secret, and its
   // runtime has both values in the environment.
   test("a bound SMTP_PASSWORD still overrides the URI password at runtime", () => {
