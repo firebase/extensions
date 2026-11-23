@@ -108,6 +108,9 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
 the CLI connects them to the function at deploy time.
 
+A value that contains `#` needs quotes in `.env`; see
+[Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
+
 The instance id is not a setting: the CLI provides it to each instance as
 `FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
 `FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
