@@ -75,7 +75,7 @@ later, behind the `kits` experiment):
 `firebase.json`) holding that instance's `.env.<projectId>`. Give each instance
 a directory of its own: `functions:kits:uninstall` treats every `.env.*` file in
 it as instance config. The CLI prefixes every function and task queue name with
-`kit-<instance id>-`, so the function above deploys as
+`kit-<instance-id>-`, so the function above deploys as
 `kit-default-processQueue`.
 
 ```sh
@@ -83,7 +83,7 @@ firebase experiments:enable kits
 firebase deploy --only functions
 ```
 
-Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+Deploy a single instance with `firebase deploy --only functions:<instance-id>`.
 
 ## Configuration
 
@@ -170,7 +170,7 @@ map, each pointing at its own config directory with its own `.env.<projectId>`:
 ```
 
 Instance ids must be unique across all kit stanzas in the project, and every
-instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+instance's function names are namespaced by its `kit-<instance-id>-` prefix, so
 the instances cannot collide.
 
 ## Events
@@ -183,7 +183,7 @@ such as `onStart`, `onProcessing`, `onSuccess`, `onError`, `onComplete`,
 ## Uninstall
 
 ```sh
-firebase functions:kits:uninstall --instance <instance id>
+firebase functions:kits:uninstall --instance <instance-id>
 ```
 
 This deletes the instance's function, its trigger, and the service account the
@@ -222,29 +222,29 @@ error.
 Uninstalling the extension also deleted its secrets and the service account's
 IAM role bindings. The kit's uninstall leaves both:
 
-- The instance's secrets in Secret Manager, `kit-<instance id>-SMTP_PASSWORD`,
-  `kit-<instance id>-CLIENT_ID`, `kit-<instance id>-CLIENT_SECRET` and
-  `kit-<instance id>-REFRESH_TOKEN`. `SMTP_PASSWORD` and the OAuth2 ones hold
+- The instance's secrets in Secret Manager, `kit-<instance-id>-SMTP_PASSWORD`,
+  `kit-<instance-id>-CLIENT_ID`, `kit-<instance-id>-CLIENT_SECRET` and
+  `kit-<instance-id>-REFRESH_TOKEN`. `SMTP_PASSWORD` and the OAuth2 ones hold
   credentials for your mail server. Delete each with
-  `gcloud secrets delete <secret> --project <project id>`, unless you pointed
+  `gcloud secrets delete <secret> --project <project-id>`, unless you pointed
   another function at it. A secret you reused with a
   `FIREBASE_SECRET_REF_<NAME>` line in `.env.<projectId>` is used under its own
-  name instead, so there is no `kit-<instance id>-<NAME>` secret for it. Delete
+  name instead, so there is no `kit-<instance-id>-<NAME>` secret for it. Delete
   it only if nothing else uses it.
 - The deleted service account's project roles. They no longer grant
   access, and show in your project's IAM policy as members like
-  `deleted:serviceAccount:firebase-fn-<n>@<project id>.iam.gserviceaccount.com?uid=<n>`.
+  `deleted:serviceAccount:firebase-fn-<n>@<project-id>.iam.gserviceaccount.com?uid=<n>`.
   The account's name doesn't include the instance id, and other kits' deleted
   accounts look the same, so note the `firebase-fn-<n>` account the uninstall
   command prints ("The following managed service accounts will also be
   deleted" or "Deleting managed service account"). List its roles with:
 
   ```sh
-  gcloud projects get-iam-policy <project id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-<n>@" --format="value(bindings.role,bindings.members)"
+  gcloud projects get-iam-policy <project-id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-<n>@" --format="value(bindings.role,bindings.members)"
   ```
 
   and remove each one, one command per role, with
-  `gcloud projects remove-iam-policy-binding <project id> --member='<member>' --role=<role> --condition=None`.
+  `gcloud projects remove-iam-policy-binding <project-id> --member='<member>' --role=<role> --condition=None`.
   Keep the quotes: the `?` in the member makes some shells, such as zsh, fail
   with "no matches found".
 
@@ -261,13 +261,13 @@ and what is no longer checked or set up for you.
 
 ### Create the four secrets by name, all of them
 
-The extension stored each secret param as `ext-<instance id>-<PARAM>` in Secret
-Manager. The kit asks for `kit-<instance id>-SMTP_PASSWORD`,
-`kit-<instance id>-CLIENT_ID`, `kit-<instance id>-CLIENT_SECRET` and
-`kit-<instance id>-REFRESH_TOKEN` (`kit-default-SMTP_PASSWORD` and so on for the
+The extension stored each secret param as `ext-<instance-id>-<PARAM>` in Secret
+Manager. The kit asks for `kit-<instance-id>-SMTP_PASSWORD`,
+`kit-<instance-id>-CLIENT_ID`, `kit-<instance-id>-CLIENT_SECRET` and
+`kit-<instance-id>-REFRESH_TOKEN` (`kit-default-SMTP_PASSWORD` and so on for the
 `default` instance), so your existing extension secrets are not picked up unless
 you add a line such as
-`FIREBASE_SECRET_REF_SMTP_PASSWORD=ext-<instance id>-SMTP_PASSWORD` to
+`FIREBASE_SECRET_REF_SMTP_PASSWORD=ext-<instance-id>-SMTP_PASSWORD` to
 `.env.<projectId>`. All four are attached to the function whatever `AUTH_TYPE`
 is set to, and were optional in the extension. If a secret does not exist,
 `firebase deploy` prompts you for a value, and fails outright when running
@@ -345,9 +345,9 @@ unaffected.
 ### CloudEvent source has changed
 
 Each event's CloudEvent `source` used to identify the extension instance
-(`//firebaseextensions.googleapis.com/extensions/projects/<project id>/instances/<instance id>`).
+(`//firebaseextensions.googleapis.com/extensions/projects/<project-id>/instances/<instance-id>`).
 The Firebase CLI now sets it to the function that published the event
-(`projects/<project id>/locations/<region>/services/kit-<instance id>-processQueue`).
+(`projects/<project-id>/locations/<region>/services/kit-<instance-id>-processQueue`).
 Only `processQueue` publishes, so each instance still has one `source`. If your
 event triggers filter on `source`, change the filter to the new value.
 
