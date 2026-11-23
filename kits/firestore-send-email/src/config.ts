@@ -346,10 +346,10 @@ export function secretParamsForAuthType(authType?: string) {
     case AuthenticatonType.OAuth2:
       // The SendGrid transport reads SMTP_PASSWORD as its API key regardless
       // of auth type, so it must stay bound under OAuth2.
-      return secretParams;
+      return [...secretParams];
     case AuthenticatonType.UsernamePassword:
     case AuthenticatonType.ApiKey:
-      return secretParams.filter((secret) => secret === params.smtpPassword);
+      return params.smtpPassword ? [params.smtpPassword] : [];
     default:
       throw new Error(
         `Unsupported AUTH_TYPE for firestore-send-email: ${authType}`
