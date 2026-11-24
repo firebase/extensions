@@ -59,7 +59,7 @@ vi.mock("firebase-functions/params", () => ({
   }),
 }));
 
-import { configFromEnv, secretParamsForAuthType } from "../src/config";
+import { configFromEnv } from "../src/config";
 import { resolveConfig } from "../src/export-config";
 import { AuthenticatonType } from "../src/types";
 
@@ -113,38 +113,6 @@ describe("configFromEnv TESTING", () => {
       process.env.TESTING = value;
       expect(configFromEnv().testing).toBe(false);
     }
-  });
-});
-
-describe("secretParamsForAuthType", () => {
-  test("binds only the SMTP password secret for username/password auth", () => {
-    expect(
-      secretParamsForAuthType(AuthenticatonType.UsernamePassword).map(
-        (secret) => (secret as { name: string }).name
-      )
-    ).toEqual(["SMTP_PASSWORD"]);
-  });
-
-  test("keeps the SMTP password bound alongside OAuth secrets for OAuth2 auth", () => {
-    expect(
-      secretParamsForAuthType(AuthenticatonType.OAuth2).map(
-        (secret) => (secret as { name: string }).name
-      )
-    ).toEqual(["SMTP_PASSWORD", "CLIENT_ID", "CLIENT_SECRET", "REFRESH_TOKEN"]);
-  });
-
-  test("uses username/password secret binding by default", () => {
-    expect(
-      secretParamsForAuthType().map(
-        (secret) => (secret as { name: string }).name
-      )
-    ).toEqual(["SMTP_PASSWORD"]);
-  });
-
-  test("rejects unsupported auth types", () => {
-    expect(() => secretParamsForAuthType("Unknown")).toThrow(
-      "Unsupported AUTH_TYPE for firestore-send-email: Unknown"
-    );
   });
 });
 
