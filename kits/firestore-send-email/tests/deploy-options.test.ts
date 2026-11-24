@@ -61,6 +61,17 @@ describe("envDeployOptions", () => {
     }
   );
 
+  test.each([
+    ["europe-north2", "europe-north1"],
+    ["northamerica-south1", "us-south1"],
+  ])(
+    "DATABASE_REGION %s, which has no Cloud Functions, maps the function region to %s",
+    (databaseRegion, expectedRegion) => {
+      setDatabaseRegion(databaseRegion);
+      expect(envDeployOptions().region).toBe(expectedRegion);
+    }
+  );
+
   test("regional DATABASE_REGION passes through as the function region", () => {
     setDatabaseRegion("europe-west1");
     expect(envDeployOptions().region).toBe("europe-west1");

@@ -27,6 +27,16 @@ describe("firestoreLocationToFunctionRegion", () => {
     expect(firestoreLocationToFunctionRegion(location)).toBe(region);
   });
 
+  test.each([
+    ["europe-north2", "europe-north1"],
+    ["northamerica-south1", "us-south1"],
+  ])(
+    "maps %s, which has no Cloud Functions, to the nearby %s",
+    (location, region) => {
+      expect(firestoreLocationToFunctionRegion(location)).toBe(region);
+    }
+  );
+
   test.each(["us-central1", "europe-west1", "asia-northeast1", "us-east1"])(
     "passes the regional location %s through unchanged",
     (location) => {

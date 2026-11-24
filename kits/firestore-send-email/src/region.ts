@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-// Firestore multi-region locations are not Cloud Run regions; deploying a
-// function to one hard-fails, so they map to a region inside the multi-region.
-const MULTI_REGION_TO_FUNCTION_REGION: Record<string, string> = {
+// Locations where deploying a function hard-fails. Firestore multi-regions are
+// not Cloud Run regions, so they map to a region inside the multi-region.
+// `europe-north2` and `northamerica-south1` have no Cloud Functions, so they map
+// to the nearest region that does. A Firestore trigger can reach a function in
+// another region, so the trigger still fires in the database's own location.
+const LOCATION_TO_FUNCTION_REGION: Record<string, string> = {
   nam5: "us-central1",
   nam7: "us-central1",
   eur3: "europe-west1",
+  "europe-north2": "europe-north1",
+  "northamerica-south1": "us-south1",
 };
 
 /**
  * Maps a Firestore database location to the Cloud Run region the functions
  * should deploy to. The lookup is case-insensitive and ignores surrounding
- * whitespace, as the CLI's own region handling is. Regional locations pass
- * through lowercased; an unset or blank location returns `undefined`, meaning
+ * whitespace, as the CLI's own region handling is. Other regional locations
+ * pass through lowercased; an unset or blank location returns `undefined`, meaning
  * the functions declare no region.
  */
 export function firestoreLocationToFunctionRegion(
@@ -36,5 +41,5 @@ export function firestoreLocationToFunctionRegion(
   if (!normalized) {
     return undefined;
   }
-  return MULTI_REGION_TO_FUNCTION_REGION[normalized] ?? normalized;
+  return LOCATION_TO_FUNCTION_REGION[normalized] ?? normalized;
 }
