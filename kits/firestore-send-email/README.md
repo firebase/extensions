@@ -46,7 +46,8 @@ Export the function from your functions codebase entry:
 export { processQueue } from "@firebase-function-kits/firestore-send-email";
 ```
 
-and configure it with a `.env` (or `.env.<projectId>`).
+and configure it in a `.env.<projectId>` file (see [Uninstall](#uninstall) for
+why not a plain `.env`).
 
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
@@ -63,7 +64,7 @@ later, behind the `kits` experiment):
       "source": ".",
       "kit": "firestore-send-email",
       "instances": {
-        "default": "."
+        "default": "instances/default"
       }
     }
   ]
@@ -71,21 +72,25 @@ later, behind the `kits` experiment):
 ```
 
 `instances` maps each instance id to the directory (relative to
-`firebase.json`) holding that instance's `.env`. The CLI prefixes every
-function and task queue name with `kit-<instance id>-`, so the function above
-deploys as `kit-default-processQueue`.
+`firebase.json`) holding that instance's `.env.<projectId>`. Give each instance
+a directory of its own: `functions:kits:uninstall` treats every `.env.*` file in
+it as instance config. The CLI prefixes every function and task queue name with
+`kit-<instance-id>-`, so the function above deploys as
+`kit-default-processQueue`.
 
 ```sh
 firebase experiments:enable kits
 firebase deploy --only functions
 ```
 
-Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+Deploy a single instance with `firebase deploy --only functions:<instance-id>`.
 
 ## Configuration
 
-Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
-loads them at deploy time and prompts for any required values that are missing.
+Set these values in a `.env.<projectId>` file, such as `.env.my-project`. The
+Firebase CLI loads them at deploy time and prompts for any required values that
+are missing. A plain `.env` deploys the same way, but
+`functions:kits:uninstall` ignores it (see [Uninstall](#uninstall)).
 Rows with a `(secret)` default live in Secret Manager. You can reuse existing
 secrets; the CLI connects them to the function at deploy time.
 
@@ -115,10 +120,10 @@ A setting with **No** under "Can be blank" fails the deploy on a line like
 | `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | No           | `1`                | TTL amount when expire type is set                    |
 | `tlsOptions`          | `TLS_OPTIONS`          | Yes          | `{}`               | JSON TLS options for the SMTP transport               |
 
-A value that contains `#` may need quotes in `.env`; see
+A value that contains `#` may need quotes in the `.env.<projectId>` file; see
 [Quote settings that contain a hash sign](../README.md#quote-settings-that-contain-a-hash-sign).
 
-Single-quote JSON values such as `TLS_OPTIONS` in `.env`. In a double-quoted
+Single-quote JSON values such as `TLS_OPTIONS` in the `.env.<projectId>` file. In a double-quoted
 value the CLI turns `\n` into a real newline, so a PEM certificate no longer
 parses as JSON, and the kit falls back to `{"rejectUnauthorized":false}`
 (certificate checks off) with only a warning:
@@ -127,7 +132,7 @@ parses as JSON, and the kit falls back to `{"rejectUnauthorized":false}`
 TLS_OPTIONS='{"ca":"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----\n"}'
 ```
 
-The CLI does not check values that are already in `.env`, so the kit checks
+The CLI does not check values that are already in the file, so the kit checks
 them itself when the deploy loads it, as the extension did at install time. The
 deploy fails with an error naming the setting if `DATABASE_REGION`,
 `AUTH_TYPE`, `OAUTH_SECURE` or `TTL_EXPIRE_TYPE` is not one of its option values
@@ -150,7 +155,7 @@ values instead.
 ## Multiple instances
 
 To process several mail queues, add one entry per instance to the `instances`
-map, each pointing at its own config directory with its own `.env`:
+map, each pointing at its own config directory with its own `.env.<projectId>`:
 
 ```json
 {
@@ -168,7 +173,7 @@ map, each pointing at its own config directory with its own `.env`:
 ```
 
 Instance ids must be unique across all kit stanzas in the project, and every
-instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+instance's function names are namespaced by its `kit-<instance-id>-` prefix, so
 the instances cannot collide.
 
 ## Events
@@ -177,6 +182,72 @@ When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
 such as `onStart`, `onProcessing`, `onSuccess`, `onError`, `onComplete`,
 `onPending`, and `onRetry` under
 `firebase.extensions.firestore-send-email.v1.*`.
+
+## Uninstall
+
+```sh
+firebase functions:kits:uninstall --instance <instance-id>
+```
+
+This deletes the instance's function, its trigger, and the service account the
+CLI created for it. It then removes the instance from `firebase.json` and
+deletes its `.env.<projectId>` file. If it is the kit's only instance, it
+removes the whole kit entry, leaving `"functions": []`. Despite what the prompt
+says, it doesn't delete your functions source when the kit is exported from
+your own codebase, as in [Usage](#usage).
+
+The command asks you to confirm, twice if this is the kit's only instance. In a
+non-interactive shell (CI, a script, any shell without a TTY, or when the CLI
+detects an AI agent), add `--force`. Without it nothing is deleted: the command
+exits 0 for the kit's only instance, and fails with `Command aborted.`
+otherwise.
+
+- **Plain `.env`.** The command only deletes what is deployed to a project with
+  a `.env.<projectId>` (or `.env.<alias>`) file in the instance's config
+  directory. With only a plain `.env`, it removes the instance from
+  `firebase.json` and exits without an error, but the function keeps running
+  and keeps sending mail. Rename the file first. If you already uninstalled,
+  put the instance (or, if it was the only one, the whole kit entry) back in
+  `firebase.json`, rename the file, and run the command again.
+- **Several projects.** Give each its own `.env.<projectId>` (copy a shared
+  `.env`, don't rename it) and run the command once per project with
+  `--project <project-id>`. The instance stays in `firebase.json` until the
+  last project's file is gone.
+- **Other `.env.*` files.** Move any other `.env.*` file, such as `.env.local`
+  (the emulator override) or a `.env.bak`, out of the config directory first.
+  Next to a plain `.env` it makes the command fail with "contains no .env file
+  for current project". Next to `.env.<projectId>` the command deletes the
+  function but leaves the instance in `firebase.json`, and running it again
+  fails with that error.
+
+Uninstalling the extension also deleted its secrets and the service account's
+IAM role bindings. The kit's uninstall leaves both:
+
+- The instance's secrets in Secret Manager, `kit-<instance-id>-SMTP_PASSWORD`,
+  `kit-<instance-id>-CLIENT_ID`, `kit-<instance-id>-CLIENT_SECRET` and
+  `kit-<instance-id>-REFRESH_TOKEN`. `SMTP_PASSWORD` and the OAuth2 ones hold
+  credentials for your mail server. Delete each with
+  `gcloud secrets delete <secret> --project <project-id>`, unless you pointed
+  another function at it. A secret you reused with a
+  `FIREBASE_SECRET_REF_<NAME>` line in `.env.<projectId>` is used under its own
+  name instead, so there is no `kit-<instance-id>-<NAME>` secret for it. Delete
+  it only if nothing else uses it.
+- The deleted service account's project roles. They no longer grant
+  access, and show in your project's IAM policy as members like
+  `deleted:serviceAccount:firebase-fn-<n>@<project-id>.iam.gserviceaccount.com?uid=<n>`.
+  The account's name doesn't include the instance id, and other kits' deleted
+  accounts look the same, so note the `firebase-fn-<n>` account the uninstall
+  command prints ("The following managed service accounts will also be
+  deleted" or "Deleting managed service account"). List its roles with:
+
+  ```sh
+  gcloud projects get-iam-policy <project-id> --flatten="bindings[].members" --filter="bindings.members:deleted:serviceAccount:firebase-fn-<n>@" --format="value(bindings.role,bindings.members)"
+  ```
+
+  and remove each one, one command per role, with
+  `gcloud projects remove-iam-policy-binding <project-id> --member='<member>' --role=<role> --condition=None`.
+  Keep the quotes: the `?` in the member makes some shells, such as zsh, fail
+  with "no matches found".
 
 ## Differences from the Trigger Email from Firestore extension
 
@@ -191,17 +262,22 @@ and what is no longer checked or set up for you.
 
 ### Create the four secrets by name, all of them
 
-The extension stored each secret param as `ext-<instance id>-<PARAM>` in Secret
-Manager. The kit asks for secrets named exactly `SMTP_PASSWORD`, `CLIENT_ID`,
-`CLIENT_SECRET` and `REFRESH_TOKEN`, so your existing extension secrets are not
-picked up. All four are attached to the function whatever `AUTH_TYPE` is set to,
-and were optional in the extension. If a secret does not exist, `firebase deploy`
-prompts you for a value, and fails outright when running non-interactively (CI).
-On username/password auth create the three OAuth2 secrets with a placeholder
-value. On OAuth2 auth do the same for `SMTP_PASSWORD`, unless you send through
-SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key whatever
-`AUTH_TYPE` is set to, so a connection URI pointing at `smtp.sendgrid.net` needs
-your real API key there and a placeholder fails every send with a 401.
+The extension stored each secret param as `ext-<instance-id>-<PARAM>` in Secret
+Manager. The kit asks for `kit-<instance-id>-SMTP_PASSWORD`,
+`kit-<instance-id>-CLIENT_ID`, `kit-<instance-id>-CLIENT_SECRET` and
+`kit-<instance-id>-REFRESH_TOKEN` (`kit-default-SMTP_PASSWORD` and so on for the
+`default` instance), so your existing extension secrets are not picked up unless
+you add a line such as
+`FIREBASE_SECRET_REF_SMTP_PASSWORD=ext-<instance-id>-SMTP_PASSWORD` to
+`.env.<projectId>`. All four are attached to the function whatever `AUTH_TYPE`
+is set to, and were optional in the extension. If a secret does not exist,
+`firebase deploy` prompts you for a value, and fails outright when running
+non-interactively (CI). On username/password auth create the three OAuth2
+secrets with a placeholder value. On OAuth2 auth do the same for
+`SMTP_PASSWORD`, unless you send through SendGrid: the SendGrid transport reads
+`SMTP_PASSWORD` as its API key whatever `AUTH_TYPE` is set to, so a connection
+URI pointing at `smtp.sendgrid.net` needs your real API key there and a
+placeholder fails every send with a 401.
 
 ### DATABASE_REGION now decides where the function runs
 
@@ -216,27 +292,28 @@ Run regions themselves and would fail the deploy. The value is case sensitive,
 as in the extension, so `NAM5` fails the deploy. The Firestore trigger always fires in the database's own
 region, whatever region the function runs in.
 
-If you copied `DATABASE_REGION` into your `.env` from an extension install, it
-is honored: the function deploys near your database.
+If you copied `DATABASE_REGION` into your `.env.<projectId>` from an extension
+install, it is honored: the function deploys near your database.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the function silently falls back to
-the no-region behavior below. Upgrading the CLI (or this kit, if your `.env`
-already carried `DATABASE_REGION`) can itself trigger the region move described
-below on your next deploy.
+the no-region behavior below. Upgrading the CLI (or this kit, if your
+`.env.<projectId>` already carried `DATABASE_REGION`) can itself trigger the
+region move described below on your next deploy.
 
 `firebase functions:kits:install` and `firebase ext:migrate` prompt for this
-value and write it to `.env` before anything is deployed, so a single deploy
-places the function correctly. If you instead run `firebase deploy` with the
-value still missing from `.env`, the prompt comes after discovery has already
-chosen a region, so your answer only takes effect on the following deploy.
+value and write it to `.env.<projectId>` before anything is deployed, so a
+single deploy places the function correctly. If you instead run
+`firebase deploy` with the value still missing from `.env.<projectId>`, the
+prompt comes after discovery has already chosen a region, so your answer only
+takes effect on the following deploy.
 
-`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
-recording where the extension's function ran. Nothing reads it: placement comes
-from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
-function.
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your
+`.env.<projectId>`, recording where the extension's function ran. Nothing reads
+it: placement comes from `DATABASE_REGION` alone, so if the two disagree your
+next deploy moves the function.
 
-With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+With an explicit empty `DATABASE_REGION=` line in `.env.<projectId>`, the function declares
 no region and the Firebase CLI resolves one at deploy time: it keeps the region
 it is already deployed in, and on a first deploy it lands in `us-central1`. The
 CLI would otherwise place it next to the database, but it resolves the default
@@ -258,7 +335,7 @@ writers and let the collection drain before a deploy that moves the region.
 ### Create the Eventarc channel yourself for events
 
 Choosing events at install used to create the channel and set both event
-variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
+variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env.<projectId>`
 to a channel you have created, and the same seven
 `firebase.extensions.firestore-send-email.v1.*` events are published. Per-event
 selection is gone in practice, because the CLI rejects any `.env` key beginning
@@ -270,9 +347,9 @@ unaffected.
 ### CloudEvent source has changed
 
 Each event's CloudEvent `source` used to identify the extension instance
-(`//firebaseextensions.googleapis.com/extensions/projects/<project id>/instances/<instance id>`).
+(`//firebaseextensions.googleapis.com/extensions/projects/<project-id>/instances/<instance-id>`).
 The Firebase CLI now sets it to the function that published the event
-(`projects/<project id>/locations/<region>/services/kit-<instance id>-processQueue`).
+(`projects/<project-id>/locations/<region>/services/kit-<instance-id>-processQueue`).
 Only `processQueue` publishes, so each instance still has one `source`. If your
 event triggers filter on `source`, change the filter to the new value.
 
@@ -350,7 +427,7 @@ using the bug template, with `firestore-send-email kit` in the title. Include:
 - The kit version (run `npm ls @firebase-function-kits/firestore-send-email` in the
   directory where you installed it), your `firebase-tools` version
   (`firebase --version`) and Node.js version.
-- Your configuration from your `.env` (or `.env.<projectId>`) file, with
+- Your configuration from your `.env.<projectId>` (or `.env`) file, with
   secrets and project details redacted.
 - Steps to reproduce, the result you expected, and the result you got.
 - Logs from the kit's functions in Cloud Logging (with their
