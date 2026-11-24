@@ -94,6 +94,34 @@ are missing. A plain `.env` deploys the same way, but
 Rows with a `(secret)` default live in Secret Manager. You can reuse existing
 secrets; the CLI connects them to the function at deploy time.
 
+`SMTP_PASSWORD` is attached to the function only when it is needed, which the
+kit decides from the values in your `.env` files when the deploy loads it.
+Whenever it is attached, it replaces any password in `SMTP_CONNECTION_URI`, as
+in the extension.
+
+| Situation                                                                                     | Prompted, if the secret does not exist yet? | Attached?         |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------- |
+| URI with password in `.env`                                                                   | No                                          | No                |
+| URI answered at the deploy prompt                                                             | Yes                                         | First deploy only |
+| `firebase ext:migrate` (instance had no `SMTP_PASSWORD`) or `firebase functions:kits:install` | Yes, any non-empty value                    | No                |
+| `FIREBASE_SECRET_REF_SMTP_PASSWORD` in `.env`                                                 | Yes, for the secret it names                | Yes               |
+| `AUTH_TYPE=OAuth2` in `.env`, or a SendGrid URI (`smtp.sendgrid.net`)                         | Yes                                         | Yes               |
+
+A URI answered at the deploy prompt is written to `.env.<projectId>` and only
+counts from the next deploy, so answer the `SMTP_PASSWORD` prompt with your real
+password, or with any value and run `firebase deploy` again. `firebase
+ext:migrate` writes `FIREBASE_SECRET_REF_SMTP_PASSWORD` when the extension
+instance had an `SMTP_PASSWORD` secret; remove it if you want the URI password
+used.
+
+We recommend putting the password in `SMTP_PASSWORD` rather than in the URI: a
+password in the URI is stored in a plain environment variable, while the secret
+is kept in Secret Manager. The URI form still works for existing setups.
+
+For the emulator, leave `SMTP_PASSWORD` out of `.secret.local` when the URI
+includes the password, because the emulator passes every `.secret.local` value
+to the function.
+
 A setting with **No** under "Can be blank" fails the deploy on a line like
 `DEFAULT_FROM=`. Give it a value, or remove the line and answer the prompt.
 
@@ -257,10 +285,10 @@ lease and retry handling, Handlebars templates and partials, UID recipient
 lookup, the SendGrid transport, payload validation and the TTL field are all
 ported verbatim. Every setting keeps its extension environment variable name and
 default, so a `.env` copied from your installed instance needs no value changes.
-What does change is where the four secrets come from, where the function runs,
+What does change is where the secrets come from, where the function runs,
 and what is no longer checked or set up for you.
 
-### Create the four secrets by name, all of them
+### Create the secrets by name
 
 The extension stored each secret param as `ext-<instance-id>-<PARAM>` in Secret
 Manager. The kit asks for `kit-<instance-id>-SMTP_PASSWORD`,
@@ -269,15 +297,24 @@ Manager. The kit asks for `kit-<instance-id>-SMTP_PASSWORD`,
 `default` instance), so your existing extension secrets are not picked up unless
 you add a line such as
 `FIREBASE_SECRET_REF_SMTP_PASSWORD=ext-<instance-id>-SMTP_PASSWORD` to
-`.env.<projectId>`. All four are attached to the function whatever `AUTH_TYPE`
-is set to, and were optional in the extension. If a secret does not exist,
-`firebase deploy` prompts you for a value, and fails outright when running
-non-interactively (CI). On username/password auth create the three OAuth2
-secrets with a placeholder value. On OAuth2 auth do the same for
-`SMTP_PASSWORD`, unless you send through SendGrid: the SendGrid transport reads
-`SMTP_PASSWORD` as its API key whatever `AUTH_TYPE` is set to, so a connection
-URI pointing at `smtp.sendgrid.net` needs your real API key there and a
-placeholder fails every send with a 401.
+`.env.<projectId>`. All four were optional in the extension. The three OAuth2
+secrets are attached to the function whatever `AUTH_TYPE` is set to, and so is
+`SMTP_PASSWORD` unless the connection URI already includes the password and
+your `.env` files have no binding for it (see [Configuration](#configuration)).
+If a secret does not exist, `firebase deploy` prompts you for a value, and fails
+outright when running non-interactively (CI).
+
+On username/password auth create the three OAuth2 secrets with a placeholder
+value. If your `SMTP_CONNECTION_URI` includes the password, keep it and
+`AUTH_TYPE` in your `.env` files and the deploy does not attach `SMTP_PASSWORD`.
+`firebase ext:migrate` still asks for it once: answer with any non-empty value,
+such as a placeholder, which is stored but not used.
+
+On OAuth2 auth create `SMTP_PASSWORD` with a placeholder value, unless you send
+through SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key
+whatever `AUTH_TYPE` is set to, so a connection URI pointing at
+`smtp.sendgrid.net` needs your real API key there and a placeholder fails every
+send with a 401.
 
 ### DATABASE_REGION now decides where the function runs
 

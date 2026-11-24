@@ -20,9 +20,9 @@ import { createTransport } from "nodemailer";
 import type { ResolvedSendEmailConfig } from "./export-config";
 import { invalidTlsOptions, invalidURI } from "./logs";
 import { SendGridTransport } from "./nodemailer-sendgrid";
-import { AuthenticatonType } from "./types";
+import { AuthenticatonType, Hosts } from "./types";
 
-function compileUrl(value?: string): URL | null {
+export function compileUrl(value?: string): URL | null {
   if (!value) {
     return null;
   }
@@ -54,7 +54,7 @@ export function parseTlsOptions(tlsOptions: string) {
 export function isSendGrid(config: ResolvedSendEmailConfig): boolean {
   try {
     const url = new URL(config.smtpConnectionUri || "");
-    return url.hostname === "smtp.sendgrid.net";
+    return url.hostname === Hosts.SendGrid;
   } catch {
     return false;
   }

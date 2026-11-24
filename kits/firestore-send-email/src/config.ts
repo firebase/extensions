@@ -27,8 +27,9 @@ import type {
   SecretValue,
   SendEmailConfig,
 } from "./export-config";
+import { compileUrl } from "./helpers";
 import { firestoreLocationToFunctionRegion } from "./region";
-import { AuthenticatonType } from "./types";
+import { AuthenticatonType, Hosts } from "./types";
 
 const DATABASE_REGION_OPTIONS = [
   "eur3",
@@ -77,6 +78,33 @@ const DATABASE_REGION_OPTIONS = [
   "australia-southeast2",
   "africa-south1",
 ] as const;
+
+/**
+ * Whether the `SMTP_PASSWORD` secret is declared at all.
+ *
+ * The CLI requires a value for every declared secret, bound or not, so a
+ * connection URI that already carries the password would otherwise force a
+ * placeholder secret that then overrides it. Discovery only sees `.env` values,
+ * so anything it cannot see falls back to declaring the secret. OAuth2 and
+ * SendGrid never send the URI password. A `.env` secret binding (which
+ * `ext:migrate` writes for the extension's secret) is only honoured for a
+ * declared secret; an empty one marks the secret as deliberately unset. A
+ * bound secret in the runtime environment keeps its precedence over the URI.
+ */
+export function smtpPasswordDeclared(
+  env: NodeJS.ProcessEnv = process.env
+): boolean {
+  if (
+    env.FIREBASE_SECRET_REF_SMTP_PASSWORD ||
+    env.SMTP_PASSWORD !== undefined ||
+    env.AUTH_TYPE === AuthenticatonType.OAuth2
+  ) {
+    return true;
+  }
+  const url = compileUrl(env.SMTP_CONNECTION_URI);
+  return !url?.password || url.hostname === Hosts.SendGrid;
+}
+
 const TTL_EXPIRE_TYPE_OPTIONS = [
   "never",
   "hour",
@@ -176,10 +204,12 @@ const params = {
       },
     },
   }),
-  smtpPassword: defineSecret("SMTP_PASSWORD", {
-    label: "SMTP password",
-    description: "User password for the SMTP server",
-  }),
+  smtpPassword: smtpPasswordDeclared()
+    ? defineSecret("SMTP_PASSWORD", {
+        label: "SMTP password",
+        description: "User password for the SMTP server",
+      })
+    : undefined,
   host: defineString("HOST", {
     label: "OAuth2 SMTP Host",
     description:
@@ -309,31 +339,10 @@ export const secretParams = [
   params.clientId,
   params.clientSecret,
   params.refreshToken,
-];
-
-export function secretParamsForAuthType(authType?: string) {
-  switch (authType || AuthenticatonType.UsernamePassword) {
-    case AuthenticatonType.OAuth2:
-      // The SendGrid transport reads SMTP_PASSWORD as its API key regardless
-      // of auth type, so it must stay bound under OAuth2.
-      return [
-        params.smtpPassword,
-        params.clientId,
-        params.clientSecret,
-        params.refreshToken,
-      ];
-    case AuthenticatonType.UsernamePassword:
-    case AuthenticatonType.ApiKey:
-      return [params.smtpPassword];
-    default:
-      throw new Error(
-        `Unsupported AUTH_TYPE for firestore-send-email: ${authType}`
-      );
-  }
-}
+].filter((secret) => secret !== undefined);
 
 function optionalSecret(
-  value: ReturnType<typeof defineSecret>
+  value: ReturnType<typeof defineSecret> | undefined
 ): SecretValue | undefined {
   return value;
 }
@@ -456,6 +465,9 @@ export function assertValidParams(): void {
   const invalid: string[] = [];
 
   for (const param of Object.values(params)) {
+    if (!param) {
+      continue;
+    }
     const raw = process.env[param.name];
     // Secrets declare no `input`.
     const declared = param.options;
