@@ -89,31 +89,33 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows with a `(secret)` default live in Secret Manager. You can reuse existing
 secrets; the CLI connects them to the function at deploy time.
 
-`SMTP_PASSWORD` is not needed when `AUTH_TYPE` is `UsernamePassword` and
-`SMTP_CONNECTION_URI` already includes the password. The kit decides this when
-the deploy loads it, from the values in your `.env` files, so put both settings
-there. A value you answer at the deploy prompt is written to
-`.env.<projectId>` and only takes effect on the next deploy. Until then the
-deploy asks for `SMTP_PASSWORD` and attaches it, so it replaces the URI
-password. Answer with your real SMTP password, or answer with any value and run
-`firebase deploy` again, which no longer attaches it. OAuth2 and a SendGrid URI
-(`smtp.sendgrid.net`) always need `SMTP_PASSWORD`.
+`SMTP_PASSWORD` is attached to the function only when it is needed, which the
+kit decides from the values in your `.env` files when the deploy loads it.
+Whenever it is attached, it replaces any password in `SMTP_CONNECTION_URI`, as
+in the extension.
 
-`firebase ext:migrate` and `firebase functions:kits:install` still ask for
-`SMTP_PASSWORD` once, even when the URI includes the password. Any value works,
-for example a placeholder, because the deploy does not attach it when the URI
-includes the password. An empty value is still rejected.
+| Situation                                                                                     | Prompted, if the secret does not exist yet? | Attached?         |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------- |
+| URI with password in `.env`                                                                   | No                                          | No                |
+| URI answered at the deploy prompt                                                             | Yes                                         | First deploy only |
+| `firebase ext:migrate` (instance had no `SMTP_PASSWORD`) or `firebase functions:kits:install` | Yes, any non-empty value                    | No                |
+| `FIREBASE_SECRET_REF_SMTP_PASSWORD` in `.env`                                                 | Yes, for the secret it names                | Yes               |
+| `AUTH_TYPE=OAuth2` in `.env`, or a SendGrid URI (`smtp.sendgrid.net`)                         | Yes                                         | Yes               |
 
-A `FIREBASE_SECRET_REF_SMTP_PASSWORD` binding in your `.env` files also makes
-the kit attach `SMTP_PASSWORD`, even when the URI includes the password.
-`firebase ext:migrate` writes this binding when the extension instance had an
-`SMTP_PASSWORD` secret. Whenever `SMTP_PASSWORD` is attached it replaces the
-URI password, as in the extension, so remove the binding if you want the URI
-password used.
+A URI answered at the deploy prompt is written to `.env.<projectId>` and only
+counts from the next deploy, so answer the `SMTP_PASSWORD` prompt with your real
+password, or with any value and run `firebase deploy` again. `firebase
+ext:migrate` writes `FIREBASE_SECRET_REF_SMTP_PASSWORD` when the extension
+instance had an `SMTP_PASSWORD` secret; remove it if you want the URI password
+used.
 
-When the URI includes the password, leave `SMTP_PASSWORD` out of
-`.secret.local` for the emulator. The emulator passes every `.secret.local`
-value to the function, so an `SMTP_PASSWORD` there replaces the URI password.
+We recommend putting the password in `SMTP_PASSWORD` rather than in the URI: a
+password in the URI is stored in a plain environment variable, while the secret
+is kept in Secret Manager. The URI form still works for existing setups.
+
+For the emulator, leave `SMTP_PASSWORD` out of `.secret.local` when the URI
+includes the password, because the emulator passes every `.secret.local` value
+to the function.
 
 A setting with **No** under "Can be blank" fails the deploy on a line like
 `DEFAULT_FROM=`. Give it a value, or remove the line and answer the prompt.
