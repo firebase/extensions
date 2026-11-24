@@ -202,25 +202,23 @@ detects an AI agent), add `--force`. Without it nothing is deleted: the command
 exits 0 for the kit's only instance, and fails with `Command aborted.`
 otherwise.
 
-It only deletes what is deployed to a project with a `.env.<projectId>` file in
-the instance's config directory. With only a plain `.env`, it still removes the
-instance from `firebase.json` and exits without an error, but the function keeps
-running and keeps sending mail. Rename `.env` to `.env.<projectId>` before you
-uninstall. If you already uninstalled with a plain `.env`, put the instance
-(or, if it was the only one, the whole kit entry) back in `firebase.json`,
-rename the file, and run the command again.
-
-If the instance is deployed to more than one project, give each project its own
-`.env.<projectId>` (copy a shared `.env`, don't rename it) and run the command
-once per project with `--project <projectId>`. The instance stays in
-`firebase.json` until the last project's file is gone.
-
-Move any other `.env.*` file, such as `.env.local` (the emulator override) or a
-`.env.bak`, out of the instance's config directory before you uninstall. Next
-to a plain `.env`, it makes the command fail with "contains no .env file for
-current project". Next to `.env.<projectId>`, the command deletes the function
-but leaves the instance in `firebase.json`, and running it again fails with that
-error.
+- **Plain `.env`.** The command only deletes what is deployed to a project with
+  a `.env.<projectId>` (or `.env.<alias>`) file in the instance's config
+  directory. With only a plain `.env`, it removes the instance from
+  `firebase.json` and exits without an error, but the function keeps running
+  and keeps sending mail. Rename the file first. If you already uninstalled,
+  put the instance (or, if it was the only one, the whole kit entry) back in
+  `firebase.json`, rename the file, and run the command again.
+- **Several projects.** Give each its own `.env.<projectId>` (copy a shared
+  `.env`, don't rename it) and run the command once per project with
+  `--project <project-id>`. The instance stays in `firebase.json` until the
+  last project's file is gone.
+- **Other `.env.*` files.** Move any other `.env.*` file, such as `.env.local`
+  (the emulator override) or a `.env.bak`, out of the config directory first.
+  Next to a plain `.env` it makes the command fail with "contains no .env file
+  for current project". Next to `.env.<projectId>` the command deletes the
+  function but leaves the instance in `firebase.json`, and running it again
+  fails with that error.
 
 Uninstalling the extension also deleted its secrets and the service account's
 IAM role bindings. The kit's uninstall leaves both:
@@ -294,27 +292,28 @@ Run regions themselves and would fail the deploy. The value is case sensitive,
 as in the extension, so `NAM5` fails the deploy. The Firestore trigger always fires in the database's own
 region, whatever region the function runs in.
 
-If you copied `DATABASE_REGION` into your `.env` from an extension install, it
-is honored: the function deploys near your database.
+If you copied `DATABASE_REGION` into your `.env.<projectId>` from an extension
+install, it is honored: the function deploys near your database.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the function silently falls back to
-the no-region behavior below. Upgrading the CLI (or this kit, if your `.env`
-already carried `DATABASE_REGION`) can itself trigger the region move described
-below on your next deploy.
+the no-region behavior below. Upgrading the CLI (or this kit, if your
+`.env.<projectId>` already carried `DATABASE_REGION`) can itself trigger the
+region move described below on your next deploy.
 
 `firebase functions:kits:install` and `firebase ext:migrate` prompt for this
-value and write it to `.env` before anything is deployed, so a single deploy
-places the function correctly. If you instead run `firebase deploy` with the
-value still missing from `.env`, the prompt comes after discovery has already
-chosen a region, so your answer only takes effect on the following deploy.
+value and write it to `.env.<projectId>` before anything is deployed, so a
+single deploy places the function correctly. If you instead run
+`firebase deploy` with the value still missing from `.env.<projectId>`, the
+prompt comes after discovery has already chosen a region, so your answer only
+takes effect on the following deploy.
 
-`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
-recording where the extension's function ran. Nothing reads it: placement comes
-from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
-function.
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your
+`.env.<projectId>`, recording where the extension's function ran. Nothing reads
+it: placement comes from `DATABASE_REGION` alone, so if the two disagree your
+next deploy moves the function.
 
-With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+With an explicit empty `DATABASE_REGION=` line in `.env.<projectId>`, the function declares
 no region and the Firebase CLI resolves one at deploy time: it keeps the region
 it is already deployed in, and on a first deploy it lands in `us-central1`. The
 CLI would otherwise place it next to the database, but it resolves the default
